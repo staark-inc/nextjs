@@ -8,3 +8,5 @@ dist/
 .env.*.local
 next-env.d.ts
 .staark/
+
+*.patch
