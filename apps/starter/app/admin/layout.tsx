@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import AdminShell from "./AdminShell";
 import "./admin.css";
 import "./admin-v2.css";
+import "./overview-control-center.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Staark Admin", robots: "noindex" };
