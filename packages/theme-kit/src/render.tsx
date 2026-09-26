@@ -39,7 +39,10 @@ export function BlockRenderer({ blocks, site, theme, registry }: BlockRendererPr
     const owner = chain.find((t) => t.sections[block.type]);
     const Section = owner?.sections[block.type];
     if (!Section) {
-      if (process.env.NODE_ENV !== "production") {
+      // Read NODE_ENV via globalThis so this shared package typechecks in every
+      // consumer, including theme packages whose tsconfig has no Node types.
+      const nodeEnv = (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV;
+      if (nodeEnv !== "production") {
         return (
           <div key={block.id} data-staark-unknown={block.type} style={{ padding: 16, border: "1px dashed #c00", color: "#c00", font: "13px monospace" }}>
             Unknown section: {block.type}
