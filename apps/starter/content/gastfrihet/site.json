@@ -1,0 +1,39 @@
+{
+  "name": "Gästis Björkvik",
+  "tagline": "Gästhus vid sjön, mitt i Sörmland",
+  "locale": "sv-SE",
+  "url": "https://gastisbjorkvik.example",
+  "theme": {
+    "preset": "gastfrihet"
+  },
+  "brand": {
+    "copyright": "© 2026 Gästis Björkvik"
+  },
+  "contact": {
+    "email": "boka@gastisbjorkvik.example",
+    "phone": "+46 70 123 45 67",
+    "address": { "street": "Sjövägen 4", "postalCode": "640 24", "city": "Björkvik", "country": "SE" },
+    "openingHours": [
+      { "days": "Reception", "hours": "08–20" }
+    ]
+  },
+  "navigation": {
+    "primary": [
+      { "label": "Rum", "href": "/#rum" },
+      { "label": "Bekvämligheter", "href": "/#bekvamligheter" },
+      { "label": "Om oss", "href": "/om-oss" },
+      { "label": "Kontakt", "href": "/kontakt" }
+    ],
+    "footer": [
+      { "label": "Rum", "href": "/#rum" },
+      { "label": "Om oss", "href": "/om-oss" },
+      { "label": "Kontakt", "href": "/kontakt" }
+    ],
+    "cta": { "label": "Boka rum", "href": "/kontakt" }
+  },
+  "seo": {
+    "titleTemplate": "%s | Gästis Björkvik",
+    "defaultDescription": "Gästis Björkvik är ett gästhus vid sjön i Sörmland. Boka rum för en lugn helg på landet.",
+    "businessType": "LodgingBusiness"
+  }
+}

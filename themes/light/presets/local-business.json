@@ -1,0 +1,47 @@
+{
+  "id": "local-business",
+  "name": "Local Business",
+  "description": "Conversion-first starter direction for Swedish local service companies: clear offers, trust signals, strong contact paths and an editorial display typeface.",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "ink": "#17212B",
+      "muted": "#5C6874",
+      "line": "#D9DED9",
+      "paper": "#F8F7F2",
+      "surface": "#EAEFE9",
+      "white": "#FFFFFF",
+      "primary": "#B64728",
+      "primaryDark": "#92361F",
+      "primarySoft": "#FFF0EA",
+      "success": "#177756",
+      "forest": "#17362F",
+      "forestDeep": "#102722",
+      "gold": "#D3A23A"
+    },
+    "typography": {
+      "body": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "display": "Georgia, \"Times New Roman\", serif",
+      "displayWeight": "700"
+    },
+    "radius": {
+      "sm": "8px",
+      "md": "14px",
+      "lg": "22px",
+      "button": "999px"
+    },
+    "layout": {
+      "content": "760px",
+      "wide": "1280px",
+      "wrap": "1360px"
+    }
+  },
+  "components": {
+    "header": "solid",
+    "buttons": "pill",
+    "cards": "outlined",
+    "hero": "offer",
+    "footer": "deep"
+  },
+  "stylesheet": ""
+}

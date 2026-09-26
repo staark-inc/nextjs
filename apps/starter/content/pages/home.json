@@ -1,0 +1,80 @@
+{
+  "path": "/",
+  "title": "Startsida",
+  "seo": { "title": "Salong Nova – frisör & barberare i Göteborg", "description": "Boka klippning, färg och skägg hos Salong Nova i centrala Göteborg." },
+  "updatedAt": "2026-09-20T10:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Frisör & barberare",
+        "heading": "Ett klipp över mängden",
+        "intro": "Salong Nova är en modern salong i hjärtat av Göteborg. Skickliga frisörer, noga utvalda produkter och en avslappnad stämning.",
+        "primaryCta": { "label": "Boka tid", "href": "/kontakt" },
+        "secondaryCta": { "label": "Se priser", "href": "/priser" },
+        "image": { "src": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=70", "alt": "Salongsinteriör" },
+        "points": ["Drop-in och bokning", "Barberare för skägg och rakning", "Färg och slingor"]
+      }
+    },
+    {
+      "id": "services",
+      "type": "services",
+      "props": {
+        "eyebrow": "Tjänster",
+        "heading": "Det vi gör bäst",
+        "columns": 3,
+        "items": [
+          { "title": "Klippning", "icon": "✂️", "description": "Dam, herr och barn. Konsultation ingår alltid.", "price": "fr. 495 kr" },
+          { "title": "Färg & slingor", "icon": "🎨", "description": "Balayage, slingor och heltäckande färg.", "price": "fr. 950 kr" },
+          { "title": "Skägg & rakning", "icon": "🪒", "description": "Skäggtrim, rakkniv och styling.", "price": "fr. 350 kr" }
+        ]
+      }
+    },
+    {
+      "id": "why",
+      "type": "process",
+      "props": {
+        "eyebrow": "Så går det till",
+        "heading": "Från bokning till nöjd kund",
+        "steps": [
+          { "title": "Boka", "description": "Välj tid online eller slå oss en signal." },
+          { "title": "Konsultation", "description": "Vi går igenom vad du vill ha innan vi börjar." },
+          { "title": "Behandling", "description": "Luta dig tillbaka medan vi fixar resten." }
+        ]
+      }
+    },
+    {
+      "id": "gallery",
+      "type": "gallery",
+      "props": {
+        "eyebrow": "Galleri",
+        "heading": "Ett urval av vårt arbete",
+        "images": [
+          { "src": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=700&q=70", "alt": "Herrklippning" },
+          { "src": "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=700&q=70", "alt": "Skäggtrim" },
+          { "src": "https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=700&q=70", "alt": "Färgning" },
+          { "src": "https://images.unsplash.com/photo-1596178065887-1198b6148b2b?w=700&q=70", "alt": "Styling" },
+          { "src": "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=700&q=70", "alt": "Salong" }
+        ]
+      }
+    },
+    {
+      "id": "reviews",
+      "type": "testimonials",
+      "props": {
+        "heading": "Vad kunderna säger",
+        "items": [
+          { "quote": "Bästa klippningen jag fått i Göteborg. Kommer tillbaka!", "author": "Johan L.", "rating": 5 },
+          { "quote": "Otroligt trevlig personal och grymt resultat på färgen.", "author": "Amina R.", "rating": 5 },
+          { "quote": "Snabbt, proffsigt och schysst pris.", "author": "Erik S.", "rating": 5 }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Redo för en ny look?", "intro": "Boka din tid idag – vi har ofta tider samma vecka.", "cta": { "label": "Boka tid", "href": "/kontakt" } }
+    }
+  ]
+}

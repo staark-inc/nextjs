@@ -1,0 +1,47 @@
+{
+  "path": "/priser",
+  "title": "Priser",
+  "seo": { "description": "Prislista för klippning, färg och skäggvård hos Salong Nova." },
+  "updatedAt": "2026-09-20T10:00:00Z",
+  "blocks": [
+    {
+      "id": "prices",
+      "type": "priceList",
+      "props": {
+        "eyebrow": "Prislista",
+        "heading": "Våra priser",
+        "intro": "Priserna är riktpriser. Slutpris beror på hårlängd och tidsåtgång – vi ger dig alltid ett besked vid konsultationen.",
+        "groups": [
+          {
+            "title": "Klippning",
+            "items": [
+              { "name": "Damklippning", "description": "Inkl. tvätt och styling", "duration": "45 min", "price": "595 kr" },
+              { "name": "Herrklippning", "duration": "30 min", "price": "495 kr" },
+              { "name": "Barn (under 12 år)", "duration": "20 min", "price": "295 kr" }
+            ]
+          },
+          {
+            "title": "Färg",
+            "items": [
+              { "name": "Slingor", "description": "Foliering", "duration": "90 min", "price": "fr. 1195 kr" },
+              { "name": "Balayage", "duration": "120 min", "price": "fr. 1650 kr" },
+              { "name": "Toning", "duration": "30 min", "price": "550 kr" }
+            ]
+          },
+          {
+            "title": "Skägg",
+            "items": [
+              { "name": "Skäggtrim", "duration": "20 min", "price": "350 kr" },
+              { "name": "Rakkniv & handduk", "duration": "30 min", "price": "450 kr" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Boka din tid", "intro": "Osäker på vad du behöver? Boka en konsultation så hjälper vi dig.", "cta": { "label": "Boka tid", "href": "/kontakt" } }
+    }
+  ]
+}

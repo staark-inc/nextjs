@@ -1,0 +1,63 @@
+{
+  "name": "Staark Demo",
+  "tagline": "Digital byrå i Stockholm",
+  "locale": "sv-SE",
+  "url": "https://demo.staarkinc.com",
+  "theme": {
+    "preset": "scandinavian"
+  },
+  "brand": {
+    "copyright": "© 2026 Staark Demo"
+  },
+  "contact": {
+    "email": "hej@staarkinc.com",
+    "phone": "+46 8 123 45 67",
+    "address": {
+      "street": "Birger Jarlsgatan 58",
+      "postalCode": "114 29",
+      "city": "Stockholm",
+      "country": "SE"
+    },
+    "openingHours": [
+      {
+        "days": "Mån–Fre",
+        "hours": "09–17"
+      }
+    ]
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Tjänster",
+        "href": "/#tjanster"
+      },
+      {
+        "label": "Process",
+        "href": "/#process"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "footer": [
+      {
+        "label": "Tjänster",
+        "href": "/#tjanster"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "cta": {
+      "label": "Kontakta oss",
+      "href": "/kontakt"
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Staark Demo",
+    "defaultDescription": "Staark Demo — en digital byrå i Stockholm som bygger webbplatser och varumärken.",
+    "businessType": "ProfessionalService"
+  }
+}

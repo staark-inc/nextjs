@@ -1,0 +1,30 @@
+import type { Metadata } from "next";
+import { buildRootMetadata, localBusinessJsonLd, jsonLdString } from "@staark/core/server";
+import { presetToCssVars, cssVarsToString, resolvePreset } from "@staark/theme-kit";
+import { content } from "@/lib/staark";
+import { theme, SiteHeader, SiteFooter } from "@/staark.config";
+import "@staark/theme-light/styles.css";
+import "@staark/theme-salong/styles.css";
+import "@staark/theme-gastfrihet/styles.css";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await content.getSite();
+  return buildRootMetadata(site);
+}
+
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  const site = await content.getSite();
+  const preset = resolvePreset(theme, site.theme.preset);
+  const vars = presetToCssVars(preset, site.theme.overrides);
+  const components = { ...preset.components, ...site.theme.components };
+
+  return (
+    <>
+      <style>{`:root{${cssVarsToString(vars)}}`}</style>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(localBusinessJsonLd(site)) }} />
+      <SiteHeader site={site} variant={components.header ?? "solid"} />
+      <main>{children}</main>
+      <SiteFooter site={site} variant={components.footer ?? "dark"} />
+    </>
+  );
+}

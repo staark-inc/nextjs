@@ -1,0 +1,54 @@
+{
+  "path": "/kontakt",
+  "title": "Kontakt",
+  "seo": {
+    "description": "Kontakta Staark Demo — vi hjälper er med webb, design och varumärke.",
+    "title": "Kontakt | Staark Demo"
+  },
+  "updatedAt": "2026-09-26T10:00:00Z",
+  "blocks": [
+    {
+      "id": "contact",
+      "type": "contact",
+      "props": {
+        "eyebrow": "Kontakt",
+        "heading": "Berätta om ert projekt",
+        "intro": "Fyll i formuläret så återkommer vi inom en arbetsdag. Eller ring oss direkt.",
+        "formId": "demo-kontakt",
+        "submitLabel": "Skicka",
+        "successMessage": "Tack! Vi hör av oss snart.",
+        "fields": [
+          {
+            "name": "name",
+            "label": "Namn",
+            "required": true
+          },
+          {
+            "name": "email",
+            "label": "E-post",
+            "type": "email",
+            "required": true
+          },
+          {
+            "name": "phone",
+            "label": "Telefon",
+            "type": "tel"
+          },
+          {
+            "name": "company",
+            "label": "Företag"
+          },
+          {
+            "name": "subject",
+            "label": "Ämne"
+          },
+          {
+            "name": "message",
+            "label": "Meddelande",
+            "type": "textarea"
+          }
+        ]
+      }
+    }
+  ]
+}

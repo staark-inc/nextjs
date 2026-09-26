@@ -1,0 +1,52 @@
+{
+  "path": "/about",
+  "title": "Omm os",
+  "seo": {
+    "title": "Omm os",
+    "description": "Omm os - "
+  },
+  "blocks": [
+    {
+      "id": "process-1790446812408",
+      "type": "process",
+      "props": {
+        "eyebrow": "How it works",
+        "heading": "From start to finish",
+        "steps": [
+          {
+            "title": "Step one",
+            "description": "Describe this step."
+          },
+          {
+            "title": "Step two",
+            "description": "Describe this step."
+          },
+          {
+            "title": "Step three",
+            "description": "Describe this step."
+          }
+        ]
+      }
+    },
+    {
+      "id": "testimonials-1790446819071",
+      "type": "testimonials",
+      "props": {
+        "heading": "What our customers say",
+        "items": [
+          {
+            "quote": "Excellent service and great results!",
+            "author": "Jane D.",
+            "rating": 5
+          },
+          {
+            "quote": "Highly recommended. Professional and fast.",
+            "author": "John S.",
+            "rating": 5
+          }
+        ]
+      }
+    }
+  ],
+  "updatedAt": "2026-09-26T18:10:58.926Z"
+}

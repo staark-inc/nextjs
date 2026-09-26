@@ -1,0 +1,29 @@
+{
+  "path": "/kontakt",
+  "title": "Kontakt & bokning",
+  "seo": { "description": "Boka tid eller kontakta Salong Nova i Göteborg." },
+  "updatedAt": "2026-09-20T10:00:00Z",
+  "blocks": [
+    {
+      "id": "contact",
+      "type": "contact",
+      "props": {
+        "eyebrow": "Boka tid",
+        "heading": "Hör av dig så bokar vi in dig",
+        "intro": "Fyll i formuläret så återkommer vi med en tid. Du kan också ringa oss under öppettiderna.",
+        "formId": "salong-bokning",
+        "submitLabel": "Skicka bokningsförfrågan",
+        "successMessage": "Tack! Vi hör av oss med en tid så snart vi kan.",
+        "fields": [
+          { "name": "name", "label": "Namn", "required": true },
+          { "name": "email", "label": "E-post", "type": "email", "required": true },
+          { "name": "phone", "label": "Telefon", "type": "tel" },
+          { "name": "booking_item", "label": "Önskad behandling" },
+          { "name": "booking_date", "label": "Önskat datum", "type": "date" },
+          { "name": "booking_time", "label": "Önskad tid", "type": "time" },
+          { "name": "message", "label": "Övrigt", "type": "textarea" }
+        ]
+      }
+    }
+  ]
+}

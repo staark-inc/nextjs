@@ -1,0 +1,30 @@
+{
+  "path": "/kontakt",
+  "title": "Kontakt & bokning",
+  "seo": { "description": "Boka rum eller kontakta Gästis Björkvik i Sörmland." },
+  "updatedAt": "2026-09-26T10:00:00Z",
+  "blocks": [
+    {
+      "id": "contact",
+      "type": "contact",
+      "props": {
+        "eyebrow": "Boka rum",
+        "heading": "Skicka en bokningsförfrågan",
+        "intro": "Fyll i formuläret så återkommer vi med bekräftelse och betalningsinfo. Du kan också ringa oss under receptionen (08–20).",
+        "formId": "gastfrihet-bokning",
+        "submitLabel": "Skicka förfrågan",
+        "successMessage": "Tack! Vi återkommer med bekräftelse inom en dag.",
+        "fields": [
+          { "name": "name", "label": "Namn", "required": true },
+          { "name": "email", "label": "E-post", "type": "email", "required": true },
+          { "name": "phone", "label": "Telefon", "type": "tel" },
+          { "name": "booking_item", "label": "Önskat rum" },
+          { "name": "booking_date", "label": "Incheckning", "type": "date" },
+          { "name": "booking_end_date", "label": "Utcheckning", "type": "date" },
+          { "name": "booking_guests", "label": "Antal gäster", "type": "number" },
+          { "name": "message", "label": "Övrigt", "type": "textarea" }
+        ]
+      }
+    }
+  ]
+}

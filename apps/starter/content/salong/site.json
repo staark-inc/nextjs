@@ -1,0 +1,75 @@
+{
+  "name": "Salong Nova",
+  "tagline": "Frisör & barberare i centrala Göteborg",
+  "locale": "sv-SE",
+  "url": "https://salongnova.example",
+  "theme": {
+    "preset": "gastfrihet"
+  },
+  "brand": {
+    "copyright": "© 2026 Salong Nova"
+  },
+  "contact": {
+    "email": "contact@staarkinc.com",
+    "phone": "+46 31 123 45 67",
+    "address": {
+      "street": "Kungsgatan 12",
+      "postalCode": "411 19",
+      "city": "Göteborg",
+      "country": "SE"
+    },
+    "openingHours": [
+      {
+        "days": "Mån–Fre",
+        "hours": "09–19"
+      },
+      {
+        "days": "Lör",
+        "hours": "10–16"
+      }
+    ]
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Tjänster",
+        "href": "/#tjanster"
+      },
+      {
+        "label": "Priser",
+        "href": "/priser"
+      },
+      {
+        "label": "Galleri",
+        "href": "/#galleri"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "footer": [
+      {
+        "label": "Priser",
+        "href": "/priser"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      },
+      {
+        "label": "Boka tid",
+        "href": "/kontakt"
+      }
+    ],
+    "cta": {
+      "label": "Boka tid",
+      "href": "/kontakt"
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Salong Nova",
+    "defaultDescription": "Salong Nova är en frisör och barberare i centrala Göteborg. Boka klippning, färg och skägg online.",
+    "businessType": "HairSalon"
+  }
+}

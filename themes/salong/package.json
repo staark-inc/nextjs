@@ -1,0 +1,30 @@
+{
+  "name": "@staark/theme-salong",
+  "version": "0.1.0",
+  "description": "S-Hub Salong — child theme of S-Hub Light for hair salons and barbers (price list, gallery, booking).",
+  "private": true,
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@staark/core": "workspace:*",
+    "@staark/theme-kit": "workspace:*",
+    "@staark/theme-light": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@staark/theme-kit",
+  "version": "0.1.0",
+  "description": "Staark theme runtime: preset (theme.json-style) tokens → CSS variables, section registry and the block renderer shared by every S-Hub theme.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@staark/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

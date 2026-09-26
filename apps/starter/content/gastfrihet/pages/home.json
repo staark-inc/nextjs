@@ -1,0 +1,125 @@
+{
+  "path": "/",
+  "title": "Startsida",
+  "seo": { "title": "Gästis Björkvik – gästhus vid sjön", "description": "Boka rum hos Gästis Björkvik i Sörmland. Frukost, bastu och kanotuthyrning." },
+  "updatedAt": "2026-09-26T10:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Gästhus vid sjön",
+        "heading": "Gästfrihet med utsikt",
+        "intro": "Gästis Björkvik är ett litet gästhus mitt i Sörmland. Fem rum, frukost med lokala råvaror och tystnad ända ner till bryggan.",
+        "primaryCta": { "label": "Boka rum", "href": "/kontakt" },
+        "secondaryCta": { "label": "Se rummen", "href": "/#rum" },
+        "image": { "src": "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&q=70", "alt": "Gästhus vid sjön" },
+        "points": ["Frukost ingår", "Fem minuter till badplatsen", "Husdjur välkomna"]
+      }
+    },
+    {
+      "id": "rooms",
+      "type": "rooms",
+      "props": {
+        "eyebrow": "Rum",
+        "heading": "Fem rum, varsin karaktär",
+        "intro": "Alla rum har eget badrum och utsikt mot antingen sjön eller trädgården.",
+        "rooms": [
+          {
+            "name": "Sjöutsikt",
+            "image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=70",
+            "occupancy": "2 gäster",
+            "description": "Vårt största rum, med fransk balkong mot sjön.",
+            "price": "1 490 kr/natt",
+            "amenities": ["Sjöutsikt", "Balkong", "Dubbelsäng", "Eget bad"],
+            "href": "/kontakt"
+          },
+          {
+            "name": "Trädgårdsrummet",
+            "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=70",
+            "occupancy": "2 gäster",
+            "description": "Lugnt rum med egen uteplats mot trädgården.",
+            "price": "1 190 kr/natt",
+            "amenities": ["Uteplats", "Dubbelsäng", "Eget bad"],
+            "href": "/kontakt"
+          },
+          {
+            "name": "Familjerummet",
+            "image": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=70",
+            "occupancy": "2+2 gäster",
+            "description": "Dubbelsäng och plats för extrabädd, perfekt för familjer.",
+            "price": "1 590 kr/natt",
+            "amenities": ["Extrabädd", "Dubbelsäng", "Eget bad", "Sjöutsikt"],
+            "href": "/kontakt"
+          },
+          {
+            "name": "Enkelrummet",
+            "image": "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800&q=70",
+            "occupancy": "1 gäst",
+            "description": "Kompakt och mysigt, perfekt för en solovistelse.",
+            "price": "890 kr/natt",
+            "amenities": ["Enkelsäng", "Skrivbord", "Eget bad"],
+            "href": "/kontakt"
+          },
+          {
+            "name": "Stuga Eken",
+            "image": "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=70",
+            "occupancy": "2 gäster",
+            "description": "Fristående stuga med braskamin och altan mot skogen.",
+            "price": "1 890 kr/natt",
+            "amenities": ["Stuga", "Braskamin", "Altan", "Dubbelsäng", "Eget bad"],
+            "href": "/kontakt"
+          }
+        ]
+      }
+    },
+    {
+      "id": "amenities",
+      "type": "amenities",
+      "props": {
+        "eyebrow": "Bekvämligheter",
+        "heading": "Allt du behöver för ett lugnt uppehåll",
+        "items": [
+          { "icon": "🍳", "label": "Frukost ingår" },
+          { "icon": "📶", "label": "Fri wifi" },
+          { "icon": "🚗", "label": "Fri parkering" },
+          { "icon": "🐾", "label": "Husdjur välkomna" },
+          { "icon": "🛶", "label": "Kanotuthyrning" },
+          { "icon": "🔥", "label": "Bastu vid sjön" },
+          { "icon": "🚲", "label": "Cykeluthyrning" },
+          { "icon": "🧺", "label": "Picknickkorgar" }
+        ]
+      }
+    },
+    {
+      "id": "process",
+      "type": "process",
+      "props": {
+        "eyebrow": "Så bokar du",
+        "heading": "Från förfrågan till vistelse",
+        "steps": [
+          { "title": "Skicka förfrågan", "description": "Välj datum och rum via formuläret eller ring oss." },
+          { "title": "Bekräftelse", "description": "Vi återkommer med bekräftelse och betalningsinfo inom en dag." },
+          { "title": "Välkommen", "description": "Incheckning från kl. 15. Vi möter dig vid grinden." }
+        ]
+      }
+    },
+    {
+      "id": "reviews",
+      "type": "testimonials",
+      "props": {
+        "heading": "Vad gästerna säger",
+        "items": [
+          { "quote": "Perfekt lugn helg. Frukosten var fantastisk och bastun vid sjön — underbar!", "author": "Karin M.", "rating": 5 },
+          { "quote": "Fina rum och otroligt gästvänliga värdar. Barnen älskade kanotpaddlingen.", "author": "Fredrik B.", "rating": 5 },
+          { "quote": "Vi har hittat vårt nya favoritställe för hösthelger. Stugan med braskamin — perfekt.", "author": "Anna & Johan", "rating": 5 }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Boka din vistelse", "intro": "Vi har rum lediga de flesta helger. Skicka en förfrågan så svarar vi inom en dag.", "cta": { "label": "Boka rum", "href": "/kontakt" } }
+    }
+  ]
+}

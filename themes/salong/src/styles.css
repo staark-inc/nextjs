@@ -1,0 +1,21 @@
+/* S-Hub Salong additions on top of S-Hub Light. Import after the light styles. */
+
+.sk-pricelist { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px 56px; }
+.sk-pricelist__group h3 { padding-bottom: 12px; border-bottom: 2px solid var(--sk-color-primary-soft, #f6e6de); margin-bottom: 8px; }
+.sk-pricelist ul { list-style: none; margin: 0; padding: 0; }
+.sk-price { display: flex; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--sk-color-line, #e6dbcf); }
+.sk-price:last-child { border-bottom: 0; }
+.sk-price__label { display: flex; flex-direction: column; gap: 2px; }
+.sk-price__name { font-weight: 600; }
+.sk-price__desc { color: var(--sk-color-muted, #6e6057); font-size: 0.9rem; }
+.sk-price__meta { display: flex; align-items: baseline; gap: 14px; white-space: nowrap; }
+.sk-price__dur { color: var(--sk-color-muted, #6e6057); font-size: 0.88rem; }
+.sk-price__amount { font-weight: 700; color: var(--sk-color-primary, #9a4733); font-family: var(--sk-font-display, inherit); }
+
+.sk-gallery { columns: 3; column-gap: 16px; }
+.sk-gallery__item { margin: 0 0 16px; break-inside: avoid; }
+.sk-gallery__item img { width: 100%; border-radius: var(--sk-radius-md, 16px); }
+.sk-gallery__item--tall img { aspect-ratio: 3 / 4; object-fit: cover; }
+
+@media (max-width: 860px) { .sk-gallery { columns: 2; } }
+@media (max-width: 520px) { .sk-gallery { columns: 1; } }
