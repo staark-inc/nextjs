@@ -12,24 +12,56 @@
   "contact": {
     "email": "boka@gastisbjorkvik.example",
     "phone": "+46 70 123 45 67",
-    "address": { "street": "Sjövägen 4", "postalCode": "640 24", "city": "Björkvik", "country": "SE" },
+    "address": {
+      "street": "Sjövägen 4",
+      "postalCode": "640 24",
+      "city": "Björkvik",
+      "country": "SE"
+    },
     "openingHours": [
-      { "days": "Reception", "hours": "08–20" }
+      {
+        "days": "Reception",
+        "hours": "08–20"
+      }
     ]
   },
   "navigation": {
     "primary": [
-      { "label": "Rum", "href": "/#rum" },
-      { "label": "Bekvämligheter", "href": "/#bekvamligheter" },
-      { "label": "Om oss", "href": "/om-oss" },
-      { "label": "Kontakt", "href": "/kontakt" }
+      {
+        "label": "Rum",
+        "href": "/#rum"
+      },
+      {
+        "label": "Bekvämligheter",
+        "href": "/#bekvamligheter"
+      },
+      {
+        "label": "Om oss",
+        "href": "/om-oss"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
     ],
     "footer": [
-      { "label": "Rum", "href": "/#rum" },
-      { "label": "Om oss", "href": "/om-oss" },
-      { "label": "Kontakt", "href": "/kontakt" }
+      {
+        "label": "Rum",
+        "href": "/#rum"
+      },
+      {
+        "label": "Om oss",
+        "href": "/om-oss"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
     ],
-    "cta": { "label": "Boka rum", "href": "/kontakt" }
+    "cta": {
+      "label": "Boka rum",
+      "href": "/kontakt"
+    }
   },
   "seo": {
     "titleTemplate": "%s | Gästis Björkvik",

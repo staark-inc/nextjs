@@ -4,7 +4,7 @@
   "locale": "sv-SE",
   "url": "https://demo.staarkinc.com",
   "theme": {
-    "preset": "scandinavian",
+    "preset": "local-business",
     "overrides": {
       "colors": {
         "ink": "#101619",

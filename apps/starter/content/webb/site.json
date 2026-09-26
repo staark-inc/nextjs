@@ -3,27 +3,65 @@
   "tagline": "Webbplatser som hjälper ditt företag att växa",
   "locale": "sv-SE",
   "url": "https://vassa.example",
-  "theme": { "preset": "webb" },
-  "brand": { "copyright": "© 2026 Vässa Webbstudio" },
+  "theme": {
+    "preset": "webb"
+  },
+  "brand": {
+    "copyright": "© 2026 Vässa Webbstudio"
+  },
   "contact": {
     "email": "hej@vassa.example",
     "phone": "+46 8 400 100 20",
-    "address": { "street": "Storgatan 3", "postalCode": "722 12", "city": "Västerås", "country": "SE" },
-    "openingHours": [{ "days": "Mån–Fre", "hours": "08–17" }]
+    "address": {
+      "street": "Storgatan 3",
+      "postalCode": "722 12",
+      "city": "Västerås",
+      "country": "SE"
+    },
+    "openingHours": [
+      {
+        "days": "Mån–Fre",
+        "hours": "08–17"
+      }
+    ]
   },
   "navigation": {
     "primary": [
-      { "label": "Tjänster", "href": "/#tjanster" },
-      { "label": "Projekt", "href": "/#projekt" },
-      { "label": "Priser", "href": "/priser" },
-      { "label": "Om oss", "href": "/om-oss" }
+      {
+        "label": "Tjänster",
+        "href": "/#tjanster"
+      },
+      {
+        "label": "Projekt",
+        "href": "/#projekt"
+      },
+      {
+        "label": "Priser",
+        "href": "/priser"
+      },
+      {
+        "label": "Om oss",
+        "href": "/om-oss"
+      }
     ],
     "footer": [
-      { "label": "Tjänster", "href": "/#tjanster" },
-      { "label": "Priser", "href": "/priser" },
-      { "label": "Kontakt", "href": "/kontakt" }
+      {
+        "label": "Tjänster",
+        "href": "/#tjanster"
+      },
+      {
+        "label": "Priser",
+        "href": "/priser"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
     ],
-    "cta": { "label": "Få kostnadsfri offert", "href": "/kontakt" }
+    "cta": {
+      "label": "Få kostnadsfri offert",
+      "href": "/kontakt"
+    }
   },
   "seo": {
     "titleTemplate": "%s | Vässa Webbstudio",
