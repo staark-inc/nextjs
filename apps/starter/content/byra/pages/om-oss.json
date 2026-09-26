@@ -1,0 +1,62 @@
+{
+  "path": "/om-oss",
+  "title": "Byrån",
+  "seo": { "description": "Nordvik Studio – en oberoende brand- och digitalbyrå i Stockholm. Möt teamet." },
+  "updatedAt": "2026-09-26T20:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Byrån",
+        "heading": "Liten byrå. Stora idéer.",
+        "intro": "Vi är ett tajt team av strateger, designers och utvecklare som gillar arbete som märks. Inga mellanhänder, inga onödiga lager – bara folk som bryr sig.",
+        "primaryCta": { "label": "Jobba med oss", "href": "/kontakt" }
+      }
+    },
+    {
+      "id": "stats",
+      "type": "stats",
+      "props": {
+        "items": [
+          { "value": "9", "label": "Personer i teamet" },
+          { "value": "2014", "label": "Grundades" },
+          { "value": "40+", "label": "Kunder genom åren" }
+        ]
+      }
+    },
+    {
+      "id": "process",
+      "type": "process",
+      "props": {
+        "eyebrow": "Så jobbar vi",
+        "heading": "Från idé till lansering",
+        "steps": [
+          { "title": "Lyssna", "description": "Vi gräver i affären, målgruppen och vad som faktiskt ska hända." },
+          { "title": "Forma", "description": "Strategi, koncept och design – vi visar tidigt och ofta." },
+          { "title": "Bygg", "description": "Vi producerar, utvecklar och lanserar. Snabbt och noggrant." },
+          { "title": "Väx", "description": "Vi mäter, förbättrar och skalar tillsammans med er." }
+        ]
+      }
+    },
+    {
+      "id": "team",
+      "type": "team",
+      "props": {
+        "eyebrow": "Teamet",
+        "heading": "Människorna bakom",
+        "members": [
+          { "name": "Elin Norrby", "role": "Creative Director", "bio": "Leder det kreativa. Tidigare på en av Stockholms största byråer." },
+          { "name": "Oskar Ideström", "role": "Strateg", "bio": "Gör komplexa affärer begripliga och skarpa." },
+          { "name": "Amira Haddad", "role": "Design Lead", "bio": "Bygger designsystem som håller i längden." },
+          { "name": "Ted Wallin", "role": "Utvecklare", "bio": "Next.js, prestanda och pixel-perfekt frontend." }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Vill du jobba med oss?", "intro": "Vi söker alltid vassa människor och bra projekt.", "cta": { "label": "Säg hej", "href": "/kontakt" } }
+    }
+  ]
+}

@@ -2,6 +2,8 @@ import type { ThemeDefinition } from "@staark/theme-kit";
 import lightTheme, { SiteHeader, SiteFooter } from "@staark/theme-light";
 import salongTheme, { salongRegistry } from "@staark/theme-salong";
 import gastfrihetTheme, { gastfrihetRegistry } from "@staark/theme-gastfrihet";
+import byraTheme, { byraRegistry } from "@staark/theme-byra";
+import webbTheme, { webbRegistry } from "@staark/theme-webb";
 
 /**
  * Per-client theme selection. In this "one deploy per client" model the theme
@@ -13,6 +15,8 @@ const THEMES: Record<string, { theme: ThemeDefinition; registry?: Record<string,
   light: { theme: lightTheme },
   salong: { theme: salongTheme, registry: salongRegistry },
   gastfrihet: { theme: gastfrihetTheme, registry: gastfrihetRegistry },
+  byra: { theme: byraTheme, registry: byraRegistry },
+  webb: { theme: webbTheme, registry: webbRegistry },
 };
 
 const selected = process.env.STAARK_THEME?.trim() || "salong";

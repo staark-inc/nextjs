@@ -1,0 +1,33 @@
+{
+  "name": "Nordvik Studio",
+  "tagline": "Brand- och digitalbyrå i Stockholm",
+  "locale": "sv-SE",
+  "url": "https://nordvik.example",
+  "theme": { "preset": "byra" },
+  "brand": { "copyright": "© 2026 Nordvik Studio" },
+  "contact": {
+    "email": "hej@nordvik.example",
+    "phone": "+46 8 555 010 20",
+    "address": { "street": "Åsögatan 144", "postalCode": "116 24", "city": "Stockholm", "country": "SE" },
+    "openingHours": [{ "days": "Mån–Fre", "hours": "09–18" }]
+  },
+  "navigation": {
+    "primary": [
+      { "label": "Arbete", "href": "/arbete" },
+      { "label": "Tjänster", "href": "/#tjanster" },
+      { "label": "Byrån", "href": "/om-oss" },
+      { "label": "Kontakt", "href": "/kontakt" }
+    ],
+    "footer": [
+      { "label": "Arbete", "href": "/arbete" },
+      { "label": "Byrån", "href": "/om-oss" },
+      { "label": "Kontakt", "href": "/kontakt" }
+    ],
+    "cta": { "label": "Starta ett projekt", "href": "/kontakt" }
+  },
+  "seo": {
+    "titleTemplate": "%s | Nordvik Studio",
+    "defaultDescription": "Nordvik Studio är en brand- och digitalbyrå i Stockholm. Vi bygger varumärken, webb och digitala produkter.",
+    "businessType": "Organization"
+  }
+}

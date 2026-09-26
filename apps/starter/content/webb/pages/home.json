@@ -1,0 +1,92 @@
+{
+  "path": "/",
+  "title": "Startsida",
+  "seo": { "title": "Vässa Webbstudio – webbplatser som får dig att växa", "description": "Snabba, moderna webbplatser för småföretag. Webbdesign, utveckling, SEO och prestanda." },
+  "updatedAt": "2026-09-26T21:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Webbdesign & utveckling",
+        "heading": "Webbplatser som hjälper ditt företag att växa",
+        "intro": "Vi bygger snabba, moderna sajter för småföretag – från idé till lansering. Snyggt, sökbart och byggt för att sälja.",
+        "primaryCta": { "label": "Få kostnadsfri offert", "href": "/kontakt" },
+        "secondaryCta": { "label": "Se priser", "href": "/priser" },
+        "points": ["Klar på 2–3 veckor", "Byggd för Google & mobil", "Fast pris, inga överraskningar"]
+      }
+    },
+    {
+      "id": "project",
+      "type": "featuredProject",
+      "props": {
+        "eyebrow": "Utvalt projekt",
+        "client": "Alex Däckservice",
+        "title": "Ny sajt som fyllde verkstaden",
+        "description": "Vi byggde en snabb bokningssajt för en lokal däckverkstad. Fler bokningar, färre telefonsamtal och topplacering på Google.",
+        "result": "+52% bokningar",
+        "tags": ["Webbdesign", "SEO", "Bokning"],
+        "cta": { "label": "Se fler projekt", "href": "/#projekt" }
+      }
+    },
+    {
+      "id": "services",
+      "type": "services",
+      "props": {
+        "eyebrow": "Tjänster",
+        "heading": "Allt du behöver på webben",
+        "columns": 4,
+        "items": [
+          { "title": "Webbdesign", "icon": "✳", "description": "Snyggt och tydligt, anpassat efter ditt varumärke." },
+          { "title": "Webbutveckling", "icon": "⌘", "description": "Snabba sajter byggda med modern teknik." },
+          { "title": "SEO", "icon": "◎", "description": "Syns på Google när kunderna söker." },
+          { "title": "Prestanda", "icon": "⚡", "description": "Laddar blixtsnabbt – på mobil och dator." }
+        ]
+      }
+    },
+    {
+      "id": "why",
+      "type": "process",
+      "props": {
+        "eyebrow": "Varför Vässa",
+        "heading": "Enkelt, snabbt och tryggt",
+        "steps": [
+          { "title": "Fast pris", "description": "Du vet vad det kostar innan vi börjar. Inga dolda avgifter." },
+          { "title": "Klar snabbt", "description": "De flesta sajter är live inom två till tre veckor." },
+          { "title": "Vi sköter driften", "description": "Hosting, säkerhet och uppdateringar ingår. Du driver ditt företag." }
+        ]
+      }
+    },
+    {
+      "id": "pricing",
+      "type": "pricing",
+      "props": {
+        "eyebrow": "Priser",
+        "heading": "Tydliga paket, fast pris",
+        "intro": "Välj det som passar – vi hjälper dig vidare om du är osäker.",
+        "plans": [
+          { "name": "Start", "price": "2 999 kr", "period": "eng.", "description": "För dig som behöver en enkel närvaro.", "features": ["Enkelsidig sajt", "Mobilanpassad", "Kontaktformulär", "Live på 1 vecka"], "cta": { "label": "Välj Start", "href": "/kontakt" } },
+          { "name": "Växa", "price": "5 999 kr", "period": "eng.", "description": "Vår populäraste – allt ett växande företag behöver.", "features": ["Upp till 6 sidor", "SEO-grund", "Bokning/formulär", "Google-profil", "Live på 2–3 veckor"], "cta": { "label": "Välj Växa", "href": "/kontakt" }, "featured": true },
+          { "name": "Skräddarsytt", "price": "Offert", "description": "Webbutik, integrationer eller något helt eget.", "features": ["Obegränsat med sidor", "E-handel", "Egna funktioner", "Prioriterad support"], "cta": { "label": "Boka möte", "href": "/kontakt" } }
+        ],
+        "note": "Alla paket inkluderar hosting, SSL och löpande uppdateringar. Månadsavgift från 199 kr."
+      }
+    },
+    {
+      "id": "areas",
+      "type": "serviceAreas",
+      "props": {
+        "eyebrow": "Var vi finns",
+        "heading": "Webbyrå för hela Mälardalen",
+        "intro": "Vi jobbar med företag i hela regionen – på plats eller på distans.",
+        "areas": ["Västerås", "Enköping", "Eskilstuna", "Köping", "Sala", "Uppsala", "Stockholm"],
+        "note": "Sitter du någon annanstans? Vi jobbar lika gärna på distans."
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Redo att komma igång?", "intro": "Få en kostnadsfri offert inom en arbetsdag.", "cta": { "label": "Få kostnadsfri offert", "href": "/kontakt" } }
+    }
+  ]
+}

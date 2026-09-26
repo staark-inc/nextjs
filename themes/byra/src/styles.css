@@ -1,0 +1,92 @@
+/* S-Hub Byrå — bold editorial additions on top of S-Hub Light.
+   Import after the light styles. Everything uses --sk-* tokens. */
+
+/* Sharper, more editorial rhythm for this theme */
+.sk-byra-stats { padding-block: clamp(40px, 5vw, 64px); border-block: 1px solid var(--sk-color-line, #e4e3df); }
+.sk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 32px; }
+.sk-stat__value {
+  font-family: var(--sk-font-display, inherit);
+  font-weight: 820;
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--sk-color-ink, #0a0a0b);
+}
+.sk-stat__label { margin-top: 8px; color: var(--sk-color-muted, #6b6b70); font-size: 0.95rem; }
+
+/* Case studies — bold color panels */
+.sk-cases { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.sk-case {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  min-height: 340px;
+  padding: 28px;
+  border-radius: var(--sk-radius-lg, 14px);
+  background-size: cover;
+  background-position: center;
+  text-decoration: none;
+  color: var(--sk-color-white, #fff);
+  overflow: hidden;
+  transition: transform 0.18s ease;
+}
+.sk-case:hover { transform: translateY(-3px); }
+.sk-case--span1 { grid-column: 1 / -1; min-height: 300px; }
+/* Tone fallbacks when there's no background image */
+.sk-case--tone1:not([data-has-image]) { background: var(--sk-color-ink, #0a0a0b); }
+.sk-case--tone2:not([data-has-image]) { background: var(--sk-color-primary, #ff4d2e); }
+.sk-case--tone3:not([data-has-image]) { background: var(--sk-color-forest-deep, #050505); }
+.sk-case__top { display: flex; justify-content: space-between; gap: 16px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; }
+.sk-case__client { font-weight: 700; }
+.sk-case__title { color: inherit; font-size: clamp(1.6rem, 2.6vw, 2.4rem); line-height: 1.05; margin: 0 0 10px; }
+.sk-case__result { margin: 0; font-size: 1.05rem; opacity: 0.92; max-width: 46ch; }
+
+/* Team — monogram avatars */
+.sk-team { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; }
+.sk-member__photo, .sk-member__monogram {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--sk-radius-md, 8px);
+  object-fit: cover;
+  margin-bottom: 16px;
+}
+.sk-member__monogram {
+  display: grid;
+  place-items: center;
+  font-family: var(--sk-font-display, inherit);
+  font-weight: 820;
+  font-size: 2.6rem;
+  color: var(--sk-color-white, #fff);
+  letter-spacing: -0.02em;
+}
+.sk-member--tone1 { background: var(--sk-color-ink, #0a0a0b); }
+.sk-member--tone2 { background: var(--sk-color-primary, #ff4d2e); }
+.sk-member--tone3 { background: var(--sk-color-gold, #e5b84b); color: var(--sk-color-ink, #0a0a0b); }
+.sk-member__name { margin: 0; font-size: 1.15rem; }
+.sk-member__role { margin: 2px 0 0; color: var(--sk-color-primary, #ff4d2e); font-weight: 600; font-size: 0.92rem; }
+.sk-member__bio { margin: 10px 0 0; color: var(--sk-color-muted, #6b6b70); font-size: 0.92rem; }
+
+/* Client logo wall */
+.sk-byra-logos { padding-block: clamp(36px, 4vw, 56px); background: var(--sk-color-surface, #f0efe9); }
+.sk-byra-logos__heading { text-align: center; text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.78rem; font-weight: 600; color: var(--sk-color-muted, #6b6b70); margin: 0 0 24px; }
+.sk-logos { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px 48px; }
+.sk-logo span {
+  font-family: var(--sk-font-display, inherit);
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+  color: var(--sk-color-ink, #0a0a0b);
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+.sk-logo:hover span { opacity: 1; }
+.sk-logo img { max-height: 34px; width: auto; opacity: 0.6; filter: grayscale(1); }
+
+/* Editorial hero tweak: oversized, tighter */
+.sk-hero__title { letter-spacing: -0.035em; }
+
+@media (max-width: 720px) {
+  .sk-cases { grid-template-columns: 1fr; }
+}

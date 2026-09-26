@@ -1,0 +1,41 @@
+{
+  "path": "/priser",
+  "title": "Priser",
+  "seo": { "description": "Tydliga webbpaket till fast pris hos Vässa Webbstudio. Från 2 999 kr." },
+  "updatedAt": "2026-09-26T21:00:00Z",
+  "blocks": [
+    {
+      "id": "pricing",
+      "type": "pricing",
+      "props": {
+        "eyebrow": "Priser",
+        "heading": "Vad kostar en ny sajt?",
+        "intro": "Fast pris, tydligt innehåll och inga överraskningar. Osäker? Boka ett kostnadsfritt möte.",
+        "plans": [
+          { "name": "Start", "price": "2 999 kr", "period": "eng.", "description": "För dig som behöver en enkel närvaro.", "features": ["Enkelsidig sajt", "Mobilanpassad", "Kontaktformulär", "Live på 1 vecka"], "cta": { "label": "Välj Start", "href": "/kontakt" } },
+          { "name": "Växa", "price": "5 999 kr", "period": "eng.", "description": "Vår populäraste – allt ett växande företag behöver.", "features": ["Upp till 6 sidor", "SEO-grund", "Bokning/formulär", "Google-profil", "Live på 2–3 veckor"], "cta": { "label": "Välj Växa", "href": "/kontakt" }, "featured": true },
+          { "name": "Skräddarsytt", "price": "Offert", "description": "Webbutik, integrationer eller något helt eget.", "features": ["Obegränsat med sidor", "E-handel", "Egna funktioner", "Prioriterad support"], "cta": { "label": "Boka möte", "href": "/kontakt" } }
+        ],
+        "note": "Alla paket inkluderar hosting, SSL och löpande uppdateringar. Månadsavgift från 199 kr."
+      }
+    },
+    {
+      "id": "why",
+      "type": "process",
+      "props": {
+        "eyebrow": "Ingår alltid",
+        "heading": "Trygghet i varje paket",
+        "steps": [
+          { "title": "Hosting & SSL", "description": "Snabb och säker drift ingår i månadsavgiften." },
+          { "title": "Uppdateringar", "description": "Vi håller sajten uppdaterad och säker." },
+          { "title": "Support", "description": "Hör av dig när du behöver – vi svarar snabbt." }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Ta första steget", "intro": "Berätta om ditt projekt så återkommer vi med ett förslag.", "cta": { "label": "Få kostnadsfri offert", "href": "/kontakt" } }
+    }
+  ]
+}

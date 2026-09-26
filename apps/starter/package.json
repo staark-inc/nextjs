@@ -13,6 +13,8 @@
     "@staark/core": "workspace:*",
     "@staark/platform": "workspace:*",
     "@staark/theme-gastfrihet": "workspace:*",
+    "@staark/theme-byra": "workspace:*",
+    "@staark/theme-webb": "workspace:*",
     "@staark/theme-kit": "workspace:*",
     "@staark/theme-light": "workspace:*",
     "@staark/theme-salong": "workspace:*",

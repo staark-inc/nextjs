@@ -1,0 +1,81 @@
+{
+  "path": "/",
+  "title": "Startsida",
+  "seo": { "title": "Nordvik Studio – brand- & digitalbyrå i Stockholm", "description": "Vi bygger varumärken, webb och digitala produkter som märks." },
+  "updatedAt": "2026-09-26T20:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Brand & Digital",
+        "heading": "Varumärken som vägrar att smälta in.",
+        "intro": "Nordvik är en oberoende byrå i Stockholm. Vi hjälper ambitiösa bolag att se skarpare ut och sälja mer – från strategi och identitet till webb och produkt.",
+        "primaryCta": { "label": "Starta ett projekt", "href": "/kontakt" },
+        "secondaryCta": { "label": "Se vårt arbete", "href": "/arbete" },
+        "points": ["Strategi & positionering", "Visuell identitet", "Webb & digitala produkter"]
+      }
+    },
+    {
+      "id": "logos",
+      "type": "logos",
+      "props": { "heading": "Betrodda av", "logos": ["VOLT", "Nordöst Bank", "Kappa", "Fältman", "Strandby", "Yrke"] }
+    },
+    {
+      "id": "stats",
+      "type": "stats",
+      "props": {
+        "items": [
+          { "value": "120+", "label": "Projekt levererade" },
+          { "value": "18", "label": "Priser & utmärkelser" },
+          { "value": "+38%", "label": "Snitt i konvertering" },
+          { "value": "12 år", "label": "I branschen" }
+        ]
+      }
+    },
+    {
+      "id": "services",
+      "type": "services",
+      "props": {
+        "eyebrow": "Tjänster",
+        "heading": "Det vi gör",
+        "columns": 3,
+        "items": [
+          { "title": "Strategi", "icon": "◆", "description": "Positionering, budskap och varumärkesplattform som håller." },
+          { "title": "Identitet", "icon": "▲", "description": "Logotyp, typografi, färg och ett designsystem att växa i." },
+          { "title": "Webb & produkt", "icon": "●", "description": "Sajter och digitala produkter byggda för konvertering och fart." }
+        ]
+      }
+    },
+    {
+      "id": "work",
+      "type": "caseStudies",
+      "props": {
+        "eyebrow": "Utvalt arbete",
+        "heading": "Nyligen ur studion",
+        "items": [
+          { "title": "Ett elbolag som vågar synas", "client": "Volt Energi", "result": "Rebrand + ny sajt gav +38% i konvertering på tre månader.", "tags": ["Brand", "Webb"], "span": 1 },
+          { "title": "Bank utan gråskala", "client": "Nordöst Bank", "result": "Ny visuell identitet för en digital-först bank.", "tags": ["Identitet"] },
+          { "title": "Produkt som säljer sig själv", "client": "Kappa", "result": "Designsystem och produktsajt på sex veckor.", "tags": ["Produkt", "Design"] }
+        ]
+      }
+    },
+    {
+      "id": "reviews",
+      "type": "testimonials",
+      "props": {
+        "heading": "Vad kunderna säger",
+        "items": [
+          { "quote": "Nordvik förstod vårt varumärke bättre än vi själva gjorde. Resultatet talar för sig.", "author": "Sara Lund", "role": "CMO, Volt Energi", "rating": 5 },
+          { "quote": "Snabba, orädda och grymt duktiga. Vi hade en helt ny identitet på rekordtid.", "author": "Micke Ek", "role": "VD, Kappa", "rating": 5 },
+          { "quote": "Bästa byråsamarbetet vi haft. Punkt.", "author": "Johanna Berg", "role": "Nordöst Bank", "rating": 5 }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Har ni ett projekt på gång?", "intro": "Berätta vad ni vill uppnå så hör vi av oss inom en dag.", "cta": { "label": "Starta ett projekt", "href": "/kontakt" } }
+    }
+  ]
+}

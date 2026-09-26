@@ -6,6 +6,8 @@ import { theme, SiteHeader, SiteFooter } from "@/staark.config";
 import "@staark/theme-light/styles.css";
 import "@staark/theme-salong/styles.css";
 import "@staark/theme-gastfrihet/styles.css";
+import "@staark/theme-byra/styles.css";
+import "@staark/theme-webb/styles.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = await content.getSite();

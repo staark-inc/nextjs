@@ -1,0 +1,41 @@
+/* S-Hub Webb — Staark house-style additions on top of S-Hub Light.
+   Import after the light styles. Everything uses --sk-* tokens. */
+
+/* Featured project — large split card */
+.sk-feature { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: stretch; background: var(--sk-color-white, #fff); border: 1px solid var(--sk-color-line, #e1ddd5); border-radius: var(--sk-radius-lg, 26px); overflow: hidden; box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 24px 60px -32px rgba(16,24,40,.4); }
+/* No image: tinted gradient panel. With an image, the inline background-image wins. */
+.sk-feature__media { position: relative; min-height: 360px; background-size: cover; background-position: center; background-color: var(--sk-color-primary-soft, #eef3ff); background-image: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--sk-color-primary, #2457f5) 22%, transparent), transparent 60%); }
+.sk-feature__result { position: absolute; left: 20px; bottom: 20px; background: var(--sk-color-white, #fff); color: var(--sk-color-ink, #101619); font-weight: 700; padding: 10px 16px; border-radius: 999px; font-size: 0.9rem; box-shadow: 0 8px 24px -10px rgba(16,24,40,.4); }
+.sk-feature__body { padding: 40px 40px 40px 8px; align-self: center; }
+.sk-feature__client { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.78rem; font-weight: 700; color: var(--sk-color-primary, #2457f5); }
+.sk-feature__body h2 { margin: 10px 0 12px; }
+.sk-feature__body p { color: var(--sk-color-muted, #626d68); }
+.sk-feature__tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0 0 22px; }
+.sk-feature__tags li { font-size: 0.82rem; padding: 5px 12px; border-radius: 999px; background: var(--sk-color-primary-soft, #eef3ff); color: var(--sk-color-primary-dark, #173bb7); font-weight: 600; }
+
+/* Pricing */
+.sk-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: start; }
+.sk-plan { position: relative; background: var(--sk-color-white, #fff); border: 1px solid var(--sk-color-line, #e1ddd5); border-radius: var(--sk-radius-lg, 26px); padding: 32px; display: flex; flex-direction: column; gap: 8px; }
+.sk-plan--featured { border-color: var(--sk-color-primary, #2457f5); box-shadow: 0 24px 60px -34px var(--sk-color-primary, #2457f5); transform: translateY(-6px); }
+.sk-plan__badge { position: absolute; top: -13px; left: 32px; background: var(--sk-color-primary, #2457f5); color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 999px; }
+.sk-plan__name { margin: 0; font-size: 1.15rem; }
+.sk-plan__price { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 6px; }
+.sk-plan__amount { font-family: var(--sk-font-display, inherit); font-weight: 760; font-size: 2.4rem; letter-spacing: -0.02em; color: var(--sk-color-ink, #101619); }
+.sk-plan__period { color: var(--sk-color-muted, #626d68); font-size: 0.95rem; }
+.sk-plan__desc { color: var(--sk-color-muted, #626d68); margin: 0 0 8px; }
+.sk-plan__features { list-style: none; padding: 0; margin: 8px 0 24px; display: grid; gap: 10px; flex: 1; }
+.sk-plan__features li { padding-left: 28px; position: relative; }
+.sk-plan__features li::before { content: "✓"; position: absolute; left: 0; color: var(--sk-color-success, #0b7853); font-weight: 700; }
+.sk-plan .sk-btn { width: 100%; justify-content: center; }
+.sk-plans__note { text-align: center; color: var(--sk-color-muted, #626d68); font-size: 0.9rem; margin-top: 24px; }
+
+/* Service areas */
+.sk-areas { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 12px; }
+.sk-area { padding: 10px 18px; border: 1px solid var(--sk-color-line, #e1ddd5); border-radius: 999px; background: var(--sk-color-white, #fff); font-weight: 600; color: var(--sk-color-ink, #101619); }
+.sk-area:hover { border-color: var(--sk-color-primary, #2457f5); color: var(--sk-color-primary, #2457f5); }
+.sk-areas__note { color: var(--sk-color-muted, #626d68); font-size: 0.9rem; margin-top: 20px; }
+
+@media (max-width: 860px) {
+  .sk-feature { grid-template-columns: 1fr; }
+  .sk-feature__body { padding: 0 32px 36px; }
+}

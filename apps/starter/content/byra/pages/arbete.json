@@ -1,0 +1,30 @@
+{
+  "path": "/arbete",
+  "title": "Arbete",
+  "seo": { "description": "Utvalda case från Nordvik Studio – brand, webb och digitala produkter." },
+  "updatedAt": "2026-09-26T20:00:00Z",
+  "blocks": [
+    {
+      "id": "work",
+      "type": "caseStudies",
+      "props": {
+        "eyebrow": "Portfolio",
+        "heading": "Arbete vi är stolta över",
+        "intro": "Ett urval av projekt från de senaste åren – från helt nya varumärken till digitala produkter i drift.",
+        "items": [
+          { "title": "Ett elbolag som vågar synas", "client": "Volt Energi", "result": "Rebrand + ny sajt gav +38% i konvertering på tre månader.", "tags": ["Brand", "Webb", "Strategi"], "span": 1 },
+          { "title": "Bank utan gråskala", "client": "Nordöst Bank", "result": "Ny visuell identitet för en digital-först bank.", "tags": ["Identitet"] },
+          { "title": "Produkt som säljer sig själv", "client": "Kappa", "result": "Designsystem och produktsajt på sex veckor.", "tags": ["Produkt", "Design"] },
+          { "title": "Från lokal till nationell", "client": "Fältman & Co", "result": "Positionering och kampanjidentitet för en expansion.", "tags": ["Strategi", "Kampanj"] },
+          { "title": "En app folk faktiskt öppnar", "client": "Strandby", "result": "UX och gränssnitt för en tjänst med 90k användare.", "tags": ["Produkt", "UX"] },
+          { "title": "Rörligt som fastnar", "client": "Yrke", "result": "Visuell värld och motion för ett rekryteringsvarumärke.", "tags": ["Motion", "Brand"], "span": 1 }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": { "heading": "Vill ni bli nästa case?", "intro": "Vi tar oss an ett fåtal nya projekt i taget.", "cta": { "label": "Hör av er", "href": "/kontakt" } }
+    }
+  ]
+}

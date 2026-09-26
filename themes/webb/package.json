@@ -1,0 +1,29 @@
+{
+  "name": "@staark/theme-webb",
+  "version": "0.1.0",
+  "description": "S-Hub Webb — child theme of S-Hub Light in the Staark house style (staarkinc.com): featured project, productized pricing and local service areas.",
+  "private": true,
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@staark/core": "workspace:*",
+    "@staark/theme-kit": "workspace:*",
+    "@staark/theme-light": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}
