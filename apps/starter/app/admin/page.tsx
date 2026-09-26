@@ -3,7 +3,7 @@ import path from "node:path";
 
 function contentDir(): string {
   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
+  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
 }
 
 function ArrowIcon() {

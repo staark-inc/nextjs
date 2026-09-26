@@ -30,7 +30,7 @@ export function themesRoot(): string {
 
 export function contentRoot(): string {
   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
+  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
 }
 
 export function siteFile(root = contentRoot()): string {

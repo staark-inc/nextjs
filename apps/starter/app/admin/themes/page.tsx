@@ -199,6 +199,10 @@ export default function ThemesPage() {
       <h1 className="sa-h1">Themes</h1>
       <p className="sa-subtitle">Choose the design foundation, then customize the active site without editing theme files.</p>
 
+      <div style={{ margin: "14px 0 20px" }}>
+        <a className="sa-btn sa-btn--primary" href="/admin/themes/studio">Open Theme Studio</a>
+      </div>
+
       <div className="sa-theme-grid sa-theme-grid--compact">
         {themes.map((theme) => (
           <article key={theme.id} className={`sa-theme-card${theme.active ? " sa-theme-card--active" : ""}`}>

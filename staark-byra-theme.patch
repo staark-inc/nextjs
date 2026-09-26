@@ -1,0 +1,917 @@
+diff --git a/apps/starter/AGENTS.md b/apps/starter/AGENTS.md
+new file mode 100644
+index 0000000..643577d
+--- /dev/null
++++ b/apps/starter/AGENTS.md
+@@ -0,0 +1,9 @@
++<!-- BEGIN:nextjs-agent-rules -->
++
++# This is NOT the Next.js you know
++
++This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
++
++This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
++
++<!-- END:nextjs-agent-rules -->
+diff --git a/apps/starter/CLAUDE.md b/apps/starter/CLAUDE.md
+new file mode 100644
+index 0000000..43c994c
+--- /dev/null
++++ b/apps/starter/CLAUDE.md
+@@ -0,0 +1 @@
++@AGENTS.md
+diff --git a/apps/starter/app/(site)/layout.tsx b/apps/starter/app/(site)/layout.tsx
+index 58b0a3a..9baadc3 100644
+--- a/apps/starter/app/(site)/layout.tsx
++++ b/apps/starter/app/(site)/layout.tsx
+@@ -6,6 +6,7 @@ import { theme, SiteHeader, SiteFooter } from "@/staark.config";
+ import "@staark/theme-light/styles.css";
+ import "@staark/theme-salong/styles.css";
+ import "@staark/theme-gastfrihet/styles.css";
++import "@staark/theme-byra/styles.css";
+ 
+ export async function generateMetadata(): Promise<Metadata> {
+   const site = await content.getSite();
+diff --git a/apps/starter/content/byra/pages/arbete.json b/apps/starter/content/byra/pages/arbete.json
+new file mode 100644
+index 0000000..e6f5e54
+--- /dev/null
++++ b/apps/starter/content/byra/pages/arbete.json
+@@ -0,0 +1,30 @@
++{
++  "path": "/arbete",
++  "title": "Arbete",
++  "seo": { "description": "Utvalda case från Nordvik Studio – brand, webb och digitala produkter." },
++  "updatedAt": "2026-09-26T20:00:00Z",
++  "blocks": [
++    {
++      "id": "work",
++      "type": "caseStudies",
++      "props": {
++        "eyebrow": "Portfolio",
++        "heading": "Arbete vi är stolta över",
++        "intro": "Ett urval av projekt från de senaste åren – från helt nya varumärken till digitala produkter i drift.",
++        "items": [
++          { "title": "Ett elbolag som vågar synas", "client": "Volt Energi", "result": "Rebrand + ny sajt gav +38% i konvertering på tre månader.", "tags": ["Brand", "Webb", "Strategi"], "span": 1 },
++          { "title": "Bank utan gråskala", "client": "Nordöst Bank", "result": "Ny visuell identitet för en digital-först bank.", "tags": ["Identitet"] },
++          { "title": "Produkt som säljer sig själv", "client": "Kappa", "result": "Designsystem och produktsajt på sex veckor.", "tags": ["Produkt", "Design"] },
++          { "title": "Från lokal till nationell", "client": "Fältman & Co", "result": "Positionering och kampanjidentitet för en expansion.", "tags": ["Strategi", "Kampanj"] },
++          { "title": "En app folk faktiskt öppnar", "client": "Strandby", "result": "UX och gränssnitt för en tjänst med 90k användare.", "tags": ["Produkt", "UX"] },
++          { "title": "Rörligt som fastnar", "client": "Yrke", "result": "Visuell värld och motion för ett rekryteringsvarumärke.", "tags": ["Motion", "Brand"], "span": 1 }
++        ]
++      }
++    },
++    {
++      "id": "cta",
++      "type": "cta",
++      "props": { "heading": "Vill ni bli nästa case?", "intro": "Vi tar oss an ett fåtal nya projekt i taget.", "cta": { "label": "Hör av er", "href": "/kontakt" } }
++    }
++  ]
++}
+diff --git a/apps/starter/content/byra/pages/home.json b/apps/starter/content/byra/pages/home.json
+new file mode 100644
+index 0000000..12413a8
+--- /dev/null
++++ b/apps/starter/content/byra/pages/home.json
+@@ -0,0 +1,81 @@
++{
++  "path": "/",
++  "title": "Startsida",
++  "seo": { "title": "Nordvik Studio – brand- & digitalbyrå i Stockholm", "description": "Vi bygger varumärken, webb och digitala produkter som märks." },
++  "updatedAt": "2026-09-26T20:00:00Z",
++  "blocks": [
++    {
++      "id": "hero",
++      "type": "hero",
++      "props": {
++        "eyebrow": "Brand & Digital",
++        "heading": "Varumärken som vägrar att smälta in.",
++        "intro": "Nordvik är en oberoende byrå i Stockholm. Vi hjälper ambitiösa bolag att se skarpare ut och sälja mer – från strategi och identitet till webb och produkt.",
++        "primaryCta": { "label": "Starta ett projekt", "href": "/kontakt" },
++        "secondaryCta": { "label": "Se vårt arbete", "href": "/arbete" },
++        "points": ["Strategi & positionering", "Visuell identitet", "Webb & digitala produkter"]
++      }
++    },
++    {
++      "id": "logos",
++      "type": "logos",
++      "props": { "heading": "Betrodda av", "logos": ["VOLT", "Nordöst Bank", "Kappa", "Fältman", "Strandby", "Yrke"] }
++    },
++    {
++      "id": "stats",
++      "type": "stats",
++      "props": {
++        "items": [
++          { "value": "120+", "label": "Projekt levererade" },
++          { "value": "18", "label": "Priser & utmärkelser" },
++          { "value": "+38%", "label": "Snitt i konvertering" },
++          { "value": "12 år", "label": "I branschen" }
++        ]
++      }
++    },
++    {
++      "id": "services",
++      "type": "services",
++      "props": {
++        "eyebrow": "Tjänster",
++        "heading": "Det vi gör",
++        "columns": 3,
++        "items": [
++          { "title": "Strategi", "icon": "◆", "description": "Positionering, budskap och varumärkesplattform som håller." },
++          { "title": "Identitet", "icon": "▲", "description": "Logotyp, typografi, färg och ett designsystem att växa i." },
++          { "title": "Webb & produkt", "icon": "●", "description": "Sajter och digitala produkter byggda för konvertering och fart." }
++        ]
++      }
++    },
++    {
++      "id": "work",
++      "type": "caseStudies",
++      "props": {
++        "eyebrow": "Utvalt arbete",
++        "heading": "Nyligen ur studion",
++        "items": [
++          { "title": "Ett elbolag som vågar synas", "client": "Volt Energi", "result": "Rebrand + ny sajt gav +38% i konvertering på tre månader.", "tags": ["Brand", "Webb"], "span": 1 },
++          { "title": "Bank utan gråskala", "client": "Nordöst Bank", "result": "Ny visuell identitet för en digital-först bank.", "tags": ["Identitet"] },
++          { "title": "Produkt som säljer sig själv", "client": "Kappa", "result": "Designsystem och produktsajt på sex veckor.", "tags": ["Produkt", "Design"] }
++        ]
++      }
++    },
++    {
++      "id": "reviews",
++      "type": "testimonials",
++      "props": {
++        "heading": "Vad kunderna säger",
++        "items": [
++          { "quote": "Nordvik förstod vårt varumärke bättre än vi själva gjorde. Resultatet talar för sig.", "author": "Sara Lund", "role": "CMO, Volt Energi", "rating": 5 },
++          { "quote": "Snabba, orädda och grymt duktiga. Vi hade en helt ny identitet på rekordtid.", "author": "Micke Ek", "role": "VD, Kappa", "rating": 5 },
++          { "quote": "Bästa byråsamarbetet vi haft. Punkt.", "author": "Johanna Berg", "role": "Nordöst Bank", "rating": 5 }
++        ]
++      }
++    },
++    {
++      "id": "cta",
++      "type": "cta",
++      "props": { "heading": "Har ni ett projekt på gång?", "intro": "Berätta vad ni vill uppnå så hör vi av oss inom en dag.", "cta": { "label": "Starta ett projekt", "href": "/kontakt" } }
++    }
++  ]
++}
+diff --git a/apps/starter/content/byra/pages/kontakt.json b/apps/starter/content/byra/pages/kontakt.json
+new file mode 100644
+index 0000000..845f5b9
+--- /dev/null
++++ b/apps/starter/content/byra/pages/kontakt.json
+@@ -0,0 +1,27 @@
++{
++  "path": "/kontakt",
++  "title": "Kontakt",
++  "seo": { "description": "Starta ett projekt med Nordvik Studio i Stockholm." },
++  "updatedAt": "2026-09-26T20:00:00Z",
++  "blocks": [
++    {
++      "id": "contact",
++      "type": "contact",
++      "props": {
++        "eyebrow": "Starta ett projekt",
++        "heading": "Berätta vad ni vill uppnå",
++        "intro": "Fyll i formuläret så hör vi av oss inom en arbetsdag. Föredrar ni att mejla direkt går det lika bra.",
++        "formId": "byra-brief",
++        "submitLabel": "Skicka förfrågan",
++        "successMessage": "Tack! Vi återkommer inom en arbetsdag.",
++        "fields": [
++          { "name": "name", "label": "Namn", "required": true },
++          { "name": "email", "label": "E-post", "type": "email", "required": true },
++          { "name": "company", "label": "Företag" },
++          { "name": "booking_type", "label": "Typ av projekt" },
++          { "name": "message", "label": "Om projektet", "type": "textarea", "required": true }
++        ]
++      }
++    }
++  ]
++}
+diff --git a/apps/starter/content/byra/pages/om-oss.json b/apps/starter/content/byra/pages/om-oss.json
+new file mode 100644
+index 0000000..7dee009
+--- /dev/null
++++ b/apps/starter/content/byra/pages/om-oss.json
+@@ -0,0 +1,62 @@
++{
++  "path": "/om-oss",
++  "title": "Byrån",
++  "seo": { "description": "Nordvik Studio – en oberoende brand- och digitalbyrå i Stockholm. Möt teamet." },
++  "updatedAt": "2026-09-26T20:00:00Z",
++  "blocks": [
++    {
++      "id": "hero",
++      "type": "hero",
++      "props": {
++        "eyebrow": "Byrån",
++        "heading": "Liten byrå. Stora idéer.",
++        "intro": "Vi är ett tajt team av strateger, designers och utvecklare som gillar arbete som märks. Inga mellanhänder, inga onödiga lager – bara folk som bryr sig.",
++        "primaryCta": { "label": "Jobba med oss", "href": "/kontakt" }
++      }
++    },
++    {
++      "id": "stats",
++      "type": "stats",
++      "props": {
++        "items": [
++          { "value": "9", "label": "Personer i teamet" },
++          { "value": "2014", "label": "Grundades" },
++          { "value": "40+", "label": "Kunder genom åren" }
++        ]
++      }
++    },
++    {
++      "id": "process",
++      "type": "process",
++      "props": {
++        "eyebrow": "Så jobbar vi",
++        "heading": "Från idé till lansering",
++        "steps": [
++          { "title": "Lyssna", "description": "Vi gräver i affären, målgruppen och vad som faktiskt ska hända." },
++          { "title": "Forma", "description": "Strategi, koncept och design – vi visar tidigt och ofta." },
++          { "title": "Bygg", "description": "Vi producerar, utvecklar och lanserar. Snabbt och noggrant." },
++          { "title": "Väx", "description": "Vi mäter, förbättrar och skalar tillsammans med er." }
++        ]
++      }
++    },
++    {
++      "id": "team",
++      "type": "team",
++      "props": {
++        "eyebrow": "Teamet",
++        "heading": "Människorna bakom",
++        "members": [
++          { "name": "Elin Norrby", "role": "Creative Director", "bio": "Leder det kreativa. Tidigare på en av Stockholms största byråer." },
++          { "name": "Oskar Ideström", "role": "Strateg", "bio": "Gör komplexa affärer begripliga och skarpa." },
++          { "name": "Amira Haddad", "role": "Design Lead", "bio": "Bygger designsystem som håller i längden." },
++          { "name": "Ted Wallin", "role": "Utvecklare", "bio": "Next.js, prestanda och pixel-perfekt frontend." }
++        ]
++      }
++    },
++    {
++      "id": "cta",
++      "type": "cta",
++      "props": { "heading": "Vill du jobba med oss?", "intro": "Vi söker alltid vassa människor och bra projekt.", "cta": { "label": "Säg hej", "href": "/kontakt" } }
++    }
++  ]
++}
+diff --git a/apps/starter/content/byra/site.json b/apps/starter/content/byra/site.json
+new file mode 100644
+index 0000000..8a1234f
+--- /dev/null
++++ b/apps/starter/content/byra/site.json
+@@ -0,0 +1,33 @@
++{
++  "name": "Nordvik Studio",
++  "tagline": "Brand- och digitalbyrå i Stockholm",
++  "locale": "sv-SE",
++  "url": "https://nordvik.example",
++  "theme": { "preset": "byra" },
++  "brand": { "copyright": "© 2026 Nordvik Studio" },
++  "contact": {
++    "email": "hej@nordvik.example",
++    "phone": "+46 8 555 010 20",
++    "address": { "street": "Åsögatan 144", "postalCode": "116 24", "city": "Stockholm", "country": "SE" },
++    "openingHours": [{ "days": "Mån–Fre", "hours": "09–18" }]
++  },
++  "navigation": {
++    "primary": [
++      { "label": "Arbete", "href": "/arbete" },
++      { "label": "Tjänster", "href": "/#tjanster" },
++      { "label": "Byrån", "href": "/om-oss" },
++      { "label": "Kontakt", "href": "/kontakt" }
++    ],
++    "footer": [
++      { "label": "Arbete", "href": "/arbete" },
++      { "label": "Byrån", "href": "/om-oss" },
++      { "label": "Kontakt", "href": "/kontakt" }
++    ],
++    "cta": { "label": "Starta ett projekt", "href": "/kontakt" }
++  },
++  "seo": {
++    "titleTemplate": "%s | Nordvik Studio",
++    "defaultDescription": "Nordvik Studio är en brand- och digitalbyrå i Stockholm. Vi bygger varumärken, webb och digitala produkter.",
++    "businessType": "Organization"
++  }
++}
+diff --git a/apps/starter/next.config.ts b/apps/starter/next.config.ts
+index 114feb1..3b07586 100644
+--- a/apps/starter/next.config.ts
++++ b/apps/starter/next.config.ts
+@@ -4,7 +4,7 @@ import { staarkSecurityHeaders } from "@staark/platform/config";
+ const nextConfig: NextConfig = {
+   reactStrictMode: true,
+   // Compile the workspace theme/core TypeScript sources directly.
+-  transpilePackages: ["@staark/core", "@staark/platform", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-gastfrihet"],
++  transpilePackages: ["@staark/core", "@staark/platform", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-gastfrihet", "@staark/theme-byra"],
+   async headers() {
+     return [{ source: "/:path*", headers: staarkSecurityHeaders() }];
+   },
+diff --git a/apps/starter/package.json b/apps/starter/package.json
+index 7539148..36e4fd4 100644
+--- a/apps/starter/package.json
++++ b/apps/starter/package.json
+@@ -13,6 +13,7 @@
+     "@staark/core": "workspace:*",
+     "@staark/platform": "workspace:*",
+     "@staark/theme-gastfrihet": "workspace:*",
++    "@staark/theme-byra": "workspace:*",
+     "@staark/theme-kit": "workspace:*",
+     "@staark/theme-light": "workspace:*",
+     "@staark/theme-salong": "workspace:*",
+diff --git a/apps/starter/staark.config.ts b/apps/starter/staark.config.ts
+index 1bd4b87..09b7be9 100644
+--- a/apps/starter/staark.config.ts
++++ b/apps/starter/staark.config.ts
+@@ -2,6 +2,7 @@ import type { ThemeDefinition } from "@staark/theme-kit";
+ import lightTheme, { SiteHeader, SiteFooter } from "@staark/theme-light";
+ import salongTheme, { salongRegistry } from "@staark/theme-salong";
+ import gastfrihetTheme, { gastfrihetRegistry } from "@staark/theme-gastfrihet";
++import byraTheme, { byraRegistry } from "@staark/theme-byra";
+ 
+ /**
+  * Per-client theme selection. In this "one deploy per client" model the theme
+@@ -13,6 +14,7 @@ const THEMES: Record<string, { theme: ThemeDefinition; registry?: Record<string,
+   light: { theme: lightTheme },
+   salong: { theme: salongTheme, registry: salongRegistry },
+   gastfrihet: { theme: gastfrihetTheme, registry: gastfrihetRegistry },
++  byra: { theme: byraTheme, registry: byraRegistry },
+ };
+ 
+ const selected = process.env.STAARK_THEME?.trim() || "salong";
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 1ac2460..776e469 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -26,6 +26,9 @@ importers:
+       '@staark/platform':
+         specifier: workspace:*
+         version: link:../../packages/platform
++      '@staark/theme-byra':
++        specifier: workspace:*
++        version: link:../../themes/byra
+       '@staark/theme-gastfrihet':
+         specifier: workspace:*
+         version: link:../../themes/gastfrihet
+@@ -130,6 +133,31 @@ importers:
+         specifier: ^5.9.3
+         version: 5.9.3
+ 
++  themes/byra:
++    dependencies:
++      '@staark/core':
++        specifier: workspace:*
++        version: link:../../packages/core
++      '@staark/theme-kit':
++        specifier: workspace:*
++        version: link:../../packages/theme-kit
++      '@staark/theme-light':
++        specifier: workspace:*
++        version: link:../light
++      zod:
++        specifier: ^4.6.5
++        version: 4.6.5
++    devDependencies:
++      '@types/react':
++        specifier: ^19.3.0
++        version: 19.3.0
++      react:
++        specifier: ^19.3.0
++        version: 19.3.0
++      typescript:
++        specifier: ^5.9.3
++        version: 5.9.3
++
+   themes/gastfrihet:
+     dependencies:
+       '@staark/core':
+diff --git a/themes/byra/README.md b/themes/byra/README.md
+new file mode 100644
+index 0000000..ac6c005
+--- /dev/null
++++ b/themes/byra/README.md
+@@ -0,0 +1,50 @@
++# S-Hub Byrå — theme reference
++
++Child theme of **S-Hub Light** for agencies and studios. Bold editorial look
++(near-black ink, warm off-white paper, electric-coral accent, heavy display
++type, sharp edges). Reuses every parent section and adds four of its own.
++
++Activate with `STAARK_THEME=byra`.
++
++## Block types ("shortcuts")
++
++Each content block's `type` selects a section. `props` is validated by that
++section's Zod schema — a missing required field fails the build with a clear
++message. These are the theme's own blocks (in addition to the parent's `hero`,
++`services`, `process`, `testimonials`, `cta`, `contact`):
++
++### `stats`
++Row of big impact numbers.
++```json
++{ "id": "s", "type": "stats", "props": { "items": [ { "value": "120+", "label": "Projekt levererade" } ] } }
++```
++
++### `caseStudies`
++Portfolio grid of bold color panels. `span: 1` = full-width feature card.
++```json
++{ "id": "work", "type": "caseStudies", "props": {
++  "heading": "Utvalt arbete",
++  "items": [
++    { "title": "Rebrand", "client": "Volt Energi", "result": "+38% konvertering", "tags": ["Brand", "Webb"], "span": 1 }
++  ]
++} }
++```
++`image` (optional) becomes a darkened background; without it, the card uses a
++tone color, so it renders fully offline.
++
++### `team`
++Team grid. Members without a `photo` get a colored **monogram** avatar (initials).
++```json
++{ "id": "team", "type": "team", "props": { "heading": "Teamet", "members": [ { "name": "Elin Norrby", "role": "Creative Director" } ] } }
++```
++
++### `logos`
++Client logo wall. Renders wordmarks as text when no `src` is given.
++```json
++{ "id": "clients", "type": "logos", "props": { "heading": "Betrodda av", "logos": ["Volt", "Nord Bank", { "name": "Kappa", "src": "/uploads/kappa.svg" }] } }
++```
++
++## Preset
++
++`presets/byra.json` — same JSON format as every S-Hub preset. Swap the display
++`font` there for a custom editorial typeface without touching the sections.
+diff --git a/themes/byra/package.json b/themes/byra/package.json
+new file mode 100644
+index 0000000..4ba75a5
+--- /dev/null
++++ b/themes/byra/package.json
+@@ -0,0 +1,29 @@
++{
++  "name": "@staark/theme-byra",
++  "version": "0.1.0",
++  "description": "S-Hub Byrå — child theme of S-Hub Light for agencies and studios (case studies, team, stats, client logos). Bold editorial look.",
++  "private": true,
++  "type": "module",
++  "sideEffects": ["*.css"],
++  "exports": {
++    ".": "./src/index.ts",
++    "./styles.css": "./src/styles.css"
++  },
++  "scripts": {
++    "typecheck": "tsc -p tsconfig.json"
++  },
++  "dependencies": {
++    "@staark/core": "workspace:*",
++    "@staark/theme-kit": "workspace:*",
++    "@staark/theme-light": "workspace:*",
++    "zod": "^4.6.5"
++  },
++  "peerDependencies": {
++    "react": ">=19.0.0"
++  },
++  "devDependencies": {
++    "@types/react": "^19.3.0",
++    "react": "^19.3.0",
++    "typescript": "^5.9.3"
++  }
++}
+diff --git a/themes/byra/presets/byra.json b/themes/byra/presets/byra.json
+new file mode 100644
+index 0000000..5b23240
+--- /dev/null
++++ b/themes/byra/presets/byra.json
+@@ -0,0 +1,46 @@
++{
++  "id": "byra",
++  "name": "Byrå",
++  "description": "Agency and studio direction: near-black ink, warm off-white paper, an electric coral accent, heavy display type and sharp editorial edges.",
++  "version": 1,
++  "tokens": {
++    "colors": {
++      "ink": "#0A0A0B",
++      "muted": "#6B6B70",
++      "line": "#E4E3DF",
++      "paper": "#FAFAF6",
++      "surface": "#F0EFE9",
++      "white": "#FFFFFF",
++      "primary": "#FF4D2E",
++      "primaryDark": "#D8371B",
++      "primarySoft": "#FFE7E0",
++      "success": "#0E8F63",
++      "forest": "#0A0A0B",
++      "forestDeep": "#050505",
++      "gold": "#E5B84B"
++    },
++    "typography": {
++      "body": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
++      "display": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
++      "displayWeight": "820"
++    },
++    "radius": {
++      "sm": "4px",
++      "md": "8px",
++      "lg": "14px",
++      "button": "2px"
++    },
++    "layout": {
++      "content": "780px",
++      "wide": "1360px",
++      "wrap": "1480px"
++    }
++  },
++  "components": {
++    "header": "solid",
++    "buttons": "solid",
++    "cards": "outlined",
++    "hero": "split",
++    "footer": "deep"
++  }
++}
+diff --git a/themes/byra/src/index.ts b/themes/byra/src/index.ts
+new file mode 100644
+index 0000000..9fd1591
+--- /dev/null
++++ b/themes/byra/src/index.ts
+@@ -0,0 +1,38 @@
++import type { ThemeDefinition } from "@staark/theme-kit";
++import lightTheme from "@staark/theme-light";
++import byra from "../presets/byra.json" with { type: "json" };
++import { Stats } from "./sections/Stats";
++import { CaseStudies } from "./sections/CaseStudies";
++import { Team } from "./sections/Team";
++import { Logos } from "./sections/Logos";
++
++/**
++ * S-Hub Byrå — child theme for agencies and studios. It reuses every S-Hub Light
++ * section (hero, services, process, testimonials, cta, contact) through
++ * `parentId: "light"` and adds the agency-specific stats, case studies, team and
++ * client-logo sections. Bold editorial preset (`byra`).
++ */
++export const byraTheme: ThemeDefinition = {
++  id: "byra",
++  name: "S-Hub Byrå",
++  parentId: "light",
++  presets: {
++    byra: byra as ThemeDefinition["presets"][string],
++  },
++  defaultPreset: "byra",
++  sections: {
++    stats: Stats,
++    caseStudies: CaseStudies,
++    team: Team,
++    logos: Logos,
++  },
++};
++
++/** Registry to pass to BlockRenderer so parent sections resolve. */
++export const byraRegistry: Record<string, ThemeDefinition> = {
++  light: lightTheme,
++  byra: byraTheme,
++};
++
++export { Stats, CaseStudies, Team, Logos };
++export default byraTheme;
+diff --git a/themes/byra/src/sections/CaseStudies.tsx b/themes/byra/src/sections/CaseStudies.tsx
+new file mode 100644
+index 0000000..7c5e035
+--- /dev/null
++++ b/themes/byra/src/sections/CaseStudies.tsx
+@@ -0,0 +1,69 @@
++import { z } from "zod";
++import type { SectionComponent } from "@staark/theme-kit";
++import { Container, Eyebrow } from "@staark/theme-light";
++
++const schema = z.object({
++  eyebrow: z.string().optional(),
++  heading: z.string(),
++  intro: z.string().optional(),
++  items: z
++    .array(
++      z.object({
++        title: z.string(),
++        client: z.string().optional(),
++        result: z.string().optional(),
++        tags: z.array(z.string()).default([]),
++        image: z.string().optional(),
++        href: z.string().optional(),
++        /** 1 = full-width feature card, 2 = half. Defaults to 2. */
++        span: z.union([z.literal(1), z.literal(2)]).default(2),
++      }),
++    )
++    .default([]),
++});
++
++/**
++ * Case-study / portfolio grid. Each card is a bold color panel with the project
++ * title and a headline result — it reads as intentional even without a photo,
++ * and uses the image as a background when one is provided.
++ * Shortcut/block type: "caseStudies".
++ */
++export const CaseStudies: SectionComponent<z.infer<typeof schema>> = ({ props }) => {
++  const p = schema.parse(props);
++  return (
++    <section className="sk-section" id="arbete">
++      <Container wide>
++        <header className="sk-section__head">
++          {p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}
++          <h2>{p.heading}</h2>
++          {p.intro ? <p className="sk-section__intro">{p.intro}</p> : null}
++        </header>
++        <div className="sk-cases">
++          {p.items.map((item, i) => {
++            const Tag = item.href ? "a" : "div";
++            return (
++              <Tag
++                key={item.title}
++                className={`sk-case sk-case--span${item.span} sk-case--tone${(i % 3) + 1}`}
++                {...(item.href ? { href: item.href } : {})}
++                style={item.image ? { backgroundImage: `linear-gradient(180deg, rgba(10,10,11,.1), rgba(10,10,11,.72)), url(${item.image})` } : undefined}
++                data-has-image={item.image ? "1" : undefined}
++              >
++                <div className="sk-case__top">
++                  {item.client ? <span className="sk-case__client">{item.client}</span> : null}
++                  {item.tags.length ? (
++                    <span className="sk-case__tags">{item.tags.join(" · ")}</span>
++                  ) : null}
++                </div>
++                <div className="sk-case__body">
++                  <h3 className="sk-case__title">{item.title}</h3>
++                  {item.result ? <p className="sk-case__result">{item.result}</p> : null}
++                </div>
++              </Tag>
++            );
++          })}
++        </div>
++      </Container>
++    </section>
++  );
++};
+diff --git a/themes/byra/src/sections/Logos.tsx b/themes/byra/src/sections/Logos.tsx
+new file mode 100644
+index 0000000..d2ad856
+--- /dev/null
++++ b/themes/byra/src/sections/Logos.tsx
+@@ -0,0 +1,39 @@
++import { z } from "zod";
++import type { SectionComponent } from "@staark/theme-kit";
++import { Container } from "@staark/theme-light";
++
++const schema = z.object({
++  heading: z.string().optional(),
++  /** Client names shown as a wordmark wall (text). Optional image per logo. */
++  logos: z.array(z.union([z.string(), z.object({ name: z.string(), src: z.string().optional() })])).default([]),
++});
++
++function name(logo: string | { name: string; src?: string }): string {
++  return typeof logo === "string" ? logo : logo.name;
++}
++function src(logo: string | { name: string; src?: string }): string | undefined {
++  return typeof logo === "string" ? undefined : logo.src;
++}
++
++/**
++ * Client logo wall. Renders wordmarks as text (uppercase) when no image is
++ * given, so it always looks complete.
++ * Shortcut/block type: "logos".
++ */
++export const Logos: SectionComponent<z.infer<typeof schema>> = ({ props }) => {
++  const p = schema.parse(props);
++  return (
++    <section className="sk-byra-logos">
++      <Container wide>
++        {p.heading ? <p className="sk-byra-logos__heading">{p.heading}</p> : null}
++        <div className="sk-logos">
++          {p.logos.map((logo) => (
++            <div key={name(logo)} className="sk-logo">
++              {src(logo) ? <img src={src(logo)} alt={name(logo)} loading="lazy" /> : <span>{name(logo)}</span>}
++            </div>
++          ))}
++        </div>
++      </Container>
++    </section>
++  );
++};
+diff --git a/themes/byra/src/sections/Stats.tsx b/themes/byra/src/sections/Stats.tsx
+new file mode 100644
+index 0000000..cd67aec
+--- /dev/null
++++ b/themes/byra/src/sections/Stats.tsx
+@@ -0,0 +1,37 @@
++import { z } from "zod";
++import type { SectionComponent } from "@staark/theme-kit";
++import { Container, Eyebrow } from "@staark/theme-light";
++
++const schema = z.object({
++  eyebrow: z.string().optional(),
++  heading: z.string().optional(),
++  items: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
++});
++
++/**
++ * Stats band — a row of big editorial numbers (impact metrics).
++ * Shortcut/block type: "stats".
++ */
++export const Stats: SectionComponent<z.infer<typeof schema>> = ({ props }) => {
++  const p = schema.parse(props);
++  return (
++    <section className="sk-section sk-byra-stats">
++      <Container wide>
++        {p.heading ? (
++          <header className="sk-section__head">
++            {p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}
++            <h2>{p.heading}</h2>
++          </header>
++        ) : null}
++        <div className="sk-stats">
++          {p.items.map((item) => (
++            <div key={item.label} className="sk-stat">
++              <div className="sk-stat__value">{item.value}</div>
++              <div className="sk-stat__label">{item.label}</div>
++            </div>
++          ))}
++        </div>
++      </Container>
++    </section>
++  );
++};
+diff --git a/themes/byra/src/sections/Team.tsx b/themes/byra/src/sections/Team.tsx
+new file mode 100644
+index 0000000..d3b6acb
+--- /dev/null
++++ b/themes/byra/src/sections/Team.tsx
+@@ -0,0 +1,65 @@
++import { z } from "zod";
++import type { SectionComponent } from "@staark/theme-kit";
++import { Container, Eyebrow } from "@staark/theme-light";
++
++const schema = z.object({
++  eyebrow: z.string().optional(),
++  heading: z.string(),
++  intro: z.string().optional(),
++  members: z
++    .array(
++      z.object({
++        name: z.string(),
++        role: z.string().optional(),
++        image: z.string().optional(),
++        bio: z.string().optional(),
++      }),
++    )
++    .default([]),
++});
++
++/** Initials for the monogram avatar when there's no photo. */
++function initials(name: string): string {
++  return name
++    .split(/\s+/)
++    .filter(Boolean)
++    .slice(0, 2)
++    .map((part) => part[0]?.toUpperCase() ?? "")
++    .join("");
++}
++
++/**
++ * Team grid. Falls back to a colored monogram avatar (initials) when a member
++ * has no photo, so the section renders fully offline.
++ * Shortcut/block type: "team".
++ */
++export const Team: SectionComponent<z.infer<typeof schema>> = ({ props }) => {
++  const p = schema.parse(props);
++  return (
++    <section className="sk-section sk-section--surface" id="team">
++      <Container wide>
++        <header className="sk-section__head">
++          {p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}
++          <h2>{p.heading}</h2>
++          {p.intro ? <p className="sk-section__intro">{p.intro}</p> : null}
++        </header>
++        <div className="sk-team">
++          {p.members.map((member, i) => (
++            <article key={member.name} className="sk-member">
++              {member.image ? (
++                <img className="sk-member__photo" src={member.image} alt={member.name} loading="lazy" />
++              ) : (
++                <div className={`sk-member__monogram sk-member--tone${(i % 3) + 1}`} aria-hidden>
++                  {initials(member.name)}
++                </div>
++              )}
++              <h3 className="sk-member__name">{member.name}</h3>
++              {member.role ? <p className="sk-member__role">{member.role}</p> : null}
++              {member.bio ? <p className="sk-member__bio">{member.bio}</p> : null}
++            </article>
++          ))}
++        </div>
++      </Container>
++    </section>
++  );
++};
+diff --git a/themes/byra/src/styles.css b/themes/byra/src/styles.css
+new file mode 100644
+index 0000000..f777b35
+--- /dev/null
++++ b/themes/byra/src/styles.css
+@@ -0,0 +1,92 @@
++/* S-Hub Byrå — bold editorial additions on top of S-Hub Light.
++   Import after the light styles. Everything uses --sk-* tokens. */
++
++/* Sharper, more editorial rhythm for this theme */
++.sk-byra-stats { padding-block: clamp(40px, 5vw, 64px); border-block: 1px solid var(--sk-color-line, #e4e3df); }
++.sk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 32px; }
++.sk-stat__value {
++  font-family: var(--sk-font-display, inherit);
++  font-weight: 820;
++  font-size: clamp(2.6rem, 6vw, 4.4rem);
++  line-height: 0.95;
++  letter-spacing: -0.03em;
++  color: var(--sk-color-ink, #0a0a0b);
++}
++.sk-stat__label { margin-top: 8px; color: var(--sk-color-muted, #6b6b70); font-size: 0.95rem; }
++
++/* Case studies — bold color panels */
++.sk-cases { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
++.sk-case {
++  position: relative;
++  display: flex;
++  flex-direction: column;
++  justify-content: space-between;
++  gap: 40px;
++  min-height: 340px;
++  padding: 28px;
++  border-radius: var(--sk-radius-lg, 14px);
++  background-size: cover;
++  background-position: center;
++  text-decoration: none;
++  color: var(--sk-color-white, #fff);
++  overflow: hidden;
++  transition: transform 0.18s ease;
++}
++.sk-case:hover { transform: translateY(-3px); }
++.sk-case--span1 { grid-column: 1 / -1; min-height: 300px; }
++/* Tone fallbacks when there's no background image */
++.sk-case--tone1:not([data-has-image]) { background: var(--sk-color-ink, #0a0a0b); }
++.sk-case--tone2:not([data-has-image]) { background: var(--sk-color-primary, #ff4d2e); }
++.sk-case--tone3:not([data-has-image]) { background: var(--sk-color-forest-deep, #050505); }
++.sk-case__top { display: flex; justify-content: space-between; gap: 16px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; }
++.sk-case__client { font-weight: 700; }
++.sk-case__title { color: inherit; font-size: clamp(1.6rem, 2.6vw, 2.4rem); line-height: 1.05; margin: 0 0 10px; }
++.sk-case__result { margin: 0; font-size: 1.05rem; opacity: 0.92; max-width: 46ch; }
++
++/* Team — monogram avatars */
++.sk-team { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; }
++.sk-member__photo, .sk-member__monogram {
++  width: 100%;
++  aspect-ratio: 1 / 1;
++  border-radius: var(--sk-radius-md, 8px);
++  object-fit: cover;
++  margin-bottom: 16px;
++}
++.sk-member__monogram {
++  display: grid;
++  place-items: center;
++  font-family: var(--sk-font-display, inherit);
++  font-weight: 820;
++  font-size: 2.6rem;
++  color: var(--sk-color-white, #fff);
++  letter-spacing: -0.02em;
++}
++.sk-member--tone1 { background: var(--sk-color-ink, #0a0a0b); }
++.sk-member--tone2 { background: var(--sk-color-primary, #ff4d2e); }
++.sk-member--tone3 { background: var(--sk-color-gold, #e5b84b); color: var(--sk-color-ink, #0a0a0b); }
++.sk-member__name { margin: 0; font-size: 1.15rem; }
++.sk-member__role { margin: 2px 0 0; color: var(--sk-color-primary, #ff4d2e); font-weight: 600; font-size: 0.92rem; }
++.sk-member__bio { margin: 10px 0 0; color: var(--sk-color-muted, #6b6b70); font-size: 0.92rem; }
++
++/* Client logo wall */
++.sk-byra-logos { padding-block: clamp(36px, 4vw, 56px); background: var(--sk-color-surface, #f0efe9); }
++.sk-byra-logos__heading { text-align: center; text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.78rem; font-weight: 600; color: var(--sk-color-muted, #6b6b70); margin: 0 0 24px; }
++.sk-logos { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px 48px; }
++.sk-logo span {
++  font-family: var(--sk-font-display, inherit);
++  font-weight: 800;
++  font-size: 1.35rem;
++  letter-spacing: -0.01em;
++  color: var(--sk-color-ink, #0a0a0b);
++  opacity: 0.55;
++  transition: opacity 0.15s ease;
++}
++.sk-logo:hover span { opacity: 1; }
++.sk-logo img { max-height: 34px; width: auto; opacity: 0.6; filter: grayscale(1); }
++
++/* Editorial hero tweak: oversized, tighter */
++.sk-hero__title { letter-spacing: -0.035em; }
++
++@media (max-width: 720px) {
++  .sk-cases { grid-template-columns: 1fr; }
++}
+diff --git a/themes/byra/tsconfig.json b/themes/byra/tsconfig.json
+new file mode 100644
+index 0000000..564a599
+--- /dev/null
++++ b/themes/byra/tsconfig.json
+@@ -0,0 +1,4 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "include": ["src"]
++}

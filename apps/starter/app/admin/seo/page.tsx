@@ -8,21 +8,37 @@ type PageSeo = {
   title: string;
   seoTitle: string;
   seoDescription: string;
+  ogImage: string;
+  noindex: boolean;
+  updatedAt?: string;
   hasOg: boolean;
 };
 
 type SiteSeo = {
   titleTemplate: string;
   defaultDescription: string;
+  ogImage: string;
   businessType: string;
+};
+
+type SeoDraft = {
+  title: string;
+  description: string;
+  ogImage: string;
+  noindex: boolean;
 };
 
 export default function SeoPage() {
   const [pages, setPages] = useState<PageSeo[]>([]);
-  const [siteSeo, setSiteSeo] = useState<SiteSeo>({ titleTemplate: "", defaultDescription: "", businessType: "" });
+  const [siteSeo, setSiteSeo] = useState<SiteSeo>({ titleTemplate: "", defaultDescription: "", ogImage: "", businessType: "" });
   const [siteData, setSiteData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingPage, setSavingPage] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState("");
+  const [draft, setDraft] = useState<SeoDraft | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   function showToast(msg: string, ok: boolean) {
@@ -43,11 +59,23 @@ export default function SeoPage() {
     setSiteSeo({
       titleTemplate: site.seo?.titleTemplate ?? "",
       defaultDescription: site.seo?.defaultDescription ?? "",
+      ogImage: site.seo?.ogImage ?? "",
       businessType: site.seo?.businessType ?? "",
     });
 
     const pagesData = await pagesRes.json();
-    setPages(pagesData.pages ?? []);
+    const loadedPages = (pagesData.pages ?? []) as PageSeo[];
+    setPages(loadedPages);
+    if (!selected && loadedPages[0]) {
+      const first = loadedPages[0];
+      setSelected(first.file);
+      setDraft({
+        title: first.seoTitle,
+        description: first.seoDescription,
+        ogImage: first.ogImage,
+        noindex: first.noindex,
+      });
+    }
     setLoading(false);
   }
 
@@ -67,7 +95,41 @@ export default function SeoPage() {
     if (res.ok) setSiteData(updated);
   }
 
+  function selectPage(page: PageSeo) {
+    setSelected(page.file);
+    setDraft({
+      title: page.seoTitle,
+      description: page.seoDescription,
+      ogImage: page.ogImage,
+      noindex: page.noindex,
+    });
+    window.setTimeout(() => document.getElementById("seo-page-editor")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
+
+  async function savePageSeo() {
+    if (!selected || !draft) return;
+    setSavingPage(true);
+    const res = await fetch("/api/admin/seo/pages", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file: selected, ...draft }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSavingPage(false);
+
+    if (!res.ok) {
+      showToast((data as { error?: string }).error ?? "Failed to save page SEO.", false);
+      return;
+    }
+
+    const saved = (data as { page: PageSeo }).page;
+    setPages((current) => current.map((page) => page.file === saved.file ? saved : page));
+    setDraft({ title: saved.seoTitle, description: saved.seoDescription, ogImage: saved.ogImage, noindex: saved.noindex });
+    showToast("Page SEO saved.", true);
+  }
+
   function seoScore(p: PageSeo): { label: string; cls: string } {
+    if (p.noindex) return { label: "Noindex", cls: "sa-status--pending" };
     let score = 0;
     if (p.seoTitle) score++;
     if (p.seoDescription) score++;
@@ -77,10 +139,26 @@ export default function SeoPage() {
     return { label: "Missing", cls: "sa-status--declined" };
   }
 
+  function matchesFilter(page: PageSeo): boolean {
+    const status = seoScore(page).label;
+    if (filter === "good") return status === "Good";
+    if (filter === "needs") return status === "Needs work";
+    if (filter === "missing") return status === "Missing";
+    if (filter === "noindex") return page.noindex;
+    return true;
+  }
+
   if (loading) return <p style={{ padding: 40 }}>Loading...</p>;
 
-  const goodCount = pages.filter((p) => seoScore(p).label === "Good").length;
-  const needsWork = pages.filter((p) => seoScore(p).label !== "Good").length;
+  const goodCount = pages.filter((p) => !p.noindex && seoScore(p).label === "Good").length;
+  const needsWork = pages.filter((p) => !p.noindex && seoScore(p).label !== "Good").length;
+  const noindexCount = pages.filter((p) => p.noindex).length;
+  const selectedPage = pages.find((page) => page.file === selected) ?? null;
+  const filteredPages = pages.filter((page) => {
+    const needle = query.trim().toLowerCase();
+    const matchesQuery = !needle || `${page.title} ${page.path} ${page.seoTitle}`.toLowerCase().includes(needle);
+    return matchesQuery && matchesFilter(page);
+  });
 
   return (
     <>
@@ -109,6 +187,11 @@ export default function SeoPage() {
           <div className="sa-stat__value">{needsWork}</div>
           <div className="sa-stat__desc">Missing fields</div>
         </div>
+        <div className="sa-stat">
+          <div className="sa-stat__label">Noindex</div>
+          <div className="sa-stat__value">{noindexCount}</div>
+          <div className="sa-stat__desc">Excluded from search</div>
+        </div>
       </div>
 
       <div className="sa-card">
@@ -134,6 +217,16 @@ export default function SeoPage() {
               placeholder="Default meta description for pages without one."
             />
             <div className="sa-field-hint">{siteSeo.defaultDescription.length}/160 characters</div>
+          </div>
+          <div className="sa-field">
+            <label htmlFor="seo-og">Default Open Graph image</label>
+            <input
+              id="seo-og"
+              value={siteSeo.ogImage}
+              onChange={(e) => setSiteSeo({ ...siteSeo, ogImage: e.target.value })}
+              placeholder="/uploads/social-cover.jpg"
+            />
+            <div className="sa-field-hint">Used when a page has no custom social image.</div>
           </div>
           <div className="sa-field">
             <label htmlFor="seo-type">Business type (Schema.org)</label>
@@ -162,7 +255,23 @@ export default function SeoPage() {
 
       <div className="sa-card">
         <h3>Page audit</h3>
-        <p className="sa-subtitle" style={{ marginBottom: 16 }}>Click a page to edit its SEO fields.</p>
+        <p className="sa-subtitle" style={{ marginBottom: 16 }}>Search, audit and edit page SEO without leaving this screen.</p>
+        <div className="sa-seo-toolbar">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search pages…"
+            aria-label="Search pages"
+          />
+          <select value={filter} onChange={(event) => setFilter(event.target.value)} aria-label="Filter SEO status">
+            <option value="all">All pages</option>
+            <option value="good">Good</option>
+            <option value="needs">Needs work</option>
+            <option value="missing">Missing</option>
+            <option value="noindex">Noindex</option>
+          </select>
+          <span>{filteredPages.length} result(s)</span>
+        </div>
         <div style={{ padding: 0, overflow: "auto" }}>
           <table className="sa-table">
             <thead>
@@ -174,15 +283,15 @@ export default function SeoPage() {
               </tr>
             </thead>
             <tbody>
-              {pages.map((p) => {
+              {filteredPages.map((p) => {
                 const score = seoScore(p);
                 return (
-                  <tr key={p.file}>
+                  <tr key={p.file} className={selected === p.file ? "sa-seo-row--selected" : ""}>
                     <td>
-                      <a href={`/admin/pages/${p.file}`} style={{ fontWeight: 600, color: "var(--sa-primary)", textDecoration: "none" }}>
+                      <button className="sa-seo-page-link" onClick={() => selectPage(p)}>
                         {p.title || p.path}
-                      </a>
-                      <div style={{ color: "var(--sa-muted)", fontSize: 12 }}>{p.path}</div>
+                      </button>
+                      <div style={{ color: "var(--sa-muted)", fontSize: 12 }}>{p.path}{p.noindex ? " · noindex" : ""}</div>
                     </td>
                     <td style={{ fontSize: 13, maxWidth: 200 }}>
                       {p.seoTitle || <span style={{ color: "var(--sa-muted)" }}>—</span>}
@@ -206,6 +315,88 @@ export default function SeoPage() {
           </table>
         </div>
       </div>
+
+      {selectedPage && draft ? (
+        <div className="sa-seo-editor-grid" id="seo-page-editor">
+          <section className="sa-card sa-seo-editor">
+            <div className="sa-seo-editor__head">
+              <div>
+                <span className="sa-page-eyebrow">Page SEO</span>
+                <h3>{selectedPage.title}</h3>
+                <p>{selectedPage.path}</p>
+              </div>
+              <a className="sa-btn sa-btn--ghost sa-btn--sm" href={`/admin/pages/${selectedPage.file}`}>Edit page</a>
+            </div>
+
+            <div className="sa-field">
+              <label htmlFor="page-seo-title">SEO title</label>
+              <input
+                id="page-seo-title"
+                value={draft.title}
+                onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+                placeholder={selectedPage.title}
+              />
+              <div className={`sa-field-hint${draft.title.length > 65 ? " is-warning" : ""}`}>{draft.title.length}/65 characters</div>
+            </div>
+
+            <div className="sa-field">
+              <label htmlFor="page-seo-description">Meta description</label>
+              <textarea
+                id="page-seo-description"
+                rows={4}
+                value={draft.description}
+                onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+                placeholder={siteSeo.defaultDescription || "Describe this page for search results."}
+              />
+              <div className={`sa-field-hint${draft.description.length > 160 ? " is-warning" : ""}`}>{draft.description.length}/160 characters</div>
+            </div>
+
+            <div className="sa-field">
+              <label htmlFor="page-seo-og">Open Graph image</label>
+              <input
+                id="page-seo-og"
+                value={draft.ogImage}
+                onChange={(event) => setDraft({ ...draft, ogImage: event.target.value })}
+                placeholder={siteSeo.ogImage || "/uploads/social-cover.jpg"}
+              />
+              <div className="sa-field-hint"><a href="/admin/media">Open Media</a> to copy an image URL.</div>
+            </div>
+
+            <label className="sa-seo-index-toggle">
+              <input
+                type="checkbox"
+                checked={draft.noindex}
+                onChange={(event) => setDraft({ ...draft, noindex: event.target.checked })}
+              />
+              <span>
+                <strong>Hide from search engines</strong>
+                <small>Adds noindex and removes this page from the generated sitemap.</small>
+              </span>
+            </label>
+
+            <button className="sa-btn sa-btn--primary" onClick={() => void savePageSeo()} disabled={savingPage}>
+              {savingPage ? "Saving…" : "Save page SEO"}
+            </button>
+          </section>
+
+          <aside className="sa-card sa-seo-live-preview">
+            <span className="sa-page-eyebrow">Live preview</span>
+            <h3>Google result</h3>
+            <div className="sa-seo-preview">
+              <div className="sa-seo-preview__title">{draft.title || selectedPage.title}</div>
+              <div className="sa-seo-preview__url">{siteData && typeof siteData.url === "string" ? `${siteData.url}${selectedPage.path === "/" ? "" : selectedPage.path}` : `https://example.com${selectedPage.path}`}</div>
+              <div className="sa-seo-preview__desc">{draft.description || siteSeo.defaultDescription || "No description set."}</div>
+            </div>
+            <div className="sa-seo-social-preview">
+              <div className="sa-seo-social-preview__image">
+                {(draft.ogImage || siteSeo.ogImage) ? <img src={draft.ogImage || siteSeo.ogImage} alt="" /> : <span>No social image</span>}
+              </div>
+              <strong>{draft.title || selectedPage.title}</strong>
+              <p>{draft.description || siteSeo.defaultDescription || "Add a description for social sharing."}</p>
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       <div className="sa-card">
         <h3>Google preview</h3>

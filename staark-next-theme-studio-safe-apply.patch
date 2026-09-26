@@ -1,0 +1,214 @@
+diff --git a/apps/starter/lib/theme-studio.ts b/apps/starter/lib/theme-studio.ts
+index 32c6bfc..8c21966 100644
+--- a/apps/starter/lib/theme-studio.ts
++++ b/apps/starter/lib/theme-studio.ts
+@@ -296,45 +296,53 @@ export async function importStudioTheme(
+   return imported;
+ }
+ 
+-function setEnvVar(env: string, key: string, value: string): string {
+-  const re = new RegExp(`^${key}=.*`, "m");
+-  if (re.test(env)) return env.replace(re, `${key}=${value}`);
+-  return env.trimEnd() + `\n${key}=${value}\n`;
+-}
+-
+ export async function applyStudioTheme(id: string): Promise<{
+   theme: ThemeStudioDocument;
+   contentDir: string;
++  activeBaseTheme: string;
++  appliedPreset: string;
++  crossFamily: boolean;
+ }> {
+   const theme = await readStudioTheme(id);
+-  const preset = await resolveBasePreset(theme.baseTheme, theme.basePreset);
+   const root = contentRoot();
+   const contentDir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
++  const activeBaseTheme = process.env.STAARK_THEME?.trim() || "salong";
++  const activePresets = await readThemePresets(activeBaseTheme);
++
++  if (!activePresets.length) {
++    throw new Error(`Active theme family "${activeBaseTheme}" has no readable presets.`);
++  }
+ 
+   const site = await readSite(root);
+   const previousTheme =
+     site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
+       ? (site.theme as Record<string, unknown>)
+       : {};
+-
++  const previousPreset = typeof previousTheme.preset === "string" ? previousTheme.preset : "";
++  const sameFamily = theme.baseTheme === activeBaseTheme;
++  const appliedPreset =
++    sameFamily && activePresets.some((item) => item.id === theme.basePreset)
++      ? theme.basePreset
++      : activePresets.some((item) => item.id === previousPreset)
++        ? previousPreset
++        : activePresets[0]!.id;
++
++  // Theme Studio documents are design layers, not executable theme packages.
++  // Applying one never swaps the deployment's React/theme family; it overlays
++  // tokens and component variants on the currently installed family.
+   site.theme = {
+     ...previousTheme,
+-    preset: preset.id,
++    preset: appliedPreset,
+     overrides: theme.tokens,
+     components: theme.components,
+   };
+   await writeSite(site, root);
+ 
+-  const envFile = path.resolve(process.cwd(), ".env.local");
+-  let env = "";
+-  try {
+-    env = await readFile(envFile, "utf8");
+-  } catch {
+-    // First activation can create .env.local.
+-  }
+-
+-  env = setEnvVar(env, "STAARK_THEME", theme.baseTheme);
+-  await writeFile(envFile, env, "utf8");
+-
+-  return { theme, contentDir };
++  return {
++    theme,
++    contentDir,
++    activeBaseTheme,
++    appliedPreset,
++    crossFamily: !sameFamily,
++  };
+ }
+diff --git a/apps/starter/app/api/admin/themes/studio/[id]/apply/route.ts b/apps/starter/app/api/admin/themes/studio/[id]/apply/route.ts
+index 31c9af7..e2600bf 100644
+--- a/apps/starter/app/api/admin/themes/studio/[id]/apply/route.ts
++++ b/apps/starter/app/api/admin/themes/studio/[id]/apply/route.ts
+@@ -1,4 +1,5 @@
+ import { NextResponse } from "next/server";
++import { revalidatePath } from "next/cache";
+ import { applyStudioTheme } from "@/lib/theme-studio";
+ import { requireAuth } from "../../../../guard";
+ 
+@@ -11,13 +12,18 @@ export async function POST(_req: Request, ctx: Ctx) {
+   try {
+     const { id } = await ctx.params;
+     const result = await applyStudioTheme(id);
++    revalidatePath("/", "layout");
+     return NextResponse.json({
+       ok: true,
+       id: result.theme.id,
+       baseTheme: result.theme.baseTheme,
+-      basePreset: result.theme.basePreset,
++      sourceBaseTheme: result.theme.baseTheme,
++      sourceBasePreset: result.theme.basePreset,
++      activeBaseTheme: result.activeBaseTheme,
++      appliedPreset: result.appliedPreset,
++      crossFamily: result.crossFamily,
+       contentDir: result.contentDir,
+-      restartRequired: true,
++      restartRequired: false,
+     });
+   } catch (error) {
+     return NextResponse.json(
+diff --git a/apps/starter/app/admin/themes/studio/page.tsx b/apps/starter/app/admin/themes/studio/page.tsx
+index fb95e36..7b20f11 100644
+--- a/apps/starter/app/admin/themes/studio/page.tsx
++++ b/apps/starter/app/admin/themes/studio/page.tsx
+@@ -38,10 +38,11 @@ export default function ThemeStudioPage() {
+   const [customThemes, setCustomThemes] = useState<CustomTheme[]>([]);
+   const [name, setName] = useState("");
+   const [id, setId] = useState("");
+-  const [baseTheme, setBaseTheme] = useState("light");
++  const [baseTheme, setBaseTheme] = useState("");
+   const [basePreset, setBasePreset] = useState("");
+   const [creating, setCreating] = useState(false);
+   const [applying, setApplying] = useState("");
++  const [appliedId, setAppliedId] = useState("");
+   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+   const [importCandidate, setImportCandidate] = useState<Record<string, unknown> | null>(null);
+   const [importing, setImporting] = useState(false);
+@@ -60,6 +61,9 @@ export default function ThemeStudioPage() {
+     const builtInData = await builtInRes.json();
+     const customData = await customRes.json();
+     setBuiltIns(builtInData.themes ?? []);
++    if (!baseTheme) {
++      setBaseTheme(builtInData.active ?? builtInData.themes?.[0]?.id ?? "light");
++    }
+     setCustomThemes(customData.themes ?? []);
+   }
+ 
+@@ -119,7 +123,14 @@ export default function ThemeStudioPage() {
+       return;
+     }
+ 
+-    showToast(`Applied "${theme.name}". Dev server may restart.`, true);
++    const result = data as { activeBaseTheme?: string; crossFamily?: boolean };
++    setAppliedId(theme.id);
++    showToast(
++      result.crossFamily
++        ? `Applied "${theme.name}" as a design layer on ${result.activeBaseTheme ?? "the active"} family.`
++        : `Applied "${theme.name}". Changes are live now.`,
++      true,
++    );
+   }
+ 
+ 
+@@ -328,12 +339,15 @@ export default function ThemeStudioPage() {
+                     <a className="sa-btn sa-btn--ghost sa-btn--sm" href={`/api/admin/themes/studio/${theme.id}/export`}>
+                       Export
+                     </a>
++                    <a className="sa-btn sa-btn--ghost sa-btn--sm" href="/" target="_blank" rel="noopener noreferrer">
++                      View site
++                    </a>
+                     <button
+                       className="sa-btn sa-btn--primary sa-btn--sm"
+                       onClick={() => void applyTheme(theme)}
+                       disabled={Boolean(applying)}
+                     >
+-                      {applying === theme.id ? "Applying…" : "Apply"}
++                      {applying === theme.id ? "Applying…" : appliedId === theme.id ? "Applied ✓" : "Apply"}
+                     </button>
+                   </div>
+                 </div>
+diff --git a/apps/starter/app/admin/themes/studio/[id]/page.tsx b/apps/starter/app/admin/themes/studio/[id]/page.tsx
+index 8ed6d5f..a9d7655 100644
+--- a/apps/starter/app/admin/themes/studio/[id]/page.tsx
++++ b/apps/starter/app/admin/themes/studio/[id]/page.tsx
+@@ -173,7 +173,13 @@ export default function ThemeStudioEditorPage() {
+       showToast((data as { error?: string }).error ?? "Could not apply theme.", false);
+       return;
+     }
+-    showToast("Theme applied. The dev server may restart.", true);
++    const result = data as { activeBaseTheme?: string; crossFamily?: boolean };
++    showToast(
++      result.crossFamily
++        ? `Theme applied as a design layer on ${result.activeBaseTheme ?? "the active"} family.`
++        : "Theme applied. Changes are live now.",
++      true,
++    );
+   }
+ 
+   async function duplicate() {
+diff --git a/apps/starter/app/admin/themes/studio/brand/page.tsx b/apps/starter/app/admin/themes/studio/brand/page.tsx
+index fa9ffa5..c7d48eb 100644
+--- a/apps/starter/app/admin/themes/studio/brand/page.tsx
++++ b/apps/starter/app/admin/themes/studio/brand/page.tsx
+@@ -180,7 +180,7 @@ export default function BrandDnaPage() {
+   const router = useRouter();
+   const fileRef = useRef<HTMLInputElement>(null);
+   const [builtIns, setBuiltIns] = useState<BuiltInTheme[]>([]);
+-  const [baseTheme, setBaseTheme] = useState("light");
++  const [baseTheme, setBaseTheme] = useState("");
+   const [basePreset, setBasePreset] = useState("");
+   const [name, setName] = useState("Brand Theme");
+   const [mood, setMood] = useState<Mood>("clean");
+@@ -198,7 +198,10 @@ export default function BrandDnaPage() {
+   useEffect(() => {
+     fetch("/api/admin/themes")
+       .then((res) => res.json())
+-      .then((data) => setBuiltIns(data.themes ?? []));
++      .then((data) => {
++        setBuiltIns(data.themes ?? []);
++        setBaseTheme(data.active ?? data.themes?.[0]?.id ?? "light");
++      });
+   }, []);
+ 
+   const selectedBase = builtIns.find((theme) => theme.id === baseTheme);

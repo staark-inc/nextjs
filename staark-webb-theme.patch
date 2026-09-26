@@ -1,0 +1,689 @@
+diff --git a/apps/starter/app/(site)/layout.tsx b/apps/starter/app/(site)/layout.tsx
+index 9baadc3..d9f5124 100644
+--- a/apps/starter/app/(site)/layout.tsx
++++ b/apps/starter/app/(site)/layout.tsx
+@@ -7,6 +7,7 @@ import "@staark/theme-light/styles.css";
+ import "@staark/theme-salong/styles.css";
+ import "@staark/theme-gastfrihet/styles.css";
+ import "@staark/theme-byra/styles.css";
++import "@staark/theme-webb/styles.css";
+ 
+ export async function generateMetadata(): Promise<Metadata> {
+   const site = await content.getSite();
+diff --git a/apps/starter/content/webb/pages/home.json b/apps/starter/content/webb/pages/home.json
+new file mode 100644
+index 0000000..31c1958
+--- /dev/null
++++ b/apps/starter/content/webb/pages/home.json
+@@ -0,0 +1,92 @@
++{
++  "path": "/",
++  "title": "Startsida",
++  "seo": { "title": "Vässa Webbstudio – webbplatser som får dig att växa", "description": "Snabba, moderna webbplatser för småföretag. Webbdesign, utveckling, SEO och prestanda." },
++  "updatedAt": "2026-09-26T21:00:00Z",
++  "blocks": [
++    {
++      "id": "hero",
++      "type": "hero",
++      "props": {
++        "eyebrow": "Webbdesign & utveckling",
++        "heading": "Webbplatser som hjälper ditt företag att växa",
++        "intro": "Vi bygger snabba, moderna sajter för småföretag – från idé till lansering. Snyggt, sökbart och byggt för att sälja.",
++        "primaryCta": { "label": "Få kostnadsfri offert", "href": "/kontakt" },
++        "secondaryCta": { "label": "Se priser", "href": "/priser" },
++        "points": ["Klar på 2–3 veckor", "Byggd för Google & mobil", "Fast pris, inga överraskningar"]
++      }
++    },
++    {
++      "id": "project",
++      "type": "featuredProject",
++      "props": {
++        "eyebrow": "Utvalt projekt",
++        "client": "Alex Däckservice",
++        "title": "Ny sajt som fyllde verkstaden",
++        "description": "Vi byggde en snabb bokningssajt för en lokal däckverkstad. Fler bokningar, färre telefonsamtal och topplacering på Google.",
++        "result": "+52% bokningar",
++        "tags": ["Webbdesign", "SEO", "Bokning"],
++        "cta": { "label": "Se fler projekt", "href": "/#projekt" }
++      }
++    },
++    {
++      "id": "services",
++      "type": "services",
++      "props": {
++        "eyebrow": "Tjänster",
++        "heading": "Allt du behöver på webben",
++        "columns": 4,
++        "items": [
++          { "title": "Webbdesign", "icon": "✳", "description": "Snyggt och tydligt, anpassat efter ditt varumärke." },
++          { "title": "Webbutveckling", "icon": "⌘", "description": "Snabba sajter byggda med modern teknik." },
++          { "title": "SEO", "icon": "◎", "description": "Syns på Google när kunderna söker." },
++          { "title": "Prestanda", "icon": "⚡", "description": "Laddar blixtsnabbt – på mobil och dator." }
++        ]
++      }
++    },
++    {
++      "id": "why",
++      "type": "process",
++      "props": {
++        "eyebrow": "Varför Vässa",
++        "heading": "Enkelt, snabbt och tryggt",
++        "steps": [
++          { "title": "Fast pris", "description": "Du vet vad det kostar innan vi börjar. Inga dolda avgifter." },
++          { "title": "Klar snabbt", "description": "De flesta sajter är live inom två till tre veckor." },
++          { "title": "Vi sköter driften", "description": "Hosting, säkerhet och uppdateringar ingår. Du driver ditt företag." }
++        ]
++      }
++    },
++    {
++      "id": "pricing",
++      "type": "pricing",
++      "props": {
++        "eyebrow": "Priser",
++        "heading": "Tydliga paket, fast pris",
++        "intro": "Välj det som passar – vi hjälper dig vidare om du är osäker.",
++        "plans": [
++          { "name": "Start", "price": "2 999 kr", "period": "eng.", "description": "För dig som behöver en enkel närvaro.", "features": ["Enkelsidig sajt", "Mobilanpassad", "Kontaktformulär", "Live på 1 vecka"], "cta": { "label": "Välj Start", "href": "/kontakt" } },
++          { "name": "Växa", "price": "5 999 kr", "period": "eng.", "description": "Vår populäraste – allt ett växande företag behöver.", "features": ["Upp till 6 sidor", "SEO-grund", "Bokning/formulär", "Google-profil", "Live på 2–3 veckor"], "cta": { "label": "Välj Växa", "href": "/kontakt" }, "featured": true },
++          { "name": "Skräddarsytt", "price": "Offert", "description": "Webbutik, integrationer eller något helt eget.", "features": ["Obegränsat med sidor", "E-handel", "Egna funktioner", "Prioriterad support"], "cta": { "label": "Boka möte", "href": "/kontakt" } }
++        ],
++        "note": "Alla paket inkluderar hosting, SSL och löpande uppdateringar. Månadsavgift från 199 kr."
++      }
++    },
++    {
++      "id": "areas",
++      "type": "serviceAreas",
++      "props": {
++        "eyebrow": "Var vi finns",
++        "heading": "Webbyrå för hela Mälardalen",
++        "intro": "Vi jobbar med företag i hela regionen – på plats eller på distans.",
++        "areas": ["Västerås", "Enköping", "Eskilstuna", "Köping", "Sala", "Uppsala", "Stockholm"],
++        "note": "Sitter du någon annanstans? Vi jobbar lika gärna på distans."
++      }
++    },
++    {
++      "id": "cta",
++      "type": "cta",
++      "props": { "heading": "Redo att komma igång?", "intro": "Få en kostnadsfri offert inom en arbetsdag.", "cta": { "label": "Få kostnadsfri offert", "href": "/kontakt" } }
++    }
++  ]
++}
+diff --git a/apps/starter/content/webb/pages/kontakt.json b/apps/starter/content/webb/pages/kontakt.json
+new file mode 100644
+index 0000000..1882dac
+--- /dev/null
++++ b/apps/starter/content/webb/pages/kontakt.json
+@@ -0,0 +1,28 @@
++{
++  "path": "/kontakt",
++  "title": "Kontakt",
++  "seo": { "description": "Få en kostnadsfri offert från Vässa Webbstudio." },
++  "updatedAt": "2026-09-26T21:00:00Z",
++  "blocks": [
++    {
++      "id": "contact",
++      "type": "contact",
++      "props": {
++        "eyebrow": "Kostnadsfri offert",
++        "heading": "Berätta om ditt projekt",
++        "intro": "Fyll i formuläret så återkommer vi inom en arbetsdag med ett förslag och ett fast pris.",
++        "formId": "webb-offert",
++        "submitLabel": "Skicka förfrågan",
++        "successMessage": "Tack! Vi återkommer inom en arbetsdag.",
++        "fields": [
++          { "name": "name", "label": "Namn", "required": true },
++          { "name": "email", "label": "E-post", "type": "email", "required": true },
++          { "name": "phone", "label": "Telefon", "type": "tel" },
++          { "name": "company", "label": "Företag" },
++          { "name": "booking_type", "label": "Vilket paket?" },
++          { "name": "message", "label": "Om projektet", "type": "textarea", "required": true }
++        ]
++      }
++    }
++  ]
++}
+diff --git a/apps/starter/content/webb/pages/priser.json b/apps/starter/content/webb/pages/priser.json
+new file mode 100644
+index 0000000..85c1430
+--- /dev/null
++++ b/apps/starter/content/webb/pages/priser.json
+@@ -0,0 +1,41 @@
++{
++  "path": "/priser",
++  "title": "Priser",
++  "seo": { "description": "Tydliga webbpaket till fast pris hos Vässa Webbstudio. Från 2 999 kr." },
++  "updatedAt": "2026-09-26T21:00:00Z",
++  "blocks": [
++    {
++      "id": "pricing",
++      "type": "pricing",
++      "props": {
++        "eyebrow": "Priser",
++        "heading": "Vad kostar en ny sajt?",
++        "intro": "Fast pris, tydligt innehåll och inga överraskningar. Osäker? Boka ett kostnadsfritt möte.",
++        "plans": [
++          { "name": "Start", "price": "2 999 kr", "period": "eng.", "description": "För dig som behöver en enkel närvaro.", "features": ["Enkelsidig sajt", "Mobilanpassad", "Kontaktformulär", "Live på 1 vecka"], "cta": { "label": "Välj Start", "href": "/kontakt" } },
++          { "name": "Växa", "price": "5 999 kr", "period": "eng.", "description": "Vår populäraste – allt ett växande företag behöver.", "features": ["Upp till 6 sidor", "SEO-grund", "Bokning/formulär", "Google-profil", "Live på 2–3 veckor"], "cta": { "label": "Välj Växa", "href": "/kontakt" }, "featured": true },
++          { "name": "Skräddarsytt", "price": "Offert", "description": "Webbutik, integrationer eller något helt eget.", "features": ["Obegränsat med sidor", "E-handel", "Egna funktioner", "Prioriterad support"], "cta": { "label": "Boka möte", "href": "/kontakt" } }
++        ],
++        "note": "Alla paket inkluderar hosting, SSL och löpande uppdateringar. Månadsavgift från 199 kr."
++      }
++    },
++    {
++      "id": "why",
++      "type": "process",
++      "props": {
++        "eyebrow": "Ingår alltid",
++        "heading": "Trygghet i varje paket",
++        "steps": [
++          { "title": "Hosting & SSL", "description": "Snabb och säker drift ingår i månadsavgiften." },
++          { "title": "Uppdateringar", "description": "Vi håller sajten uppdaterad och säker." },
++          { "title": "Support", "description": "Hör av dig när du behöver – vi svarar snabbt." }
++        ]
++      }
++    },
++    {
++      "id": "cta",
++      "type": "cta",
++      "props": { "heading": "Ta första steget", "intro": "Berätta om ditt projekt så återkommer vi med ett förslag.", "cta": { "label": "Få kostnadsfri offert", "href": "/kontakt" } }
++    }
++  ]
++}
+diff --git a/apps/starter/content/webb/site.json b/apps/starter/content/webb/site.json
+new file mode 100644
+index 0000000..630ca00
+--- /dev/null
++++ b/apps/starter/content/webb/site.json
+@@ -0,0 +1,33 @@
++{
++  "name": "Vässa Webbstudio",
++  "tagline": "Webbplatser som hjälper ditt företag att växa",
++  "locale": "sv-SE",
++  "url": "https://vassa.example",
++  "theme": { "preset": "webb" },
++  "brand": { "copyright": "© 2026 Vässa Webbstudio" },
++  "contact": {
++    "email": "hej@vassa.example",
++    "phone": "+46 8 400 100 20",
++    "address": { "street": "Storgatan 3", "postalCode": "722 12", "city": "Västerås", "country": "SE" },
++    "openingHours": [{ "days": "Mån–Fre", "hours": "08–17" }]
++  },
++  "navigation": {
++    "primary": [
++      { "label": "Tjänster", "href": "/#tjanster" },
++      { "label": "Projekt", "href": "/#projekt" },
++      { "label": "Priser", "href": "/priser" },
++      { "label": "Om oss", "href": "/om-oss" }
++    ],
++    "footer": [
++      { "label": "Tjänster", "href": "/#tjanster" },
++      { "label": "Priser", "href": "/priser" },
++      { "label": "Kontakt", "href": "/kontakt" }
++    ],
++    "cta": { "label": "Få kostnadsfri offert", "href": "/kontakt" }
++  },
++  "seo": {
++    "titleTemplate": "%s | Vässa Webbstudio",
++    "defaultDescription": "Vässa Webbstudio bygger snabba, moderna webbplatser som hjälper småföretag att växa. Webbdesign, utveckling, SEO och prestanda.",
++    "businessType": "ProfessionalService"
++  }
++}
+diff --git a/apps/starter/next.config.ts b/apps/starter/next.config.ts
+index 3b07586..ec80ff8 100644
+--- a/apps/starter/next.config.ts
++++ b/apps/starter/next.config.ts
+@@ -4,7 +4,7 @@ import { staarkSecurityHeaders } from "@staark/platform/config";
+ const nextConfig: NextConfig = {
+   reactStrictMode: true,
+   // Compile the workspace theme/core TypeScript sources directly.
+-  transpilePackages: ["@staark/core", "@staark/platform", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-gastfrihet", "@staark/theme-byra"],
++  transpilePackages: ["@staark/core", "@staark/platform", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-gastfrihet", "@staark/theme-byra", "@staark/theme-webb"],
+   async headers() {
+     return [{ source: "/:path*", headers: staarkSecurityHeaders() }];
+   },
+diff --git a/apps/starter/package.json b/apps/starter/package.json
+index 36e4fd4..e58e45e 100644
+--- a/apps/starter/package.json
++++ b/apps/starter/package.json
+@@ -14,6 +14,7 @@
+     "@staark/platform": "workspace:*",
+     "@staark/theme-gastfrihet": "workspace:*",
+     "@staark/theme-byra": "workspace:*",
++    "@staark/theme-webb": "workspace:*",
+     "@staark/theme-kit": "workspace:*",
+     "@staark/theme-light": "workspace:*",
+     "@staark/theme-salong": "workspace:*",
+diff --git a/apps/starter/staark.config.ts b/apps/starter/staark.config.ts
+index 09b7be9..077e358 100644
+--- a/apps/starter/staark.config.ts
++++ b/apps/starter/staark.config.ts
+@@ -3,6 +3,7 @@ import lightTheme, { SiteHeader, SiteFooter } from "@staark/theme-light";
+ import salongTheme, { salongRegistry } from "@staark/theme-salong";
+ import gastfrihetTheme, { gastfrihetRegistry } from "@staark/theme-gastfrihet";
+ import byraTheme, { byraRegistry } from "@staark/theme-byra";
++import webbTheme, { webbRegistry } from "@staark/theme-webb";
+ 
+ /**
+  * Per-client theme selection. In this "one deploy per client" model the theme
+@@ -15,6 +16,7 @@ const THEMES: Record<string, { theme: ThemeDefinition; registry?: Record<string,
+   salong: { theme: salongTheme, registry: salongRegistry },
+   gastfrihet: { theme: gastfrihetTheme, registry: gastfrihetRegistry },
+   byra: { theme: byraTheme, registry: byraRegistry },
++  webb: { theme: webbTheme, registry: webbRegistry },
+ };
+ 
+ const selected = process.env.STAARK_THEME?.trim() || "salong";
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 776e469..04ca0f0 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -41,6 +41,9 @@ importers:
+       '@staark/theme-salong':
+         specifier: workspace:*
+         version: link:../../themes/salong
++      '@staark/theme-webb':
++        specifier: workspace:*
++        version: link:../../themes/webb
+       iron-session:
+         specifier: ^9.0.1
+         version: 9.0.1
+@@ -239,6 +242,31 @@ importers:
+         specifier: ^5.9.3
+         version: 5.9.3
+ 
++  themes/webb:
++    dependencies:
++      '@staark/core':
++        specifier: workspace:*
++        version: link:../../packages/core
++      '@staark/theme-kit':
++        specifier: workspace:*
++        version: link:../../packages/theme-kit
++      '@staark/theme-light':
++        specifier: workspace:*
++        version: link:../light
++      zod:
++        specifier: ^4.6.5
++        version: 4.6.5
++    devDependencies:
++      '@types/react':
++        specifier: ^19.3.0
++        version: 19.3.0
++      react:
++        specifier: ^19.3.0
++        version: 19.3.0
++      typescript:
++        specifier: ^5.9.3
++        version: 5.9.3
++
+ packages:
+ 
+   '@emnapi/runtime@1.11.3':
+diff --git a/themes/webb/package.json b/themes/webb/package.json
+new file mode 100644
+index 0000000..ece7169
+--- /dev/null
++++ b/themes/webb/package.json
+@@ -0,0 +1,29 @@
++{
++  "name": "@staark/theme-webb",
++  "version": "0.1.0",
++  "description": "S-Hub Webb — child theme of S-Hub Light in the Staark house style (staarkinc.com): featured project, productized pricing and local service areas.",
++  "private": true,
++  "type": "module",
++  "sideEffects": ["*.css"],
++  "exports": {
++    ".": "./src/index.ts",
++    "./styles.css": "./src/styles.css"
++  },
++  "scripts": {
++    "typecheck": "tsc -p tsconfig.json"
++  },
++  "dependencies": {
++    "@staark/core": "workspace:*",
++    "@staark/theme-kit": "workspace:*",
++    "@staark/theme-light": "workspace:*",
++    "zod": "^4.6.5"
++  },
++  "peerDependencies": {
++    "react": ">=19.0.0"
++  },
++  "devDependencies": {
++    "@types/react": "^19.3.0",
++    "react": "^19.3.0",
++    "typescript": "^5.9.3"
++  }
++}
+diff --git a/themes/webb/presets/webb.json b/themes/webb/presets/webb.json
+new file mode 100644
+index 0000000..ec7b64d
+--- /dev/null
++++ b/themes/webb/presets/webb.json
+@@ -0,0 +1,46 @@
++{
++  "id": "webb",
++  "name": "Webb",
++  "description": "Staark house direction (staarkinc.com): warm paper, dark forest, a confident blue accent, restrained typography and clean, conversion-focused layouts.",
++  "version": 1,
++  "tokens": {
++    "colors": {
++      "ink": "#101619",
++      "muted": "#626D68",
++      "line": "#E1DDD5",
++      "paper": "#FBFAF7",
++      "surface": "#F2EEE7",
++      "white": "#FFFFFF",
++      "primary": "#2457F5",
++      "primaryDark": "#173BB7",
++      "primarySoft": "#EEF3FF",
++      "success": "#0B7853",
++      "forest": "#142720",
++      "forestDeep": "#0D1916",
++      "gold": "#D59531"
++    },
++    "typography": {
++      "body": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
++      "display": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
++      "displayWeight": "760"
++    },
++    "radius": {
++      "sm": "12px",
++      "md": "16px",
++      "lg": "26px",
++      "button": "8px"
++    },
++    "layout": {
++      "content": "760px",
++      "wide": "1320px",
++      "wrap": "1440px"
++    }
++  },
++  "components": {
++    "header": "glass",
++    "buttons": "solid",
++    "cards": "soft",
++    "hero": "split",
++    "footer": "dark"
++  }
++}
+diff --git a/themes/webb/src/index.ts b/themes/webb/src/index.ts
+new file mode 100644
+index 0000000..2765840
+--- /dev/null
++++ b/themes/webb/src/index.ts
+@@ -0,0 +1,37 @@
++import type { ThemeDefinition } from "@staark/theme-kit";
++import lightTheme from "@staark/theme-light";
++import webb from "../presets/webb.json" with { type: "json" };
++import { FeaturedProject } from "./sections/FeaturedProject";
++import { Pricing } from "./sections/Pricing";
++import { ServiceAreas } from "./sections/ServiceAreas";
++
++/**
++ * S-Hub Webb — child theme in the Staark house style (staarkinc.com). Reuses
++ * every S-Hub Light section (hero, services, process, testimonials, cta,
++ * contact) through `parentId: "light"` and adds the web-agency sections:
++ * featured project, productized pricing and local service areas. The `webb`
++ * preset is the Staark house palette (the WordPress "scandinavian" direction).
++ */
++export const webbTheme: ThemeDefinition = {
++  id: "webb",
++  name: "S-Hub Webb",
++  parentId: "light",
++  presets: {
++    webb: webb as ThemeDefinition["presets"][string],
++  },
++  defaultPreset: "webb",
++  sections: {
++    featuredProject: FeaturedProject,
++    pricing: Pricing,
++    serviceAreas: ServiceAreas,
++  },
++};
++
++/** Registry to pass to BlockRenderer so parent sections resolve. */
++export const webbRegistry: Record<string, ThemeDefinition> = {
++  light: lightTheme,
++  webb: webbTheme,
++};
++
++export { FeaturedProject, Pricing, ServiceAreas };
++export default webbTheme;
+diff --git a/themes/webb/src/sections/FeaturedProject.tsx b/themes/webb/src/sections/FeaturedProject.tsx
+new file mode 100644
+index 0000000..0820f9b
+--- /dev/null
++++ b/themes/webb/src/sections/FeaturedProject.tsx
+@@ -0,0 +1,57 @@
++import { z } from "zod";
++import type { SectionComponent } from "@staark/theme-kit";
++import { Container, Eyebrow, Button } from "@staark/theme-light";
++
++const schema = z.object({
++  eyebrow: z.string().optional(),
++  client: z.string().optional(),
++  title: z.string(),
++  description: z.string().optional(),
++  image: z.string().optional(),
++  result: z.string().optional(),
++  tags: z.array(z.string()).default([]),
++  cta: z.object({ label: z.string(), href: z.string() }).optional(),
++});
++
++/**
++ * Featured project — a large split card with the client, a headline, a result
++ * metric and a link. Mirrors the "featured project" band on staarkinc.com.
++ * Renders a tinted panel when no image is provided, so it looks complete offline.
++ * Shortcut/block type: "featuredProject".
++ */
++export const FeaturedProject: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) => {
++  const p = schema.parse(props);
++  return (
++    <section className="sk-section">
++      <Container wide>
++        <header className="sk-section__head">{p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}</header>
++        <div className="sk-feature">
++          <div
++            className="sk-feature__media"
++            style={p.image ? { backgroundImage: `url(${p.image})` } : undefined}
++            data-has-image={p.image ? "1" : undefined}
++          >
++            {p.result ? <span className="sk-feature__result">{p.result}</span> : null}
++          </div>
++          <div className="sk-feature__body">
++            {p.client ? <span className="sk-feature__client">{p.client}</span> : null}
++            <h2>{p.title}</h2>
++            {p.description ? <p>{p.description}</p> : null}
++            {p.tags.length ? (
++              <ul className="sk-feature__tags">
++                {p.tags.map((tag) => (
++                  <li key={tag}>{tag}</li>
++                ))}
++              </ul>
++            ) : null}
++            {p.cta ? (
++              <Button href={p.cta.href} ctx={ctx}>
++                {p.cta.label}
++              </Button>
++            ) : null}
++          </div>
++        </div>
++      </Container>
++    </section>
++  );
++};
+diff --git a/themes/webb/src/sections/Pricing.tsx b/themes/webb/src/sections/Pricing.tsx
+new file mode 100644
+index 0000000..e8b3049
+--- /dev/null
++++ b/themes/webb/src/sections/Pricing.tsx
+@@ -0,0 +1,67 @@
++import { z } from "zod";
++import type { SectionComponent } from "@staark/theme-kit";
++import { Container, Eyebrow, Button } from "@staark/theme-light";
++
++const schema = z.object({
++  eyebrow: z.string().optional(),
++  heading: z.string(),
++  intro: z.string().optional(),
++  plans: z
++    .array(
++      z.object({
++        name: z.string(),
++        price: z.string(),
++        period: z.string().optional(),
++        description: z.string().optional(),
++        features: z.array(z.string()).default([]),
++        cta: z.object({ label: z.string(), href: z.string() }).optional(),
++        featured: z.boolean().default(false),
++      }),
++    )
++    .default([]),
++  note: z.string().optional(),
++});
++
++/**
++ * Pricing — productized packages with one highlighted plan, like the pricing
++ * band on staarkinc.com ("from 2 999 SEK").
++ * Shortcut/block type: "pricing".
++ */
++export const Pricing: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) => {
++  const p = schema.parse(props);
++  return (
++    <section className="sk-section sk-section--surface" id="priser">
++      <Container wide>
++        <header className="sk-section__head">
++          {p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}
++          <h2>{p.heading}</h2>
++          {p.intro ? <p className="sk-section__intro">{p.intro}</p> : null}
++        </header>
++        <div className="sk-plans">
++          {p.plans.map((plan) => (
++            <article key={plan.name} className={`sk-plan${plan.featured ? " sk-plan--featured" : ""}`}>
++              {plan.featured ? <span className="sk-plan__badge">Populärast</span> : null}
++              <h3 className="sk-plan__name">{plan.name}</h3>
++              <div className="sk-plan__price">
++                <span className="sk-plan__amount">{plan.price}</span>
++                {plan.period ? <span className="sk-plan__period">{plan.period}</span> : null}
++              </div>
++              {plan.description ? <p className="sk-plan__desc">{plan.description}</p> : null}
++              <ul className="sk-plan__features">
++                {plan.features.map((feature) => (
++                  <li key={feature}>{feature}</li>
++                ))}
++              </ul>
++              {plan.cta ? (
++                <Button href={plan.cta.href} variant={plan.featured ? "primary" : "ghost"} ctx={ctx}>
++                  {plan.cta.label}
++                </Button>
++              ) : null}
++            </article>
++          ))}
++        </div>
++        {p.note ? <p className="sk-plans__note">{p.note}</p> : null}
++      </Container>
++    </section>
++  );
++};
+diff --git a/themes/webb/src/sections/ServiceAreas.tsx b/themes/webb/src/sections/ServiceAreas.tsx
+new file mode 100644
+index 0000000..5cc9bcb
+--- /dev/null
++++ b/themes/webb/src/sections/ServiceAreas.tsx
+@@ -0,0 +1,39 @@
++import { z } from "zod";
++import type { SectionComponent } from "@staark/theme-kit";
++import { Container, Eyebrow } from "@staark/theme-light";
++
++const schema = z.object({
++  eyebrow: z.string().optional(),
++  heading: z.string(),
++  intro: z.string().optional(),
++  areas: z.array(z.string()).default([]),
++  note: z.string().optional(),
++});
++
++/**
++ * Service areas — a local-SEO section listing the towns/regions served, like the
++ * geographic band on staarkinc.com.
++ * Shortcut/block type: "serviceAreas".
++ */
++export const ServiceAreas: SectionComponent<z.infer<typeof schema>> = ({ props }) => {
++  const p = schema.parse(props);
++  return (
++    <section className="sk-section" id="omraden">
++      <Container>
++        <header className="sk-section__head">
++          {p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}
++          <h2>{p.heading}</h2>
++          {p.intro ? <p className="sk-section__intro">{p.intro}</p> : null}
++        </header>
++        <ul className="sk-areas">
++          {p.areas.map((area) => (
++            <li key={area} className="sk-area">
++              {area}
++            </li>
++          ))}
++        </ul>
++        {p.note ? <p className="sk-areas__note">{p.note}</p> : null}
++      </Container>
++    </section>
++  );
++};
+diff --git a/themes/webb/src/styles.css b/themes/webb/src/styles.css
+new file mode 100644
+index 0000000..dfc8a84
+--- /dev/null
++++ b/themes/webb/src/styles.css
+@@ -0,0 +1,41 @@
++/* S-Hub Webb — Staark house-style additions on top of S-Hub Light.
++   Import after the light styles. Everything uses --sk-* tokens. */
++
++/* Featured project — large split card */
++.sk-feature { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: stretch; background: var(--sk-color-white, #fff); border: 1px solid var(--sk-color-line, #e1ddd5); border-radius: var(--sk-radius-lg, 26px); overflow: hidden; box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 24px 60px -32px rgba(16,24,40,.4); }
++/* No image: tinted gradient panel. With an image, the inline background-image wins. */
++.sk-feature__media { position: relative; min-height: 360px; background-size: cover; background-position: center; background-color: var(--sk-color-primary-soft, #eef3ff); background-image: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--sk-color-primary, #2457f5) 22%, transparent), transparent 60%); }
++.sk-feature__result { position: absolute; left: 20px; bottom: 20px; background: var(--sk-color-white, #fff); color: var(--sk-color-ink, #101619); font-weight: 700; padding: 10px 16px; border-radius: 999px; font-size: 0.9rem; box-shadow: 0 8px 24px -10px rgba(16,24,40,.4); }
++.sk-feature__body { padding: 40px 40px 40px 8px; align-self: center; }
++.sk-feature__client { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.78rem; font-weight: 700; color: var(--sk-color-primary, #2457f5); }
++.sk-feature__body h2 { margin: 10px 0 12px; }
++.sk-feature__body p { color: var(--sk-color-muted, #626d68); }
++.sk-feature__tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0 0 22px; }
++.sk-feature__tags li { font-size: 0.82rem; padding: 5px 12px; border-radius: 999px; background: var(--sk-color-primary-soft, #eef3ff); color: var(--sk-color-primary-dark, #173bb7); font-weight: 600; }
++
++/* Pricing */
++.sk-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: start; }
++.sk-plan { position: relative; background: var(--sk-color-white, #fff); border: 1px solid var(--sk-color-line, #e1ddd5); border-radius: var(--sk-radius-lg, 26px); padding: 32px; display: flex; flex-direction: column; gap: 8px; }
++.sk-plan--featured { border-color: var(--sk-color-primary, #2457f5); box-shadow: 0 24px 60px -34px var(--sk-color-primary, #2457f5); transform: translateY(-6px); }
++.sk-plan__badge { position: absolute; top: -13px; left: 32px; background: var(--sk-color-primary, #2457f5); color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; padding: 5px 12px; border-radius: 999px; }
++.sk-plan__name { margin: 0; font-size: 1.15rem; }
++.sk-plan__price { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 6px; }
++.sk-plan__amount { font-family: var(--sk-font-display, inherit); font-weight: 760; font-size: 2.4rem; letter-spacing: -0.02em; color: var(--sk-color-ink, #101619); }
++.sk-plan__period { color: var(--sk-color-muted, #626d68); font-size: 0.95rem; }
++.sk-plan__desc { color: var(--sk-color-muted, #626d68); margin: 0 0 8px; }
++.sk-plan__features { list-style: none; padding: 0; margin: 8px 0 24px; display: grid; gap: 10px; flex: 1; }
++.sk-plan__features li { padding-left: 28px; position: relative; }
++.sk-plan__features li::before { content: "✓"; position: absolute; left: 0; color: var(--sk-color-success, #0b7853); font-weight: 700; }
++.sk-plan .sk-btn { width: 100%; justify-content: center; }
++.sk-plans__note { text-align: center; color: var(--sk-color-muted, #626d68); font-size: 0.9rem; margin-top: 24px; }
++
++/* Service areas */
++.sk-areas { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 12px; }
++.sk-area { padding: 10px 18px; border: 1px solid var(--sk-color-line, #e1ddd5); border-radius: 999px; background: var(--sk-color-white, #fff); font-weight: 600; color: var(--sk-color-ink, #101619); }
++.sk-area:hover { border-color: var(--sk-color-primary, #2457f5); color: var(--sk-color-primary, #2457f5); }
++.sk-areas__note { color: var(--sk-color-muted, #626d68); font-size: 0.9rem; margin-top: 20px; }
++
++@media (max-width: 860px) {
++  .sk-feature { grid-template-columns: 1fr; }
++  .sk-feature__body { padding: 0 32px 36px; }
++}
+diff --git a/themes/webb/tsconfig.json b/themes/webb/tsconfig.json
+new file mode 100644
+index 0000000..564a599
+--- /dev/null
++++ b/themes/webb/tsconfig.json
+@@ -0,0 +1,4 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "include": ["src"]
++}

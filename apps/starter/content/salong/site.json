@@ -49,12 +49,12 @@
         "href": "/#galleri"
       },
       {
-        "label": "Kontakt",
-        "href": "/kontakt"
-      },
-      {
         "label": "Om Oss",
         "href": "/about"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
       }
     ],
     "footer": [
@@ -69,6 +69,10 @@
       {
         "label": "Boka tid",
         "href": "/kontakt"
+      },
+      {
+        "label": "Om Oss",
+        "href": "/about"
       }
     ],
     "cta": {

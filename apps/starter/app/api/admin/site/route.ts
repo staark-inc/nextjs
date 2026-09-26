@@ -6,7 +6,7 @@ import { requireAuth } from "../guard";
 
 function sitePath(): string {
   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  const base = path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
+  const base = path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
   return path.join(base, "site.json");
 }
 
