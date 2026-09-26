@@ -1,0 +1,35 @@
+{
+  "path": "/about",
+  "title": "Om Oss",
+  "seo": {
+    "title": "Om Oss",
+    "description": "Om Oss - Add a short introduction for this page."
+  },
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "heading": "Om Oss",
+        "intro": "Add a short introduction for this page."
+      }
+    },
+    {
+      "id": "services",
+      "type": "services",
+      "props": {
+        "heading": "What we offer",
+        "items": []
+      }
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "props": {
+        "heading": "Ready to continue?",
+        "intro": "Contact us and we will help you with the next step."
+      }
+    }
+  ],
+  "updatedAt": "2026-09-26T21:00:38.752Z"
+}

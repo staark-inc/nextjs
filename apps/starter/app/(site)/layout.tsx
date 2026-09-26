@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { buildRootMetadata, localBusinessJsonLd, jsonLdString } from "@staark/core/server";
+import { buildRootMetadata, localBusinessJsonLd, jsonLdString } from "@staark/platform/server";
 import { presetToCssVars, cssVarsToString, resolvePreset } from "@staark/theme-kit";
 import { content } from "@/lib/staark";
 import { theme, SiteHeader, SiteFooter } from "@/staark.config";

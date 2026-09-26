@@ -1,0 +1,31 @@
+{
+  "name": "@staark/platform",
+  "version": "0.1.0",
+  "description": "Staark Next Platform product layer for managed client deployments, local administration and Next.js runtime integration.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./config": "./src/config.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@staark/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": ">=16.0.0",
+    "react": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "next": "^16.3.6",
+    "react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

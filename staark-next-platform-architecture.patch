@@ -1,0 +1,1030 @@
+diff --git a/.github/workflows/verify.yml b/.github/workflows/verify.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..86fcbb162e8486533d270876ba97a6a3e6e11ecc
+--- /dev/null
++++ b/.github/workflows/verify.yml
+@@ -0,0 +1,27 @@
++name: Verify
++
++on:
++  push:
++    branches: [main]
++  pull_request:
++
++jobs:
++  verify:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++
++      - uses: pnpm/action-setup@v4
++        with:
++          version: 10.28.0
++          run_install: false
++
++      - uses: actions/setup-node@v4
++        with:
++          node-version: 22
++          cache: pnpm
++
++      - run: pnpm install --frozen-lockfile
++      - run: pnpm typecheck
++      - run: pnpm test
++      - run: pnpm build
+diff --git a/README.md b/README.md
+index 9536d94866293c00ac69776e2c47b546214070f7..d265f35fddd61f0865f30d7e2cbeb3d72106241d 100644
+--- a/README.md
++++ b/README.md
+@@ -1,112 +1,95 @@
+-# Staark Next.js
++# Staark Next Platform
+ 
+-Staark Next.js is the Next.js counterpart of [`staark-inc/wordpress`](https://github.com/staark-inc/wordpress).
+-Same idea — one first-party core package plus an S-Hub theme family — but for
+-sites built on **Next.js (App Router)** and driven by **Staark Hub** as the CMS.
++Staark Next Platform is a managed website platform for deploying and operating client-facing Next.js sites, centrally connected to Staark Hub while providing each deployment with its own lightweight administration interface.
+ 
+-It is a pnpm + Turborepo monorepo:
++It is not a generic starter template and it is not a single website. `apps/starter` is the reference deployment used to exercise the platform. Real client deployments should remain thin instances of the same shared packages rather than long-lived forks.
++
++## Architecture
+ 
+ ```text
+-.
+-├── packages/
+-│   ├── core/            # @staark/core — signed Hub client, content model,
+-│   │                    #   S-Hub Inbox forms, revalidation webhook, SEO, security
+-│   └── theme-kit/       # @staark/theme-kit — preset→CSS-var runtime + block renderer
+-├── themes/
+-│   ├── light/           # @staark/theme-light — S-Hub Light (parent theme)
+-│   ├── salong/          # @staark/theme-salong — S-Hub Salong (child of light)
+-│   └── gastfrihet/      # @staark/theme-gastfrihet — S-Hub Gästfrihet (child of light)
+-├── apps/
+-│   └── starter/         # @staark/starter — a client site wired to core + a theme
+-├── docs/
+-│   └── HUB-CONTENT-API.md  # the contract Staark Hub exposes to Next.js sites
+-└── scripts/
+-    └── sign-request.mjs    # sign a request by hand (same HMAC as the WP connector)
++                         Staark Hub
++                       (control plane)
++                              │
++                     signed API/webhooks
++                              │
++                              ▼
++                    Staark Next Platform
++                    @staark/platform
++                     │             │
++              @staark/core   @staark/theme-kit
++                                     │
++                              @staark/theme-*
++                                     │
++                              client deployment
+ ```
+ 
+-## How it maps to the WordPress stack
+-
+-| WordPress | Next.js |
+-| --- | --- |
+-| `plugins/staark-core` | `@staark/core` |
+-| `themes/staark` (S-Hub Light) | `@staark/theme-light` |
+-| child themes (Salong, Bygg, Gästfrihet) | `@staark/theme-*` (extend light via `parentId`) |
+-| `theme.json` / `presets/*.json` | the **same** preset JSON → CSS variables |
+-| block patterns | React sections in the theme's `sections` registry |
+-| Site Editor (client edits content) | **Staark Hub** (content, active preset, token overrides) |
+-| signed Hub connector + S-Hub Inbox | `@staark/core` Hub client + `/api/staark/forms` |
+-| update channel (signed releases) | npm versions + redeploy |
++The monorepo keeps the responsibilities explicit:
+ 
+-The one real difference from WordPress: there is no in-app Site Editor. Content,
+-the active preset and per-site token overrides all live in **Staark Hub**; the
+-site reads them through a signed API. Theme *code* ships as npm packages.
++- `@staark/core` — low-level schemas/contracts, signed Hub protocol, HMAC signing and verification, content-client primitives and shared security primitives.
++- `@staark/platform` — the product-facing Next.js layer: local-admin/auth policy plus the runtime entry points for content, forms, SEO, security and revalidation. This first architecture patch exposes the boundary while existing implementations migrate incrementally.
++- `@staark/theme-kit` — presets/tokens, CSS variable generation, theme composition, section registry and rendering primitives.
++- `@staark/theme-*` — design and section implementations. Themes do not own platform business logic.
++- `apps/starter` — reference client deployment, not the product itself.
+ 
+-## Content model
++See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the ownership and dependency rules.
+ 
+-Staark Hub is the source of truth and serves three shapes (validated with Zod at
+-the edge, in `packages/core/src/schema.ts`):
++## Staark Hub vs local `/admin`
+ 
+-- **SiteSettings** — name, brand, contact, navigation, active `theme.preset` and `theme.overrides`, SEO.
+-- **Page** — a path plus an ordered list of **blocks**; each block's `type` selects a theme section and `props` is validated by that section.
+-- **FormSubmission** — the contact/booking fields (`booking_*` included), forwarded to S-Hub Inbox.
++They solve different problems and both are part of the platform.
+ 
+-See [`docs/HUB-CONTENT-API.md`](docs/HUB-CONTENT-API.md) for the endpoints and the
+-signing scheme (identical, byte-for-byte, to the WordPress connector).
++**Staark Hub** is the central control plane for client/deployment management, pairing, monitoring, support, central configuration and future fleet-wide operations.
+ 
+-## Themes & presets
++**Local `/admin`** is the lightweight administration interface for one deployment: pages/content, media, SEO, forms, business information, theme/preset configuration and deployment-specific settings.
+ 
+-A theme is a set of React **sections** plus one or more **presets**. A preset is
+-the same JSON format as the WordPress theme presets (`tokens.colors`,
+-`tokens.typography`, `tokens.radius`, `tokens.layout`, and a `components` map).
+-`presetToCssVars()` flattens it into `--sk-*` CSS variables on `:root`, so:
++The current runtime supports both local fixture content and signed Hub-backed content. Explicit synchronization rules between Hub-managed state and site-managed state are a later platform patch; this patch does not pretend that ownership problem is already solved.
+ 
+-- switching the active preset (in the Hub) restyles the whole site;
+-- a child theme (`parentId: "light"`) reuses every parent section and adds its own.
++## Themes and deployments
+ 
+-`themes/salong` reuses S-Hub Light's hero/services/process/testimonials/cta/contact
+-and adds `priceList` and `gallery`, using the `salong` preset copied from the
+-WordPress child theme.
++Themes share `@staark/theme-kit`. Child themes such as Salong and Gästfrihet inherit the Light theme through `parentId` and add only their industry-specific sections. Theme code is reusable package code; client content and configuration are not copied into themes.
+ 
+-`themes/gastfrihet` is the same idea for guesthouses, B&Bs and small hotels: it
+-reuses S-Hub Light's sections and adds `rooms` (a room/accommodation listing
+-with price-per-night and amenities) and `amenities` (a feature grid — breakfast,
+-wifi, parking, ...), styled with the `gastfrihet` preset (warm cream, forest
+-green, brass-gold accent).
++Each client gets its own deployment. The selected theme can differ per deployment, but platform improvements should be delivered through the shared packages and a redeploy rather than by maintaining divergent client codebases.
+ 
+-## One deploy per client
++## Hub protocol
+ 
+-Each client site is its own deployment. The theme is chosen in
+-`apps/starter/staark.config.ts` (or `STAARK_THEME`); a redesign to a different
+-theme is a redeploy. The Hub controls all content and the active preset at runtime.
++The Hub connector uses HMAC SHA-256 signatures with timestamp/skew checks and timing-safe comparison. The site secret remains server-only. The API contract is documented in [`docs/HUB-CONTENT-API.md`](docs/HUB-CONTENT-API.md).
+ 
+ ## Local development
+ 
+ ```bash
+-pnpm install
+-cp apps/starter/.env.example apps/starter/.env.local   # defaults to fixtures + salong
+-pnpm dev                                                # http://localhost:3200
++pnpm install --frozen-lockfile
++cp apps/starter/.env.example apps/starter/.env.local
++pnpm dev
+ ```
+ 
+-Without a Hub pairing the starter serves the **fixture** content in
+-`apps/starter/content/` (a demo salon site), so you can build and theme before a
+-site is paired. To connect a real Hub, set `STAARK_SITE_ID` / `STAARK_SITE_SECRET`
+-(from pairing) and `STAARK_CONTENT_SOURCE=hub`.
++The reference deployment defaults to fixture content so theme and platform work can continue before Hub pairing. To use Hub content, configure `STAARK_SITE_ID`, `STAARK_SITE_SECRET` and `STAARK_CONTENT_SOURCE=hub`.
++
++Local `/admin` keeps development convenience defaults. In production there are no fallback administrator credentials: set `ADMIN_USERNAME`, `ADMIN_PASSWORD` and an `ADMIN_SESSION_SECRET` of at least 32 characters.
++
++## Verification
++
++The same quality gates are used locally and in GitHub Actions:
+ 
+ ```bash
+-pnpm build       # build all packages + the starter app
+-pnpm typecheck    # type-check the whole workspace
+-pnpm test         # unit tests (signing / form tokens)
++pnpm install --frozen-lockfile
++pnpm typecheck
++pnpm test
++pnpm build
+ ```
+ 
++The repository CI intentionally uses one verification job rather than a matrix of redundant jobs.
++
+ ## Requirements
+ 
+-- Node.js 20.9+
++- Node.js 20.9+ (CI currently verifies on Node.js 22)
+ - pnpm 10+
+-- Next.js 16, React 19
++- Next.js 16
++- React 19
+ 
+-## Security
++## Security baseline
+ 
+-- Public forms: signed time-trap token, honeypot, same-origin check, rate limit, strict field whitelist. The site never sends mail — the Hub (S-Hub Inbox) does.
+-- Hub requests and the revalidation webhook are HMAC-signed both ways.
+-- `staarkSecurityHeaders()` sets CSP, HSTS, `X-Content-Type-Options`, `Referrer-Policy` etc. in `next.config.ts`.
+-- The site secret is server-only (never a `NEXT_PUBLIC_` variable).
++- Production local-admin credentials and session secret are required configuration; development defaults never silently become production credentials.
++- Every local admin data/mutation API is protected by the authenticated admin session.
++- Public forms use a signed time-trap token, honeypot, same-origin check, rate limiting and a strict field whitelist.
++- Hub requests and revalidation webhooks are HMAC-signed with timestamp/skew protection and timing-safe signature checks.
++- Security headers include CSP, HSTS in production, `X-Content-Type-Options`, `Referrer-Policy` and related hardening.
++- Site secrets are server-only and must never use `NEXT_PUBLIC_` variables.
+diff --git a/apps/starter/.env.example b/apps/starter/.env.example
+index 60a270ed4c6ab499fef4102ac539a71e4aa8f3f7..8a744814e94976dc492ec87fe58a5bf2763cf8a6 100644
+--- a/apps/starter/.env.example
++++ b/apps/starter/.env.example
+@@ -11,3 +11,9 @@ STAARK_THEME=salong
+ 
+ # Secret used to sign public form tokens in fixtures mode (Hub secret is used when paired)
+ STAARK_FORM_SECRET=dev-form-secret-change-me
++
++# Local /admin authentication. Development has safe convenience defaults.
++# Production requires all three values and refuses to fall back to defaults.
++# ADMIN_USERNAME=site-admin
++# ADMIN_PASSWORD=replace-with-a-strong-password
++# ADMIN_SESSION_SECRET=replace-with-at-least-32-random-characters
+diff --git a/apps/starter/app/(site)/[...slug]/page.tsx b/apps/starter/app/(site)/[...slug]/page.tsx
+index 0eb04cbbb8df3db1879d6390836c984ca549e481..62759735c7e595d9af2fc154e9c9e9d115328c66 100644
+--- a/apps/starter/app/(site)/[...slug]/page.tsx
++++ b/apps/starter/app/(site)/[...slug]/page.tsx
+@@ -1,6 +1,6 @@
+ import { notFound } from "next/navigation";
+ import type { Metadata } from "next";
+-import { buildMetadata } from "@staark/core/server";
++import { buildMetadata } from "@staark/platform/server";
+ import { BlockRenderer } from "@staark/theme-kit";
+ import { content } from "@/lib/staark";
+ import { theme, themeRegistry } from "@/staark.config";
+diff --git a/apps/starter/app/(site)/layout.tsx b/apps/starter/app/(site)/layout.tsx
+index 111dfdcca03c42cd987b0b63c3bff553198cf185..58b0a3af23376b42dee244b516f43cdcac49808b 100644
+--- a/apps/starter/app/(site)/layout.tsx
++++ b/apps/starter/app/(site)/layout.tsx
+@@ -1,5 +1,5 @@
+ import type { Metadata } from "next";
+-import { buildRootMetadata, localBusinessJsonLd, jsonLdString } from "@staark/core/server";
++import { buildRootMetadata, localBusinessJsonLd, jsonLdString } from "@staark/platform/server";
+ import { presetToCssVars, cssVarsToString, resolvePreset } from "@staark/theme-kit";
+ import { content } from "@/lib/staark";
+ import { theme, SiteHeader, SiteFooter } from "@/staark.config";
+diff --git a/apps/starter/app/(site)/page.tsx b/apps/starter/app/(site)/page.tsx
+index 970c371622ed6c80266f3521f620ae334187daef..5bbbc21fe3c2be96450429a01e8ea68c85cfac9f 100644
+--- a/apps/starter/app/(site)/page.tsx
++++ b/apps/starter/app/(site)/page.tsx
+@@ -1,6 +1,6 @@
+ import { notFound } from "next/navigation";
+ import type { Metadata } from "next";
+-import { buildMetadata } from "@staark/core/server";
++import { buildMetadata } from "@staark/platform/server";
+ import { BlockRenderer } from "@staark/theme-kit";
+ import { content } from "@/lib/staark";
+ import { theme, themeRegistry } from "@/staark.config";
+diff --git a/apps/starter/app/api/admin/blocks/route.ts b/apps/starter/app/api/admin/blocks/route.ts
+index 83ffafe4370671f33589fece89f82d15bfae57cf..2639b5e4d7da9d1eaea057f49a53325698cee566 100644
+--- a/apps/starter/app/api/admin/blocks/route.ts
++++ b/apps/starter/app/api/admin/blocks/route.ts
+@@ -1,5 +1,5 @@
+ import { NextResponse } from "next/server";
+-import { devOnly } from "../guard";
++import { requireAuth } from "../guard";
+ 
+ type BlockTemplate = {
+   type: string;
+@@ -180,7 +180,7 @@ const THEME_BLOCKS: Record<string, BlockTemplate[]> = {
+ };
+ 
+ export async function GET() {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+ 
+   const activeTheme = process.env.STAARK_THEME ?? "light";
+diff --git a/apps/starter/app/api/admin/forms/route.ts b/apps/starter/app/api/admin/forms/route.ts
+index 5fd74c3ecfc8fe43519d58601f85dfa258a37c7e..d8124e4a085d6c6321e09ec3a085c6ad8f6613f3 100644
+--- a/apps/starter/app/api/admin/forms/route.ts
++++ b/apps/starter/app/api/admin/forms/route.ts
+@@ -1,12 +1,12 @@
+ import { NextResponse } from "next/server";
+ import { readFile, writeFile } from "node:fs/promises";
+ import path from "node:path";
+-import { devOnly } from "../guard";
++import { requireAuth } from "../guard";
+ 
+ const SUBMISSIONS_FILE = path.join(process.cwd(), ".staark", "submissions.jsonl");
+ 
+ export async function GET() {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+ 
+   let lines: string[];
+@@ -29,7 +29,7 @@ export async function GET() {
+ }
+ 
+ export async function DELETE() {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+ 
+   try {
+diff --git a/apps/starter/app/api/admin/guard.ts b/apps/starter/app/api/admin/guard.ts
+index 590f2a71057f6d0fe7d307884264d69204c39a4d..dbae1153d732ff89538de8bbd6d3568d0c43f2f7 100644
+--- a/apps/starter/app/api/admin/guard.ts
++++ b/apps/starter/app/api/admin/guard.ts
+@@ -8,8 +8,3 @@ export async function requireAuth(): Promise<NextResponse | null> {
+   }
+   return null;
+ }
+-
+-/** @deprecated Use requireAuth() instead */
+-export function devOnly(): NextResponse | null {
+-  return null;
+-}
+diff --git a/apps/starter/app/api/admin/media/route.ts b/apps/starter/app/api/admin/media/route.ts
+index 59037e6c93a38ccd493a51207ed79b35c72763dc..4d4807576a61d9c75887563e225428837b4bb398 100644
+--- a/apps/starter/app/api/admin/media/route.ts
++++ b/apps/starter/app/api/admin/media/route.ts
+@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
+ import { readdir, unlink, mkdir } from "node:fs/promises";
+ import { writeFile } from "node:fs/promises";
+ import path from "node:path";
++import { requireAuth } from "../guard";
+ 
+ function uploadsDir(): string {
+   return path.join(process.cwd(), "public", "uploads");
+ }
+ 
+ export async function GET() {
++  const blocked = await requireAuth();
++  if (blocked) return blocked;
+   const dir = uploadsDir();
+   try {
+     await mkdir(dir, { recursive: true });
+@@ -27,6 +30,8 @@ export async function GET() {
+ }
+ 
+ export async function POST(req: NextRequest) {
++  const blocked = await requireAuth();
++  if (blocked) return blocked;
+   const dir = uploadsDir();
+   await mkdir(dir, { recursive: true });
+ 
+@@ -51,6 +56,8 @@ export async function POST(req: NextRequest) {
+ }
+ 
+ export async function DELETE(req: NextRequest) {
++  const blocked = await requireAuth();
++  if (blocked) return blocked;
+   const { name } = (await req.json()) as { name?: string };
+   if (!name) {
+     return NextResponse.json({ error: "Missing file name." }, { status: 400 });
+diff --git a/apps/starter/app/api/admin/pages/[file]/route.ts b/apps/starter/app/api/admin/pages/[file]/route.ts
+index 3d7723d8c86724757be5b543e93e3312c8ea9179..43ea2af2ce82b6586e89270d91b58563bae8ad61 100644
+--- a/apps/starter/app/api/admin/pages/[file]/route.ts
++++ b/apps/starter/app/api/admin/pages/[file]/route.ts
+@@ -1,7 +1,7 @@
+ import { NextResponse } from "next/server";
+ import { readFile, writeFile, unlink } from "node:fs/promises";
+ import path from "node:path";
+-import { devOnly } from "../../guard";
++import { requireAuth } from "../../guard";
+ 
+ function pagesDir(): string {
+   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
+@@ -12,7 +12,7 @@ function pagesDir(): string {
+ type Ctx = { params: Promise<{ file: string }> };
+ 
+ export async function GET(_req: Request, ctx: Ctx) {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+   const { file } = await ctx.params;
+   const filePath = path.join(pagesDir(), file);
+@@ -25,7 +25,7 @@ export async function GET(_req: Request, ctx: Ctx) {
+ }
+ 
+ export async function PUT(req: Request, ctx: Ctx) {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+   const { file } = await ctx.params;
+   const body = await req.json();
+@@ -34,7 +34,7 @@ export async function PUT(req: Request, ctx: Ctx) {
+ }
+ 
+ export async function DELETE(_req: Request, ctx: Ctx) {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+   const { file } = await ctx.params;
+   try {
+diff --git a/apps/starter/app/api/admin/pages/route.ts b/apps/starter/app/api/admin/pages/route.ts
+index 0da7e3538b4bb52c82a03d6909ad0ea5edc8f598..1bbaf2cc72286a7abb0c0c7960cb0f9cc4ee4a25 100644
+--- a/apps/starter/app/api/admin/pages/route.ts
++++ b/apps/starter/app/api/admin/pages/route.ts
+@@ -1,7 +1,7 @@
+ import { NextResponse } from "next/server";
+ import { readdir, readFile, writeFile } from "node:fs/promises";
+ import path from "node:path";
+-import { devOnly } from "../guard";
++import { requireAuth } from "../guard";
+ 
+ function pagesDir(): string {
+   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
+@@ -10,7 +10,7 @@ function pagesDir(): string {
+ }
+ 
+ export async function GET() {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+   const dir = pagesDir();
+   const files = (await readdir(dir)).filter((f) => f.endsWith(".json")).sort();
+@@ -24,7 +24,7 @@ export async function GET() {
+ }
+ 
+ export async function POST(req: Request) {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+   const body = await req.json();
+   const slug = (body.path as string).replace(/^\//, "") || "index";
+diff --git a/apps/starter/app/api/admin/seo/pages/route.ts b/apps/starter/app/api/admin/seo/pages/route.ts
+index ccadb0228fe37c27c525c7bc9c92e2cd95118a97..e14fa7eb9cc3d9ff9fd0b1ae7625b7c43ab23b1d 100644
+--- a/apps/starter/app/api/admin/seo/pages/route.ts
++++ b/apps/starter/app/api/admin/seo/pages/route.ts
+@@ -1,6 +1,7 @@
+ import { NextResponse } from "next/server";
+ import { readdir, readFile } from "node:fs/promises";
+ import path from "node:path";
++import { requireAuth } from "../../guard";
+ 
+ function contentDir(): string {
+   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
+@@ -10,6 +11,8 @@ function contentDir(): string {
+ export const dynamic = "force-dynamic";
+ 
+ export async function GET() {
++  const blocked = await requireAuth();
++  if (blocked) return blocked;
+   const dir = contentDir();
+   const pagesDir = path.join(dir, "pages");
+ 
+diff --git a/apps/starter/app/api/admin/site/route.ts b/apps/starter/app/api/admin/site/route.ts
+index 204e1f58fb1d3893852af7912d08b595c4c0e9d1..5709b835660b4eb992618c1825c60ddf2891d91a 100644
+--- a/apps/starter/app/api/admin/site/route.ts
++++ b/apps/starter/app/api/admin/site/route.ts
+@@ -1,7 +1,7 @@
+ import { NextResponse } from "next/server";
+ import { readFile, writeFile } from "node:fs/promises";
+ import path from "node:path";
+-import { devOnly } from "../guard";
++import { requireAuth } from "../guard";
+ 
+ function sitePath(): string {
+   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
+@@ -10,14 +10,14 @@ function sitePath(): string {
+ }
+ 
+ export async function GET() {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+   const raw = await readFile(sitePath(), "utf8");
+   return NextResponse.json(JSON.parse(raw));
+ }
+ 
+ export async function PUT(req: Request) {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+   const body = await req.json();
+   await writeFile(sitePath(), JSON.stringify(body, null, 2) + "\n", "utf8");
+diff --git a/apps/starter/app/api/admin/themes/activate/route.ts b/apps/starter/app/api/admin/themes/activate/route.ts
+index 72b3795aa8cc8662ffa0afedd64a17f04579d8c6..9dd08af11328a1136ffb9c4b74bd042ccf31e2a3 100644
+--- a/apps/starter/app/api/admin/themes/activate/route.ts
++++ b/apps/starter/app/api/admin/themes/activate/route.ts
+@@ -1,7 +1,7 @@
+ import { NextResponse } from "next/server";
+ import { readFile, writeFile, access } from "node:fs/promises";
+ import path from "node:path";
+-import { devOnly } from "../../guard";
++import { requireAuth } from "../../guard";
+ 
+ function envPath(): string {
+   return path.resolve(process.cwd(), ".env.local");
+@@ -16,7 +16,7 @@ function setEnvVar(env: string, key: string, value: string): string {
+ }
+ 
+ export async function POST(req: Request) {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+ 
+   const { theme, preset } = (await req.json()) as { theme: string; preset?: string };
+diff --git a/apps/starter/app/api/admin/themes/route.ts b/apps/starter/app/api/admin/themes/route.ts
+index 7ee053918ded6829ef4d8c1c88f034040e6700dc..40f4ab3e57d06de8ccbc579ce3a07d4d14dc0839 100644
+--- a/apps/starter/app/api/admin/themes/route.ts
++++ b/apps/starter/app/api/admin/themes/route.ts
+@@ -1,7 +1,7 @@
+ import { NextResponse } from "next/server";
+ import { readdir, readFile } from "node:fs/promises";
+ import path from "node:path";
+-import { devOnly } from "../guard";
++import { requireAuth } from "../guard";
+ 
+ type ThemeInfo = {
+   id: string;
+@@ -16,7 +16,7 @@ async function readJson(file: string): Promise<Record<string, unknown>> {
+ }
+ 
+ export async function GET() {
+-  const blocked = devOnly();
++  const blocked = await requireAuth();
+   if (blocked) return blocked;
+ 
+   const themesRoot = path.resolve(process.cwd(), "../../themes");
+diff --git a/apps/starter/app/api/staark/forms/route.ts b/apps/starter/app/api/staark/forms/route.ts
+index 62941c0ad36cd3a0540123292fa7fafa2e383d22..f2b16352fea7737a76ad53ead88739907c8e3817 100644
+--- a/apps/starter/app/api/staark/forms/route.ts
++++ b/apps/starter/app/api/staark/forms/route.ts
+@@ -1,4 +1,4 @@
+-import { createFormsRoute } from "@staark/core/server";
++import { createFormsRoute } from "@staark/platform/server";
+ import { content } from "@/lib/staark";
+ 
+ // GET ?form=<id> issues a time-trap token; POST submits to S-Hub Inbox via the Hub.
+diff --git a/apps/starter/app/api/staark/revalidate/route.ts b/apps/starter/app/api/staark/revalidate/route.ts
+index 7bcee440125180389d49183b2791b5eaa2cf679d..e6cfceb55f1542ec0780b5e7b7a83eba8c115100 100644
+--- a/apps/starter/app/api/staark/revalidate/route.ts
++++ b/apps/starter/app/api/staark/revalidate/route.ts
+@@ -1,4 +1,4 @@
+-import { createRevalidateRoute } from "@staark/core/server";
++import { createRevalidateRoute } from "@staark/platform/server";
+ import { content } from "@/lib/staark";
+ 
+ // Signed webhook from Staark Hub: purges cache tags/paths when content changes.
+diff --git a/apps/starter/app/robots.ts b/apps/starter/app/robots.ts
+index 7341282bbf0c4439de58f809e0a574f74ffb17b5..d7c545f9f707ab64dd702a661b9c92744a2d39de 100644
+--- a/apps/starter/app/robots.ts
++++ b/apps/starter/app/robots.ts
+@@ -1,5 +1,5 @@
+ import type { MetadataRoute } from "next";
+-import { buildRobots } from "@staark/core/server";
++import { buildRobots } from "@staark/platform/server";
+ import { content } from "@/lib/staark";
+ 
+ export default async function robots(): Promise<MetadataRoute.Robots> {
+diff --git a/apps/starter/app/sitemap.ts b/apps/starter/app/sitemap.ts
+index 9782339d54517b888e953c17a98c9ca84eeeae5b..4cf4b40a6dad8aba889bf83dcd1835dae57f4e29 100644
+--- a/apps/starter/app/sitemap.ts
++++ b/apps/starter/app/sitemap.ts
+@@ -1,5 +1,5 @@
+ import type { MetadataRoute } from "next";
+-import { buildSitemap } from "@staark/core/server";
++import { buildSitemap } from "@staark/platform/server";
+ import { content } from "@/lib/staark";
+ 
+ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+diff --git a/apps/starter/lib/auth.ts b/apps/starter/lib/auth.ts
+index 153b3be2309d362821256fa1ce47e4a382145c46..4071de12778fb137cc7aa8dbe049af15fb146e30 100644
+--- a/apps/starter/lib/auth.ts
++++ b/apps/starter/lib/auth.ts
+@@ -1,5 +1,6 @@
+ import { getIronSession, type SessionOptions } from "iron-session";
+ import { cookies } from "next/headers";
++import { resolveAdminAuthConfig } from "@staark/platform/server";
+ 
+ export type SessionData = {
+   isLoggedIn: boolean;
+@@ -7,26 +8,25 @@ export type SessionData = {
+   loginAt?: number;
+ };
+ 
+-const sessionOptions: SessionOptions = {
+-  password:
+-    process.env.ADMIN_SESSION_SECRET ??
+-    "staark-dev-secret-at-least-32-chars-long!!",
+-  cookieName: "staark-admin",
+-  cookieOptions: {
+-    secure: process.env.NODE_ENV === "production",
+-    httpOnly: true,
+-    sameSite: "lax" as const,
+-  },
+-};
++function sessionOptions(): SessionOptions {
++  const config = resolveAdminAuthConfig();
++  return {
++    password: config.sessionSecret,
++    cookieName: "staark-admin",
++    cookieOptions: {
++      secure: process.env.NODE_ENV === "production",
++      httpOnly: true,
++      sameSite: "lax" as const,
++    },
++  };
++}
+ 
+ export async function getSession() {
+   const cookieStore = await cookies();
+-  return getIronSession<SessionData>(cookieStore, sessionOptions);
++  return getIronSession<SessionData>(cookieStore, sessionOptions());
+ }
+ 
+ export function getAdminCredentials(): { username: string; password: string } {
+-  return {
+-    username: process.env.ADMIN_USERNAME ?? "admin",
+-    password: process.env.ADMIN_PASSWORD ?? "admin",
+-  };
++  const { username, password } = resolveAdminAuthConfig();
++  return { username, password };
+ }
+diff --git a/apps/starter/lib/staark.ts b/apps/starter/lib/staark.ts
+index 23fbe7b53288be904ae73962bb6301eaa86769bb..f4c6b35b84d2da4fdd8b44256ee1514fc5ee0faa 100644
+--- a/apps/starter/lib/staark.ts
++++ b/apps/starter/lib/staark.ts
+@@ -1,4 +1,4 @@
+-import { createStaarkContent } from "@staark/core/server";
++import { createStaarkContent } from "@staark/platform/server";
+ 
+ /** One content client per server process, reused across requests. */
+ export const content = createStaarkContent();
+diff --git a/apps/starter/next.config.ts b/apps/starter/next.config.ts
+index 541f6ea46656877133b3894d2b00f2dc0d50a8fc..114feb11214364487da3de8179ad93c36adfa12b 100644
+--- a/apps/starter/next.config.ts
++++ b/apps/starter/next.config.ts
+@@ -1,10 +1,10 @@
+ import type { NextConfig } from "next";
+-import { staarkSecurityHeaders } from "@staark/core/config";
++import { staarkSecurityHeaders } from "@staark/platform/config";
+ 
+ const nextConfig: NextConfig = {
+   reactStrictMode: true,
+   // Compile the workspace theme/core TypeScript sources directly.
+-  transpilePackages: ["@staark/core", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-gastfrihet"],
++  transpilePackages: ["@staark/core", "@staark/platform", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-gastfrihet"],
+   async headers() {
+     return [{ source: "/:path*", headers: staarkSecurityHeaders() }];
+   },
+diff --git a/apps/starter/package.json b/apps/starter/package.json
+index fdea88766f5ee4804a7f95e79eaed89908a32dfd..7539148d67d10c57f37050f64327210b3dbe4023 100644
+--- a/apps/starter/package.json
++++ b/apps/starter/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "@staark/starter",
+   "version": "0.1.0",
+-  "description": "Staark Next.js starter — a client site wired to Staark Hub through @staark/core with an S-Hub theme.",
++  "description": "Reference Staark Next Platform deployment with local admin, Staark Hub integration and selectable Staark themes.",
+   "private": true,
+   "scripts": {
+     "dev": "next dev -p 3200",
+@@ -11,6 +11,7 @@
+   },
+   "dependencies": {
+     "@staark/core": "workspace:*",
++    "@staark/platform": "workspace:*",
+     "@staark/theme-gastfrihet": "workspace:*",
+     "@staark/theme-kit": "workspace:*",
+     "@staark/theme-light": "workspace:*",
+diff --git a/apps/starter/staark.config.ts b/apps/starter/staark.config.ts
+index df9f8fee0e8587fbb2030873c2a0462c9ab7b280..1bd4b8763e035dc2c3552a5367986cb60d0d5dca 100644
+--- a/apps/starter/staark.config.ts
++++ b/apps/starter/staark.config.ts
+@@ -5,8 +5,9 @@ import gastfrihetTheme, { gastfrihetRegistry } from "@staark/theme-gastfrihet";
+ 
+ /**
+  * Per-client theme selection. In this "one deploy per client" model the theme
+- * is chosen here (or via STAARK_THEME) and a redesign is a redeploy. The Hub
+- * still controls all content, the active preset and token overrides at runtime.
++ * is chosen here (or via STAARK_THEME) and a redesign is a redeploy. Runtime
++ * content may come from the local deployment or Staark Hub; theme code remains
++ * deployment-owned while presets and token overrides are site configuration.
+  */
+ const THEMES: Record<string, { theme: ThemeDefinition; registry?: Record<string, ThemeDefinition> }> = {
+   light: { theme: lightTheme },
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..797d1c16e07e9375d46ea8fb8a313a294037c72d
+--- /dev/null
++++ b/docs/ARCHITECTURE.md
+@@ -0,0 +1,58 @@
++# Staark Next Platform architecture
++
++Staark Next Platform is the reusable product layer behind independent Staark-managed Next.js client deployments. A deployment is an instance of the platform, not a fork of it.
++
++## Ownership boundaries
++
++### Staark Hub — control plane
++
++Staark Hub owns cross-deployment operations: client and deployment records, pairing, central configuration, monitoring, support, and future licensing/billing or fleet-wide actions. Hub communication with a deployment uses the signed protocol in `@staark/core`.
++
++### Local `/admin` — deployment administration
++
++The local admin belongs to the client deployment. Its responsibility is deployment-specific website administration such as pages/content, media, SEO, forms, business information, theme/preset configuration and settings.
++
++The two interfaces are complementary. A Hub connection must not be used as a reason to remove `/admin`, and local `/admin` must not become a second fleet control plane. Synchronization between Hub-managed and site-managed state must use explicit contracts.
++
++## Package boundaries
++
++```text
++@staark/core
++  contracts, schemas, HMAC signing/verification, Hub protocol/client primitives
++        ↑
++@staark/platform
++  Next.js product entry point, local-admin/auth policy, forms, SEO, security,
++  revalidation and runtime integration
++        ↑
++client deployment (apps/starter is the reference deployment)
++
++@staark/theme-kit
++  tokens, presets, CSS variables, section registry and rendering primitives
++        ↑
++@staark/theme-*
++  visual design and section implementations
++```
++
++This first architecture patch establishes `@staark/platform` as the product-facing boundary without forcing a risky rewrite. Some existing Next-specific implementations are still re-exported from `@staark/core` for compatibility. They can move behind the platform package incrementally once each boundary has focused tests. New client-deployment code should prefer `@staark/platform/server` and `@staark/platform/config` for product behavior.
++
++Themes must not accumulate authentication, Hub synchronization, forms, SEO, security or other platform business logic.
++
++## Client deployments
++
++Each client gets an independent deployment with its own environment, content/configuration and selected theme. The deployment should stay thin: client-specific choices belong in configuration/content, while reusable behavior belongs in the platform or theme packages.
++
++Platform updates propagate by updating the shared workspace/package version and redeploying the client instance. Do not copy the platform into per-client forks.
++
++## Authentication configuration
++
++Local development may use the built-in `admin` development credentials and development session secret. Production must provide all of:
++
++- `ADMIN_USERNAME`
++- `ADMIN_PASSWORD`
++- `ADMIN_SESSION_SECRET` (at least 32 characters)
++
++`resolveAdminAuthConfig()` throws a configuration error instead of silently selecting defaults in production. Admin API routes must use the authenticated session guard; hiding the admin UI is not an authorization boundary.
++
++## Current migration boundary
++
++The repository already has working signed Hub communication, fixtures, forms, SEO, security headers, revalidation and theme inheritance. This patch preserves those implementations. It changes the public product boundary first, then later patches can relocate implementations out of `@staark/core` in smaller reviewable steps.
+diff --git a/package.json b/package.json
+index fdc69e28e3bb3c01bcb349717eb1b56ec0d2f562..be0dd507c46d5210b14a603dd5f1f37881c18631 100644
+--- a/package.json
++++ b/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "staark-next",
+   "private": true,
+-  "description": "Staark Next.js stack: Staark Hub core package + S-Hub themes for Next.js sites managed from Staark Hub.",
++  "description": "Staark Next Platform monorepo: managed Next.js client deployments, platform runtime, themes and Staark Hub integration.",
+   "packageManager": "pnpm@10.28.0",
+   "engines": {
+     "node": ">=20.9"
+diff --git a/packages/core/package.json b/packages/core/package.json
+index cc06db7e659343e3cf5168a5bb9670684402d630..1d17cac99dda3c91040822a07a0284288f125315 100644
+--- a/packages/core/package.json
++++ b/packages/core/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "@staark/core",
+   "version": "0.1.0",
+-  "description": "Staark Hub for Next.js: signed Hub client, content model, S-Hub Inbox forms, revalidation webhook, SEO and security helpers.",
++  "description": "Low-level Staark contracts, signed Hub protocol, content client and shared security primitives.",
+   "private": true,
+   "type": "module",
+   "sideEffects": false,
+diff --git a/packages/platform/package.json b/packages/platform/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..c538419d8c05895b224fddd358fd5ead5dc7da0a
+--- /dev/null
++++ b/packages/platform/package.json
+@@ -0,0 +1,31 @@
++{
++  "name": "@staark/platform",
++  "version": "0.1.0",
++  "description": "Staark Next Platform product layer for managed client deployments, local administration and Next.js runtime integration.",
++  "private": true,
++  "type": "module",
++  "sideEffects": false,
++  "exports": {
++    ".": "./src/index.ts",
++    "./server": "./src/server.ts",
++    "./config": "./src/config.ts"
++  },
++  "scripts": {
++    "typecheck": "tsc -p tsconfig.json",
++    "test": "node --experimental-strip-types --test test/*.test.ts"
++  },
++  "dependencies": {
++    "@staark/core": "workspace:*"
++  },
++  "peerDependencies": {
++    "next": ">=16.0.0",
++    "react": ">=19.0.0"
++  },
++  "devDependencies": {
++    "@types/node": "^22.20.4",
++    "@types/react": "^19.3.0",
++    "next": "^16.3.6",
++    "react": "^19.3.0",
++    "typescript": "^5.9.3"
++  }
++}
+diff --git a/packages/platform/src/admin/auth-config.ts b/packages/platform/src/admin/auth-config.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..67286e2dc99e1827d498892e97bab5fd7468b16b
+--- /dev/null
++++ b/packages/platform/src/admin/auth-config.ts
+@@ -0,0 +1,61 @@
++const DEV_ADMIN_USERNAME = "admin";
++const DEV_ADMIN_PASSWORD = "admin";
++const DEV_SESSION_SECRET = "staark-dev-secret-at-least-32-chars-long!!";
++
++export type AdminAuthConfig = {
++  username: string;
++  password: string;
++  sessionSecret: string;
++};
++
++export class StaarkConfigurationError extends Error {
++  constructor(message: string) {
++    super(message);
++    this.name = "StaarkConfigurationError";
++  }
++}
++
++function value(env: NodeJS.ProcessEnv, key: string): string | undefined {
++  const raw = env[key];
++  return raw?.trim() || undefined;
++}
++
++/**
++ * Resolve local-admin authentication settings.
++ *
++ * Development keeps explicit convenience defaults so a fresh fixture deployment
++ * remains easy to run. Production never receives default credentials or a
++ * default session secret: missing values are a configuration error.
++ */
++export function resolveAdminAuthConfig(env: NodeJS.ProcessEnv = process.env): AdminAuthConfig {
++  const production = env.NODE_ENV === "production";
++  const username = value(env, "ADMIN_USERNAME");
++  const password = value(env, "ADMIN_PASSWORD");
++  const sessionSecret = value(env, "ADMIN_SESSION_SECRET");
++
++  if (production) {
++    const missing = [
++      !username && "ADMIN_USERNAME",
++      !password && "ADMIN_PASSWORD",
++      !sessionSecret && "ADMIN_SESSION_SECRET",
++    ].filter((item): item is string => Boolean(item));
++
++    if (missing.length) {
++      throw new StaarkConfigurationError(
++        `Missing production admin configuration: ${missing.join(", ")}. Set explicit local /admin credentials and a session secret before starting the deployment.`,
++      );
++    }
++  }
++
++  const resolved: AdminAuthConfig = {
++    username: username ?? DEV_ADMIN_USERNAME,
++    password: password ?? DEV_ADMIN_PASSWORD,
++    sessionSecret: sessionSecret ?? DEV_SESSION_SECRET,
++  };
++
++  if (resolved.sessionSecret.length < 32) {
++    throw new StaarkConfigurationError("ADMIN_SESSION_SECRET must contain at least 32 characters.");
++  }
++
++  return resolved;
++}
+diff --git a/packages/platform/src/config.ts b/packages/platform/src/config.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..827d3955da9c062b45f877530617f132db326296
+--- /dev/null
++++ b/packages/platform/src/config.ts
+@@ -0,0 +1,2 @@
++// Next.js configuration helpers exposed from the platform boundary.
++export { staarkSecurityHeaders } from "@staark/core/config";
+diff --git a/packages/platform/src/index.ts b/packages/platform/src/index.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..4acaaf153522af32472c8763b5abf7e5c5bc7b76
+--- /dev/null
++++ b/packages/platform/src/index.ts
+@@ -0,0 +1,2 @@
++/** Public types for the Staark Next Platform product layer. */
++export type { AdminAuthConfig } from "./admin/auth-config";
+diff --git a/packages/platform/src/server.ts b/packages/platform/src/server.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..c9a67910322bd82bae3ce0a58e559cab38b4d939
+--- /dev/null
++++ b/packages/platform/src/server.ts
+@@ -0,0 +1,21 @@
++// Server-side product entry point for a Staark client deployment.
++// Existing Next-specific implementations are re-exported through this boundary
++// in the first architecture patch and can migrate out of core incrementally.
++export {
++  createStaarkContent,
++  createFormsRoute,
++  createRevalidateRoute,
++  buildMetadata,
++  buildRootMetadata,
++  buildSitemap,
++  buildRobots,
++  localBusinessJsonLd,
++  jsonLdString,
++  type StaarkContent,
++} from "@staark/core/server";
++
++export {
++  resolveAdminAuthConfig,
++  StaarkConfigurationError,
++  type AdminAuthConfig,
++} from "./admin/auth-config";
+diff --git a/packages/platform/test/admin-auth-config.test.ts b/packages/platform/test/admin-auth-config.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..c57296bbbdf1180517b0c588f2288e0f0a943c86
+--- /dev/null
++++ b/packages/platform/test/admin-auth-config.test.ts
+@@ -0,0 +1,45 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import {
++  resolveAdminAuthConfig,
++  StaarkConfigurationError,
++} from "../src/admin/auth-config.ts";
++
++test("development keeps explicit convenience defaults", () => {
++  assert.deepEqual(resolveAdminAuthConfig({ NODE_ENV: "development" }), {
++    username: "admin",
++    password: "admin",
++    sessionSecret: "staark-dev-secret-at-least-32-chars-long!!",
++  });
++});
++
++test("production refuses to start admin auth with missing secrets", () => {
++  assert.throws(
++    () => resolveAdminAuthConfig({ NODE_ENV: "production" }),
++    (error: unknown) =>
++      error instanceof StaarkConfigurationError &&
++      error.message.includes("ADMIN_USERNAME") &&
++      error.message.includes("ADMIN_PASSWORD") &&
++      error.message.includes("ADMIN_SESSION_SECRET"),
++  );
++});
++
++test("production accepts explicit credentials and a strong session secret", () => {
++  const config = resolveAdminAuthConfig({
++    NODE_ENV: "production",
++    ADMIN_USERNAME: "owner",
++    ADMIN_PASSWORD: "a-real-password",
++    ADMIN_SESSION_SECRET: "0123456789abcdef0123456789abcdef",
++  });
++
++  assert.equal(config.username, "owner");
++  assert.equal(config.password, "a-real-password");
++  assert.equal(config.sessionSecret, "0123456789abcdef0123456789abcdef");
++});
++
++test("short session secrets are rejected in every environment", () => {
++  assert.throws(
++    () => resolveAdminAuthConfig({ NODE_ENV: "development", ADMIN_SESSION_SECRET: "too-short" }),
++    /at least 32 characters/,
++  );
++});
+diff --git a/packages/platform/tsconfig.json b/packages/platform/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..26e99e8fa12b3c871c604d6f94dc853ae6b384c3
+--- /dev/null
++++ b/packages/platform/tsconfig.json
+@@ -0,0 +1,8 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "types": ["node"],
++    "allowImportingTsExtensions": true
++  },
++  "include": ["src", "test"]
++}
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index f86f39f2191206ff5988f046b4e725f4a998e1bb..fa423309df8f95b812dfb5217dabd39e51781632 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -23,6 +23,9 @@ importers:
+       '@staark/core':
+         specifier: workspace:*
+         version: link:../../packages/core
++      '@staark/platform':
++        specifier: workspace:*
++        version: link:../../packages/platform
+       '@staark/theme-gastfrihet':
+         specifier: workspace:*
+         version: link:../../themes/gastfrihet
+@@ -86,6 +89,28 @@ importers:
+         specifier: ^5.9.3
+         version: 5.9.3
+ 
++  packages/platform:
++    dependencies:
++      '@staark/core':
++        specifier: workspace:*
++        version: link:../core
++    devDependencies:
++      '@types/node':
++        specifier: ^22.20.4
++        version: 22.20.4
++      '@types/react':
++        specifier: ^19.3.0
++        version: 19.3.0
++      next:
++        specifier: ^16.3.6
++        version: 16.3.6(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
++      react:
++        specifier: ^19.3.0
++        version: 19.3.0
++      typescript:
++        specifier: ^5.9.3
++        version: 5.9.3
++
+   packages/theme-kit:
+     dependencies:
+       '@staark/core':

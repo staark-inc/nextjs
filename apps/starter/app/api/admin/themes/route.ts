@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { devOnly } from "../guard";
+import { requireAuth } from "../guard";
 
 type ThemeInfo = {
   id: string;
@@ -16,7 +16,7 @@ async function readJson(file: string): Promise<Record<string, unknown>> {
 }
 
 export async function GET() {
-  const blocked = devOnly();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
 
   const themesRoot = path.resolve(process.cwd(), "../../themes");

@@ -1,6 +1,5 @@
-import { checkFormToken, issueFormToken } from "../hub/sign";
-import type { StaarkContent } from "../hub/client";
-import { FormSubmissionSchema, type FormResult } from "../schema";
+import { FormSubmissionSchema, type FormResult } from "@staark/core";
+import { checkFormToken, issueFormToken, type StaarkContent } from "@staark/core/server";
 
 /**
  * Public form endpoint → S-Hub Inbox.

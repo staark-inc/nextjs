@@ -8,8 +8,3 @@ export async function requireAuth(): Promise<NextResponse | null> {
   }
   return null;
 }
-
-/** @deprecated Use requireAuth() instead */
-export function devOnly(): NextResponse | null {
-  return null;
-}

@@ -1,0 +1,36 @@
+diff --git a/apps/starter/app/admin/page.tsx b/apps/starter/app/admin/page.tsx
+--- a/apps/starter/app/admin/page.tsx
++++ b/apps/starter/app/admin/page.tsx
+@@ -6 +6 @@
+-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
++  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
+diff --git a/apps/starter/app/api/admin/pages/[file]/route.ts b/apps/starter/app/api/admin/pages/[file]/route.ts
+--- a/apps/starter/app/api/admin/pages/[file]/route.ts
++++ b/apps/starter/app/api/admin/pages/[file]/route.ts
+@@ -8 +8 @@
+-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
++  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
+diff --git a/apps/starter/app/api/admin/pages/route.ts b/apps/starter/app/api/admin/pages/route.ts
+--- a/apps/starter/app/api/admin/pages/route.ts
++++ b/apps/starter/app/api/admin/pages/route.ts
+@@ -25 +25 @@
+-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
++  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
+diff --git a/apps/starter/app/api/admin/seo/pages/route.ts b/apps/starter/app/api/admin/seo/pages/route.ts
+--- a/apps/starter/app/api/admin/seo/pages/route.ts
++++ b/apps/starter/app/api/admin/seo/pages/route.ts
+@@ -8 +8 @@
+-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
++  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
+diff --git a/apps/starter/app/api/admin/site/route.ts b/apps/starter/app/api/admin/site/route.ts
+--- a/apps/starter/app/api/admin/site/route.ts
++++ b/apps/starter/app/api/admin/site/route.ts
+@@ -8 +8 @@
+-  const base = path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
++  const base = path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
+diff --git a/apps/starter/lib/admin-theme.ts b/apps/starter/lib/admin-theme.ts
+--- a/apps/starter/lib/admin-theme.ts
++++ b/apps/starter/lib/admin-theme.ts
+@@ -33 +33 @@
+-  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
++  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);

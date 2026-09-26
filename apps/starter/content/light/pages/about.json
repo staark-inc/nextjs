@@ -3,11 +3,37 @@
   "title": "Omm os",
   "seo": {
     "title": "Omm os",
-    "description": "Omm os - "
+    "description": "Omm os - Excellent service and great results, en digital byrå i Stockholm som bygger webbplatser och varumärken."
   },
   "blocks": [
     {
-      "id": "process-1790446812408",
+      "id": "services-1790454332739",
+      "type": "services",
+      "props": {
+        "eyebrow": "Services",
+        "heading": "What we do",
+        "columns": 3,
+        "items": [
+          {
+            "title": "Service one",
+            "icon": "🎯",
+            "description": "Describe this service in one or two sentences."
+          },
+          {
+            "title": "Service two",
+            "icon": "🚀",
+            "description": "Describe this service in one or two sentences."
+          },
+          {
+            "title": "Service three",
+            "icon": "📊",
+            "description": "Describe this service in one or two sentences."
+          }
+        ]
+      }
+    },
+    {
+      "id": "process-1790454341377",
       "type": "process",
       "props": {
         "eyebrow": "How it works",
@@ -29,7 +55,7 @@
       }
     },
     {
-      "id": "testimonials-1790446819071",
+      "id": "testimonials-1790454337385",
       "type": "testimonials",
       "props": {
         "heading": "What our customers say",

@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { readdir, unlink, mkdir } from "node:fs/promises";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { requireAuth } from "../guard";
 
 function uploadsDir(): string {
   return path.join(process.cwd(), "public", "uploads");
 }
 
 export async function GET() {
+  const blocked = await requireAuth();
+  if (blocked) return blocked;
   const dir = uploadsDir();
   try {
     await mkdir(dir, { recursive: true });
@@ -27,6 +30,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = await requireAuth();
+  if (blocked) return blocked;
   const dir = uploadsDir();
   await mkdir(dir, { recursive: true });
 
@@ -51,6 +56,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const blocked = await requireAuth();
+  if (blocked) return blocked;
   const { name } = (await req.json()) as { name?: string };
   if (!name) {
     return NextResponse.json({ error: "Missing file name." }, { status: 400 });

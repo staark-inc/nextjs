@@ -5,8 +5,9 @@ import gastfrihetTheme, { gastfrihetRegistry } from "@staark/theme-gastfrihet";
 
 /**
  * Per-client theme selection. In this "one deploy per client" model the theme
- * is chosen here (or via STAARK_THEME) and a redesign is a redeploy. The Hub
- * still controls all content, the active preset and token overrides at runtime.
+ * is chosen here (or via STAARK_THEME) and a redesign is a redeploy. Runtime
+ * content may come from the local deployment or Staark Hub; theme code remains
+ * deployment-owned while presets and token overrides are site configuration.
  */
 const THEMES: Record<string, { theme: ThemeDefinition; registry?: Record<string, ThemeDefinition> }> = {
   light: { theme: lightTheme },

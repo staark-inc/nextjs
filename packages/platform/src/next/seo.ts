@@ -1,5 +1,5 @@
 import type { Metadata, MetadataRoute } from "next";
-import type { Page, PageSummary, SiteSettings } from "../schema";
+import type { Page, PageSummary, SiteSettings } from "@staark/core";
 
 /**
  * SEO helpers — the Next.js side of the Hub SEO module. Titles, descriptions,

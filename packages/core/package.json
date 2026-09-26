@@ -1,14 +1,13 @@
 {
   "name": "@staark/core",
   "version": "0.1.0",
-  "description": "Staark Hub for Next.js: signed Hub client, content model, S-Hub Inbox forms, revalidation webhook, SEO and security helpers.",
+  "description": "Low-level Staark contracts, signed Hub protocol, content client primitives and shared security contracts.",
   "private": true,
   "type": "module",
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
-    "./config": "./src/next/security.ts",
     "./sign": "./src/hub/sign.ts"
   },
   "scripts": {

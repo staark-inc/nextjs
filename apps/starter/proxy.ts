@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import type { SessionData } from "@/lib/auth";
+import { resolveAdminAuthConfig } from "@staark/platform/server";
+
+const adminAuth = resolveAdminAuthConfig();
 
 const sessionOptions = {
-  password:
-    process.env.ADMIN_SESSION_SECRET ??
-    "staark-dev-secret-at-least-32-chars-long!!",
+  password: adminAuth.sessionSecret,
   cookieName: "staark-admin",
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
@@ -14,7 +15,7 @@ const sessionOptions = {
   },
 };
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname === "/admin/login") {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { requireAuth } from "../../guard";
 
 function contentDir(): string {
   const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
@@ -10,6 +11,8 @@ function contentDir(): string {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const blocked = await requireAuth();
+  if (blocked) return blocked;
   const dir = contentDir();
   const pagesDir = path.join(dir, "pages");
 

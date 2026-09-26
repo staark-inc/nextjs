@@ -1,0 +1,185 @@
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 797d1c16e07e9375d46ea8fb8a313a294037c72d..dc153d78feaf06c116f3ef723b198caf32245159 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -33,7 +33,7 @@ client deployment (apps/starter is the reference deployment)
+   visual design and section implementations
+ ```
+ 
+-This first architecture patch establishes `@staark/platform` as the product-facing boundary without forcing a risky rewrite. Some existing Next-specific implementations are still re-exported from `@staark/core` for compatibility. They can move behind the platform package incrementally once each boundary has focused tests. New client-deployment code should prefer `@staark/platform/server` and `@staark/platform/config` for product behavior.
++The platform boundary is now physical as well as conceptual: Next-specific forms, revalidation, SEO and security integration live in `@staark/platform`. `@staark/core` remains responsible for schemas, signing, Hub protocol and content-client primitives. Client-deployment code should use `@staark/platform/server` and `@staark/platform/config` for product behavior.
+ 
+ Themes must not accumulate authentication, Hub synchronization, forms, SEO, security or other platform business logic.
+ 
+@@ -55,4 +55,4 @@ Local development may use the built-in `admin` development credentials and devel
+ 
+ ## Current migration boundary
+ 
+-The repository already has working signed Hub communication, fixtures, forms, SEO, security headers, revalidation and theme inheritance. This patch preserves those implementations. It changes the public product boundary first, then later patches can relocate implementations out of `@staark/core` in smaller reviewable steps.
++The repository keeps signed Hub communication, schemas, fixtures and content-client primitives in `@staark/core`. Next.js route handlers, SEO helpers, security headers and revalidation now belong to `@staark/platform`. Theme rendering remains in `@staark/theme-kit` and theme packages. This keeps the dependency direction explicit without changing the runtime behavior of client sites.
+diff --git a/packages/core/package.json b/packages/core/package.json
+index 1d17cac99dda3c91040822a07a0284288f125315..1b1cc89ab0320f6bd7fba1eaf032b8078738af59 100644
+--- a/packages/core/package.json
++++ b/packages/core/package.json
+@@ -1,14 +1,13 @@
+ {
+   "name": "@staark/core",
+   "version": "0.1.0",
+-  "description": "Low-level Staark contracts, signed Hub protocol, content client and shared security primitives.",
++  "description": "Low-level Staark contracts, signed Hub protocol, content client primitives and shared security contracts.",
+   "private": true,
+   "type": "module",
+   "sideEffects": false,
+   "exports": {
+     ".": "./src/index.ts",
+     "./server": "./src/server.ts",
+-    "./config": "./src/next/security.ts",
+     "./sign": "./src/hub/sign.ts"
+   },
+   "scripts": {
+diff --git a/packages/core/src/server.ts b/packages/core/src/server.ts
+index aee943c43cdbeed9f9fb332840a7018411b4b8ba..84664e5e421f3cb0dc3340cb8adeaf410b825642 100644
+--- a/packages/core/src/server.ts
++++ b/packages/core/src/server.ts
+@@ -1,11 +1,7 @@
+ import "server-only";
+ 
+-// Server entry: Hub connection, content client, route handlers and SEO/security helpers.
++// Server entry: Hub connection, content client, signing and shared contracts.
+ export * from "./schema";
+ export { createStaarkContent, HUB_PATHS, type StaarkContent } from "./hub/client";
+ export { readStaarkEnv, hubRequest, HubError, DEFAULT_HUB_URL, CLIENT_VERSION, type HubConnection } from "./hub/connection";
+ export { signRequest, verifySignature, issueFormToken, checkFormToken } from "./hub/sign";
+-export { createFormsRoute, type FormsRouteOptions } from "./next/forms";
+-export { createRevalidateRoute } from "./next/revalidate";
+-export { buildMetadata, buildRootMetadata, buildSitemap, buildRobots, localBusinessJsonLd, jsonLdString } from "./next/seo";
+-export { staarkSecurityHeaders } from "./next/security";
+diff --git a/packages/platform/src/config.ts b/packages/platform/src/config.ts
+index 827d3955da9c062b45f877530617f132db326296..f317de9926f7250049f8a125e02367b2e2ed140f 100644
+--- a/packages/platform/src/config.ts
++++ b/packages/platform/src/config.ts
+@@ -1,2 +1,2 @@
+ // Next.js configuration helpers exposed from the platform boundary.
+-export { staarkSecurityHeaders } from "@staark/core/config";
++export { staarkSecurityHeaders } from "./next/security";
+diff --git a/packages/core/src/next/forms.ts b/packages/platform/src/next/forms.ts
+similarity index 96%
+rename from packages/core/src/next/forms.ts
+rename to packages/platform/src/next/forms.ts
+index e35aa11ff1c0e8105a0849528934442b53a79528..757c3c01f1b7d466fe923c84b1f2e9ceeb31520c 100644
+--- a/packages/core/src/next/forms.ts
++++ b/packages/platform/src/next/forms.ts
+@@ -1,6 +1,5 @@
+-import { checkFormToken, issueFormToken } from "../hub/sign";
+-import type { StaarkContent } from "../hub/client";
+-import { FormSubmissionSchema, type FormResult } from "../schema";
++import { FormSubmissionSchema, type FormResult } from "@staark/core";
++import { checkFormToken, issueFormToken, type StaarkContent } from "@staark/core/server";
+ 
+ /**
+  * Public form endpoint → S-Hub Inbox.
+diff --git a/packages/core/src/next/revalidate.ts b/packages/platform/src/next/revalidate.ts
+similarity index 94%
+rename from packages/core/src/next/revalidate.ts
+rename to packages/platform/src/next/revalidate.ts
+index 0e35eff776aefd4c96b48ae849dd959d00dbefc6..cc41d35655b39a9f8e9ef8ce24f0811a88304683 100644
+--- a/packages/core/src/next/revalidate.ts
++++ b/packages/platform/src/next/revalidate.ts
+@@ -1,7 +1,5 @@
+ import { revalidatePath, revalidateTag } from "next/cache";
+-import { verifySignature } from "../hub/sign";
+-import { CLIENT_VERSION } from "../hub/connection";
+-import type { StaarkContent } from "../hub/client";
++import { CLIENT_VERSION, verifySignature, type StaarkContent } from "@staark/core/server";
+ 
+ /**
+  * Webhook Staark Hub calls when content changes:
+diff --git a/packages/core/src/next/security.ts b/packages/platform/src/next/security.ts
+similarity index 100%
+rename from packages/core/src/next/security.ts
+rename to packages/platform/src/next/security.ts
+diff --git a/packages/core/src/next/seo.ts b/packages/platform/src/next/seo.ts
+similarity index 98%
+rename from packages/core/src/next/seo.ts
+rename to packages/platform/src/next/seo.ts
+index f6597470a705452b17aaad987efc54727abf6f6c..a0767dc610ca2b56fdeab2c25f300e265f3e3398 100644
+--- a/packages/core/src/next/seo.ts
++++ b/packages/platform/src/next/seo.ts
+@@ -1,5 +1,5 @@
+ import type { Metadata, MetadataRoute } from "next";
+-import type { Page, PageSummary, SiteSettings } from "../schema";
++import type { Page, PageSummary, SiteSettings } from "@staark/core";
+ 
+ /**
+  * SEO helpers — the Next.js side of the Hub SEO module. Titles, descriptions,
+diff --git a/packages/platform/src/server.ts b/packages/platform/src/server.ts
+index c9a67910322bd82bae3ce0a58e559cab38b4d939..6b10037915f9076be524d6f4074fe19eb92003c4 100644
+--- a/packages/platform/src/server.ts
++++ b/packages/platform/src/server.ts
+@@ -1,18 +1,21 @@
+ // Server-side product entry point for a Staark client deployment.
+-// Existing Next-specific implementations are re-exported through this boundary
+-// in the first architecture patch and can migrate out of core incrementally.
++// Low-level Hub/content primitives come from core; Next.js product behavior
++// lives in this package so client deployments depend on one platform boundary.
+ export {
+   createStaarkContent,
+-  createFormsRoute,
+-  createRevalidateRoute,
++  type StaarkContent,
++} from "@staark/core/server";
++
++export { createFormsRoute, type FormsRouteOptions } from "./next/forms";
++export { createRevalidateRoute } from "./next/revalidate";
++export {
+   buildMetadata,
+   buildRootMetadata,
+   buildSitemap,
+   buildRobots,
+   localBusinessJsonLd,
+   jsonLdString,
+-  type StaarkContent,
+-} from "@staark/core/server";
++} from "./next/seo";
+ 
+ export {
+   resolveAdminAuthConfig,
+diff --git a/packages/platform/test/security.test.ts b/packages/platform/test/security.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..6e9d000ae5d5b024b9f6c200c38c0c64605e639b
+--- /dev/null
++++ b/packages/platform/test/security.test.ts
+@@ -0,0 +1,33 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import { staarkSecurityHeaders } from "../src/next/security.ts";
++
++function headerMap() {
++  return new Map(staarkSecurityHeaders().map((header) => [header.key, header.value]));
++}
++
++test("development security headers do not force HTTPS", () => {
++  const previous = process.env.NODE_ENV;
++  process.env.NODE_ENV = "development";
++  try {
++    const headers = headerMap();
++    assert.equal(headers.has("Strict-Transport-Security"), false);
++    assert.equal(headers.get("Content-Security-Policy")?.includes("upgrade-insecure-requests"), false);
++  } finally {
++    if (previous === undefined) delete process.env.NODE_ENV;
++    else process.env.NODE_ENV = previous;
++  }
++});
++
++test("production security headers enable HTTPS hardening", () => {
++  const previous = process.env.NODE_ENV;
++  process.env.NODE_ENV = "production";
++  try {
++    const headers = headerMap();
++    assert.equal(headers.get("Strict-Transport-Security"), "max-age=31536000; includeSubDomains");
++    assert.equal(headers.get("Content-Security-Policy")?.includes("upgrade-insecure-requests"), true);
++  } finally {
++    if (previous === undefined) delete process.env.NODE_ENV;
++    else process.env.NODE_ENV = previous;
++  }
++});

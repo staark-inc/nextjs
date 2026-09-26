@@ -8,6 +8,18 @@
   "updatedAt": "2026-09-26T10:00:00Z",
   "blocks": [
     {
+      "id": "cta-1790454194156",
+      "type": "cta",
+      "props": {
+        "heading": "Ready to get started?",
+        "intro": "Tell us about your project and we'll get back to you within a day.",
+        "cta": {
+          "label": "Contact us",
+          "href": "/kontakt"
+        }
+      }
+    },
+    {
       "id": "contact",
       "type": "contact",
       "props": {

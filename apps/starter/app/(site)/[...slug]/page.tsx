@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { buildMetadata } from "@staark/core/server";
+import { buildMetadata } from "@staark/platform/server";
 import { BlockRenderer } from "@staark/theme-kit";
 import { content } from "@/lib/staark";
 import { theme, themeRegistry } from "@/staark.config";

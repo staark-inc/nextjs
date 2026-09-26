@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
-import { readFile, writeFile, unlink } from "node:fs/promises";
+import { readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { devOnly } from "../../guard";
+import { requireAuth } from "../../guard";
+
+function contentRoot(): string {
+  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
+  return path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
+}
 
 function pagesDir(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  const base = path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
-  return path.join(base, "pages");
+  return path.join(contentRoot(), "pages");
+}
+
+function sitePath(): string {
+  return path.join(contentRoot(), "site.json");
 }
 
 type Ctx = { params: Promise<{ file: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
-  const blocked = devOnly();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
   const { file } = await ctx.params;
   const filePath = path.join(pagesDir(), file);
@@ -25,7 +32,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 }
 
 export async function PUT(req: Request, ctx: Ctx) {
-  const blocked = devOnly();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
   const { file } = await ctx.params;
   const body = await req.json();
@@ -34,11 +41,31 @@ export async function PUT(req: Request, ctx: Ctx) {
 }
 
 export async function DELETE(_req: Request, ctx: Ctx) {
-  const blocked = devOnly();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
   const { file } = await ctx.params;
+  const filePath = path.join(pagesDir(), file);
+
   try {
-    await unlink(path.join(pagesDir(), file));
+    const page = JSON.parse(await readFile(filePath, "utf8")) as { path?: string };
+    await unlink(filePath);
+
+    if (page.path) {
+      try {
+        const site = JSON.parse(await readFile(sitePath(), "utf8")) as {
+          navigation?: { primary?: { label: string; href: string }[]; footer?: { label: string; href: string }[]; [key: string]: unknown };
+          [key: string]: unknown;
+        };
+        if (site.navigation) {
+          site.navigation.primary = (site.navigation.primary ?? []).filter((link) => link.href !== page.path);
+          site.navigation.footer = (site.navigation.footer ?? []).filter((link) => link.href !== page.path);
+          await writeFile(sitePath(), JSON.stringify(site, null, 2) + "\n", "utf8");
+        }
+      } catch {
+        // Page deletion should still succeed if navigation cleanup cannot be completed.
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });

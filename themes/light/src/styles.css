@@ -40,11 +40,12 @@ img { max-width: 100%; height: auto; display: block; }
 
 .sk-container {
   width: 100%;
-  max-width: var(--sk-layout-content, 1200px);
+  max-width: var(--sk-layout-wide, 1320px);
   margin-inline: auto;
   padding-inline: 24px;
 }
-.sk-container--wide { max-width: var(--sk-layout-wide, 1320px); }
+.sk-container--wide { max-width: var(--sk-layout-wrap, 1440px); }
+.sk-container--content { max-width: var(--sk-layout-content, 760px); }
 
 .sk-section { padding-block: clamp(48px, 7vw, 96px); }
 .sk-section--surface { background: var(--sk-color-surface, #f7f4ef); }

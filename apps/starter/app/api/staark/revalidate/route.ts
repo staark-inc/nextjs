@@ -1,4 +1,4 @@
-import { createRevalidateRoute } from "@staark/core/server";
+import { createRevalidateRoute } from "@staark/platform/server";
 import { content } from "@/lib/staark";
 
 // Signed webhook from Staark Hub: purges cache tags/paths when content changes.

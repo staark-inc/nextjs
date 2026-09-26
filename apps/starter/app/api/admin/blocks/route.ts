@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { devOnly } from "../guard";
+import { requireAuth } from "../guard";
 
 type BlockTemplate = {
   type: string;
@@ -180,7 +180,7 @@ const THEME_BLOCKS: Record<string, BlockTemplate[]> = {
 };
 
 export async function GET() {
-  const blocked = devOnly();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
 
   const activeTheme = process.env.STAARK_THEME ?? "light";

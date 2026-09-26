@@ -2,13 +2,28 @@
 
 import { useEffect, useState } from "react";
 
+type InboxStatus = "new" | "read" | "replied" | "archived";
+type BookingStatus = "pending" | "confirmed" | "declined";
+
 type Submission = {
+  id: string;
   formId: string;
-  fields: Record<string, string>;
+  fields: Record<string, unknown>;
   pageUrl?: string;
   receivedAt: string;
-  meta?: Record<string, string>;
+  status: InboxStatus;
+  bookingStatus?: BookingStatus;
 };
+
+function text(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+
+function statusClass(status: InboxStatus): string {
+  if (status === "new") return "sa-status--unread";
+  if (status === "archived") return "sa-status--pending";
+  return "sa-status--read";
+}
 
 export default function FormsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -24,17 +39,21 @@ export default function FormsPage() {
   async function load() {
     setLoading(true);
     const res = await fetch("/api/admin/forms");
-    setSubmissions(await res.json());
+    setSubmissions(res.ok ? await res.json() : []);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { void load(); }, []);
 
   async function clearAll() {
     if (!confirm("Clear all submissions? This cannot be undone.")) return;
-    await fetch("/api/admin/forms", { method: "DELETE" });
-    setSubmissions([]);
-    showToast("All submissions cleared.", true);
+    const res = await fetch("/api/admin/forms", { method: "DELETE" });
+    if (res.ok) {
+      setSubmissions([]);
+      showToast("All submissions cleared.", true);
+    } else {
+      showToast("Could not clear the inbox.", false);
+    }
   }
 
   function formatDate(iso: string) {
@@ -51,8 +70,9 @@ export default function FormsPage() {
   const filtered = filter === "all" ? submissions : submissions.filter((s) => s.formId === filter);
   const today = new Date().toDateString();
   const todayCount = submissions.filter((s) => new Date(s.receivedAt).toDateString() === today).length;
+  const openCount = submissions.filter((s) => s.status === "new" || s.status === "read").length;
 
-  if (loading) return <p style={{ padding: 40 }}>Loading…</p>;
+  if (loading) return <p className="sa-loading">Loading inbox…</p>;
 
   return (
     <>
@@ -63,13 +83,18 @@ export default function FormsPage() {
       </div>
 
       <h1 className="sa-h1">Inbox</h1>
-      <p className="sa-subtitle">Messages, bookings and submissions from every form on the site.</p>
+      <p className="sa-subtitle">Open submissions, manage status and follow up with customers.</p>
 
       <div className="sa-stats">
         <div className="sa-stat">
           <div className="sa-stat__label">Total</div>
           <div className="sa-stat__value">{submissions.length}</div>
           <div className="sa-stat__desc">All submissions</div>
+        </div>
+        <div className="sa-stat">
+          <div className="sa-stat__label">Open</div>
+          <div className="sa-stat__value">{openCount}</div>
+          <div className="sa-stat__desc">Need attention</div>
         </div>
         <div className="sa-stat">
           <div className="sa-stat__label">Today</div>
@@ -79,12 +104,7 @@ export default function FormsPage() {
         <div className="sa-stat">
           <div className="sa-stat__label">Forms</div>
           <div className="sa-stat__value">{formIds.length}</div>
-          <div className="sa-stat__desc">Active forms</div>
-        </div>
-        <div className="sa-stat">
-          <div className="sa-stat__label">Source</div>
-          <div className="sa-stat__value sa-stat__value--sm">Local</div>
-          <div className="sa-stat__desc">.staark/submissions.jsonl</div>
+          <div className="sa-stat__desc">Active sources</div>
         </div>
       </div>
 
@@ -93,12 +113,12 @@ export default function FormsPage() {
           <div className="sa-empty">
             <div className="sa-empty__icon">✉️</div>
             <div className="sa-empty__title">No submissions yet</div>
-            <div className="sa-empty__desc">Fill out a contact or booking form on the site and it will appear here.</div>
+            <div className="sa-empty__desc">Messages and bookings from the website will appear here.</div>
           </div>
         </div>
       ) : (
         <>
-          <div className="sa-toolbar">
+          <div className="sa-toolbar sa-toolbar--wrap">
             <div className="sa-tab-bar">
               <button className={`sa-tab${filter === "all" ? " sa-tab--active" : ""}`} onClick={() => setFilter("all")}>
                 All <span className="sa-tab__count">{submissions.length}</span>
@@ -116,48 +136,57 @@ export default function FormsPage() {
             <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={clearAll}>Clear all</button>
           </div>
 
-          <div className="sa-card" style={{ padding: 0, overflow: "auto" }}>
-            <table className="sa-table">
-              <thead>
-                <tr>
-                  <th>From</th>
-                  <th>Request</th>
-                  <th>Status</th>
-                  <th>Received</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((s, i) => {
-                  const name = s.fields.name || s.fields.Name || "—";
-                  const email = s.fields.email || s.fields.Email || "";
-                  const message = s.fields.message || s.fields.Message || s.fields.subject || s.fields.Subject || "";
-                  return (
-                    <tr key={i}>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{name}</div>
-                        {email && <div style={{ color: "var(--sa-muted)", fontSize: 12 }}>{email}</div>}
-                      </td>
-                      <td>
-                        <span className="sa-badge sa-badge--primary" style={{ marginBottom: 4, display: "inline-block" }}>{s.formId}</span>
-                        {message && <div style={{ fontSize: 13, marginTop: 2 }}>{String(message).slice(0, 120)}{String(message).length > 120 ? "…" : ""}</div>}
-                      </td>
-                      <td>
-                        <span className="sa-status sa-status--read">
-                          <span className="sa-status__dot" />
-                          Received
-                        </span>
-                      </td>
-                      <td className="sa-table__date">{formatDate(s.receivedAt)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="sa-card sa-table-card">
+            <div className="sa-table-scroll">
+              <table className="sa-table sa-inbox-table">
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>From</th>
+                    <th>Request</th>
+                    <th>Status</th>
+                    <th>Received</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((s) => {
+                    const name = text(s.fields.name) || "—";
+                    const email = text(s.fields.email);
+                    const message = text(s.fields.message) || text(s.fields.subject) || text(s.fields.booking_item) || text(s.fields.booking_type);
+                    return (
+                      <tr key={s.id}>
+                        <td className="sa-table__mono">{s.id}</td>
+                        <td>
+                          <a className="sa-inbox-name" href={`/admin/forms/${s.id}`}>{name}</a>
+                          {email ? <div className="sa-table__secondary">{email}</div> : null}
+                        </td>
+                        <td>
+                          <span className="sa-badge sa-badge--primary">{s.formId}</span>
+                          {s.bookingStatus ? <span className={`sa-badge sa-booking-badge sa-booking-badge--${s.bookingStatus}`}>{s.bookingStatus}</span> : null}
+                          {message ? <div className="sa-inbox-preview">{message.slice(0, 110)}{message.length > 110 ? "…" : ""}</div> : null}
+                        </td>
+                        <td>
+                          <span className={`sa-status ${statusClass(s.status)}`}>
+                            <span className="sa-status__dot" />
+                            {s.status}
+                          </span>
+                        </td>
+                        <td className="sa-table__date">{formatDate(s.receivedAt)}</td>
+                        <td className="sa-table__actions">
+                          <a className="sa-btn sa-btn--ghost sa-btn--sm" href={`/admin/forms/${s.id}`}>Open</a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}
 
-      {toast && <div className={`sa-toast ${toast.ok ? "sa-toast--success" : "sa-toast--error"}`}>{toast.msg}</div>}
+      {toast ? <div className={`sa-toast ${toast.ok ? "sa-toast--success" : "sa-toast--error"}`}>{toast.msg}</div> : null}
     </>
   );
 }

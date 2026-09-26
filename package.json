@@ -1,7 +1,7 @@
 {
   "name": "staark-next",
   "private": true,
-  "description": "Staark Next.js stack: Staark Hub core package + S-Hub themes for Next.js sites managed from Staark Hub.",
+  "description": "Staark Next Platform monorepo: managed Next.js client deployments, platform runtime, themes and Staark Hub integration.",
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=20.9"

@@ -1,13 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type PageEntry = { file: string; path: string; title: string };
+type PageEntry = {
+  file: string;
+  path: string;
+  title: string;
+  inPrimary: boolean;
+  inFooter: boolean;
+  navigationLabel?: string;
+};
+
+type PageTemplate = {
+  id: string;
+  label: string;
+  description: string;
+  theme?: string;
+};
+
+type PagesPayload = {
+  pages: PageEntry[];
+  theme: string;
+  templates: PageTemplate[];
+};
 
 export default function PagesIndex() {
   const [pages, setPages] = useState<PageEntry[]>([]);
+  const [theme, setTheme] = useState("light");
+  const [templates, setTemplates] = useState<PageTemplate[]>([]);
   const [newPath, setNewPath] = useState("");
   const [newTitle, setNewTitle] = useState("");
+  const [templateId, setTemplateId] = useState("blank");
+  const [addToPrimary, setAddToPrimary] = useState(true);
+  const [addToFooter, setAddToFooter] = useState(false);
+  const [navigationLabel, setNavigationLabel] = useState("");
+  const [creating, setCreating] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   function showToast(msg: string, ok: boolean) {
@@ -17,62 +44,99 @@ export default function PagesIndex() {
 
   async function load() {
     const res = await fetch("/api/admin/pages");
-    setPages(await res.json());
-  }
-
-  useEffect(() => { load(); }, []);
-
-  async function createPage(e: React.FormEvent) {
-    e.preventDefault();
-    const p = newPath.startsWith("/") ? newPath : `/${newPath}`;
-    const body = {
-      path: p,
-      title: newTitle || p.slice(1) || "New page",
-      seo: {},
-      blocks: [],
-      updatedAt: new Date().toISOString(),
-    };
-    const res = await fetch("/api/admin/pages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) {
-      setNewPath("");
-      setNewTitle("");
-      showToast("Page created!", true);
-      load();
-    } else {
-      showToast("Failed to create page.", false);
+    if (!res.ok) {
+      showToast("Could not load pages.", false);
+      return;
+    }
+    const data = await res.json() as PagesPayload;
+    setPages(data.pages ?? []);
+    setTheme(data.theme ?? "light");
+    setTemplates(data.templates ?? []);
+    if (!(data.templates ?? []).some((template) => template.id === templateId)) {
+      setTemplateId("blank");
     }
   }
 
+  useEffect(() => { void load(); }, []);
+
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === templateId),
+    [templates, templateId],
+  );
+
+  async function createPage(e: React.FormEvent) {
+    e.preventDefault();
+    setCreating(true);
+    const pathname = newPath.startsWith("/") ? newPath : `/${newPath}`;
+    const title = newTitle || pathname.slice(1) || "New page";
+    const res = await fetch("/api/admin/pages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: pathname,
+        title,
+        templateId,
+        addToPrimary,
+        addToFooter,
+        navigationLabel: navigationLabel || title,
+      }),
+    });
+    const data = await res.json().catch(() => ({})) as { error?: string; file?: string };
+    if (res.ok && data.file) {
+      window.location.href = `/admin/pages/${data.file}`;
+      return;
+    }
+    showToast(data.error ?? "Failed to create page.", false);
+    setCreating(false);
+  }
+
   async function deletePage(file: string) {
-    if (!confirm(`Delete ${file}?`)) return;
+    if (!confirm(`Delete ${file}? The page is also removed from site navigation.`)) return;
     const res = await fetch(`/api/admin/pages/${file}`, { method: "DELETE" });
     if (res.ok) {
-      showToast("Page deleted.", true);
-      load();
+      showToast("Page deleted and navigation cleaned up.", true);
+      await load();
+    } else {
+      showToast("Could not delete the page.", false);
     }
   }
 
   return (
     <>
-      <h1 className="sa-h1">Pages</h1>
-      <p className="sa-subtitle">Manage fixture pages in the content directory.</p>
+      <div className="sa-page-header">
+        <div>
+          <p className="sa-page-eyebrow">Content</p>
+          <h1 className="sa-h1">Pages</h1>
+          <p className="sa-subtitle">Manage pages, navigation placement and templates for the active theme.</p>
+        </div>
+        <div className="sa-page-context">
+          <span>Active theme</span>
+          <strong>{theme}</strong>
+        </div>
+      </div>
 
-      <div className="sa-card">
-        <h3>Existing pages</h3>
-        <ul className="sa-page-list">
-          {pages.map((p) => (
-            <li key={p.file}>
-              <div>
-                <a href={`/admin/pages/${p.file}`}>{p.title}</a>
-                <div className="sa-path">{p.path}</div>
+      <div className="sa-card sa-pages-card">
+        <div className="sa-card__header sa-card__header--row">
+          <div><p className="sa-card__eyebrow">Existing pages</p><h2>{pages.length} pages</h2></div>
+          <span className="sa-note">Navigation badges reflect <code>site.json</code>.</span>
+        </div>
+        <ul className="sa-page-list sa-page-list--managed">
+          {pages.map((page) => (
+            <li key={page.file}>
+              <div className="sa-page-list__main">
+                <a href={`/admin/pages/${page.file}`}>{page.title}</a>
+                <div className="sa-path">{page.path}</div>
+                <div className="sa-page-badges">
+                  {page.inPrimary ? <span className="sa-badge sa-badge--primary">Main navigation</span> : null}
+                  {page.inFooter ? <span className="sa-badge">Footer</span> : null}
+                  {!page.inPrimary && !page.inFooter ? <span className="sa-badge sa-badge--muted">Not in navigation</span> : null}
+                  {page.navigationLabel && page.navigationLabel !== page.title ? <span className="sa-page-nav-label">Label: {page.navigationLabel}</span> : null}
+                </div>
               </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <a href={`/admin/pages/${p.file}`} className="sa-btn sa-btn--ghost sa-btn--sm">Edit</a>
-                <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => deletePage(p.file)}>Delete</button>
+              <div className="sa-page-list__actions">
+                <a href={page.path} target="_blank" rel="noopener noreferrer" className="sa-btn sa-btn--ghost sa-btn--sm">View</a>
+                <a href={`/admin/pages/${page.file}`} className="sa-btn sa-btn--ghost sa-btn--sm">Edit</a>
+                <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => void deletePage(page.file)}>Delete</button>
               </div>
             </li>
           ))}
@@ -80,17 +144,59 @@ export default function PagesIndex() {
       </div>
 
       <div className="sa-card">
-        <h3>Create new page</h3>
-        <form className="sa-inline-form" onSubmit={createPage}>
-          <div className="sa-field">
-            <label htmlFor="new-path">Path</label>
-            <input id="new-path" placeholder="/about" value={newPath} onChange={(e) => setNewPath(e.target.value)} required />
+        <div className="sa-card__header">
+          <p className="sa-card__eyebrow">Create new page</p>
+          <h2>Start from a template</h2>
+          <p>Theme-specific templates add the right blocks, while the page content remains independent from the theme.</p>
+        </div>
+
+        <form className="sa-create-page" onSubmit={createPage}>
+          <div className="sa-form-grid sa-form-grid--2">
+            <div className="sa-field">
+              <label htmlFor="new-title">Title</label>
+              <input id="new-title" placeholder="About us" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required />
+            </div>
+            <div className="sa-field">
+              <label htmlFor="new-path">Path</label>
+              <input id="new-path" placeholder="/about" value={newPath} onChange={(e) => setNewPath(e.target.value)} required />
+            </div>
           </div>
+
           <div className="sa-field">
-            <label htmlFor="new-title">Title</label>
-            <input id="new-title" placeholder="About us" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+            <label htmlFor="page-template">Page template</label>
+            <select id="page-template" value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>{template.label}{template.theme ? ` · ${template.theme}` : ""}</option>
+              ))}
+            </select>
+            {selectedTemplate ? <p className="sa-field-hint">{selectedTemplate.description}</p> : null}
           </div>
-          <button type="submit" className="sa-btn sa-btn--primary" style={{ marginBottom: 0 }}>Create</button>
+
+          <div className="sa-navigation-options">
+            <div>
+              <p className="sa-card__eyebrow">Navigation</p>
+              <strong>Where should this page appear?</strong>
+              <p>Normal public pages can be added to the header immediately. Utility pages can stay hidden.</p>
+            </div>
+            <label className="sa-check-row">
+              <input type="checkbox" checked={addToPrimary} onChange={(e) => setAddToPrimary(e.target.checked)} />
+              <span><strong>Add to main navigation</strong><small>Show in the site header.</small></span>
+            </label>
+            <label className="sa-check-row">
+              <input type="checkbox" checked={addToFooter} onChange={(e) => setAddToFooter(e.target.checked)} />
+              <span><strong>Add to footer</strong><small>Also show in footer navigation.</small></span>
+            </label>
+            {(addToPrimary || addToFooter) ? (
+              <div className="sa-field sa-navigation-label">
+                <label htmlFor="navigation-label">Navigation label</label>
+                <input id="navigation-label" placeholder={newTitle || "About us"} value={navigationLabel} onChange={(e) => setNavigationLabel(e.target.value)} />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="sa-form-actions">
+            <button type="submit" className="sa-btn sa-btn--primary" disabled={creating}>{creating ? "Creating…" : "Create page"}</button>
+          </div>
         </form>
       </div>
 

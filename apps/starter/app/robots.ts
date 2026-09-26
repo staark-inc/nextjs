@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { buildRobots } from "@staark/core/server";
+import { buildRobots } from "@staark/platform/server";
 import { content } from "@/lib/staark";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {

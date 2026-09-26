@@ -1,40 +1,16 @@
 import { NextResponse } from "next/server";
-import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { devOnly } from "../guard";
-
-const SUBMISSIONS_FILE = path.join(process.cwd(), ".staark", "submissions.jsonl");
+import { clearInbox, listInboxSubmissions } from "@/lib/admin-inbox";
+import { requireAuth } from "../guard";
 
 export async function GET() {
-  const blocked = devOnly();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
-
-  let lines: string[];
-  try {
-    const raw = await readFile(SUBMISSIONS_FILE, "utf8");
-    lines = raw.trim().split("\n").filter(Boolean);
-  } catch {
-    lines = [];
-  }
-
-  const submissions = lines.map((line, i) => {
-    try {
-      return { ...JSON.parse(line), _index: i };
-    } catch {
-      return null;
-    }
-  }).filter(Boolean).reverse();
-
-  return NextResponse.json(submissions);
+  return NextResponse.json(await listInboxSubmissions());
 }
 
 export async function DELETE() {
-  const blocked = devOnly();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
-
-  try {
-    await writeFile(SUBMISSIONS_FILE, "", "utf8");
-  } catch {}
-
+  await clearInbox();
   return NextResponse.json({ ok: true });
 }

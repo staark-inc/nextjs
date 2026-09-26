@@ -23,6 +23,9 @@ importers:
       '@staark/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@staark/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@staark/theme-gastfrihet':
         specifier: workspace:*
         version: link:../../themes/gastfrihet
@@ -69,6 +72,28 @@ importers:
       zod:
         specifier: ^4.6.5
         version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      next:
+        specifier: ^16.3.6
+        version: 16.3.6(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.3.0
+        version: 19.3.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/platform:
+    dependencies:
+      '@staark/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.20.4

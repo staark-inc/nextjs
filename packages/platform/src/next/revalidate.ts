@@ -1,7 +1,5 @@
 import { revalidatePath, revalidateTag } from "next/cache";
-import { verifySignature } from "../hub/sign";
-import { CLIENT_VERSION } from "../hub/connection";
-import type { StaarkContent } from "../hub/client";
+import { CLIENT_VERSION, verifySignature, type StaarkContent } from "@staark/core/server";
 
 /**
  * Webhook Staark Hub calls when content changes:

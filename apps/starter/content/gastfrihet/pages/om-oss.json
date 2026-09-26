@@ -1,7 +1,9 @@
 {
   "path": "/om-oss",
   "title": "Om oss",
-  "seo": { "description": "Läs om Gästis Björkvik — ett gästhus med anor vid sjön i Sörmland." },
+  "seo": {
+    "description": "Läs om Gästis Björkvik — ett gästhus med anor vid sjön i Sörmland."
+  },
   "updatedAt": "2026-09-26T10:00:00Z",
   "blocks": [
     {
@@ -11,7 +13,10 @@
         "eyebrow": "Vår historia",
         "heading": "Ett gästhus med anor",
         "intro": "Gästis Björkvik har välkomnat gäster sedan 1920-talet. Det som började som en bondgård med rum för sommargäster har blivit ett litet hotell med fem rum, en stuga och utsikt som aldrig tar slut.",
-        "image": { "src": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&q=70", "alt": "Gästhus på landet" }
+        "image": {
+          "src": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&q=70",
+          "alt": "Gästhus på landet"
+        }
       }
     },
     {
@@ -22,16 +27,61 @@
         "heading": "Mer än bara övernattning",
         "columns": 3,
         "items": [
-          { "title": "Frukost", "icon": "🍳", "description": "Hemlagad frukost med lokala råvaror. Nybakat bröd, ägg från gården och kaffe från Sörmlands rosteri." },
-          { "title": "Natur", "icon": "🌲", "description": "Vandringsleder, badplats och fiske direkt från bryggan. Kanot och cykel att låna." },
-          { "title": "Evenemang", "icon": "🎉", "description": "Vi tar emot mindre bröllop, retreats och firmamiddagar. Kontakta oss för offert." }
+          {
+            "title": "Frukost",
+            "icon": "🍳",
+            "description": "Hemlagad frukost med lokala råvaror. Nybakat bröd, ägg från gården och kaffe från Sörmlands rosteri."
+          },
+          {
+            "title": "Natur",
+            "icon": "🌲",
+            "description": "Vandringsleder, badplats och fiske direkt från bryggan. Kanot och cykel att låna."
+          },
+          {
+            "title": "Evenemang",
+            "icon": "🎉",
+            "description": "Vi tar emot mindre bröllop, retreats och firmamiddagar. Kontakta oss för offert."
+          }
+        ]
+      }
+    },
+    {
+      "id": "amenities-1790454083698",
+      "type": "amenities",
+      "props": {
+        "heading": "Amenities",
+        "intro": "Everything you need for a comfortable stay.",
+        "items": [
+          {
+            "label": "Breakfast included",
+            "icon": "🍳"
+          },
+          {
+            "label": "Free WiFi",
+            "icon": "📶"
+          },
+          {
+            "label": "Free parking",
+            "icon": "🚗"
+          },
+          {
+            "label": "Pets welcome",
+            "icon": "🐾"
+          }
         ]
       }
     },
     {
       "id": "cta",
       "type": "cta",
-      "props": { "heading": "Nyfiken?", "intro": "Hör av dig så berättar vi mer. Eller boka direkt.", "cta": { "label": "Kontakta oss", "href": "/kontakt" } }
+      "props": {
+        "heading": "Nyfiken?",
+        "intro": "Hör av dig så berättar vi mer. Eller boka direkt.",
+        "cta": {
+          "label": "Kontakta oss",
+          "href": "/kontakt"
+        }
+      }
     }
   ]
 }

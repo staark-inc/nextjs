@@ -1,0 +1,75 @@
+{
+  "path": "/tjanster",
+  "title": "Tjänster",
+  "seo": {},
+  "blocks": [
+    {
+      "id": "services-1790454453565",
+      "type": "services",
+      "props": {
+        "eyebrow": "Services",
+        "heading": "What we do",
+        "columns": 3,
+        "items": [
+          {
+            "title": "Service one",
+            "icon": "🎯",
+            "description": "Describe this service in one or two sentences."
+          },
+          {
+            "title": "Service two",
+            "icon": "🚀",
+            "description": "Describe this service in one or two sentences."
+          },
+          {
+            "title": "Service three",
+            "icon": "📊",
+            "description": "Describe this service in one or two sentences."
+          }
+        ]
+      }
+    },
+    {
+      "id": "process-1790454456036",
+      "type": "process",
+      "props": {
+        "eyebrow": "How it works",
+        "heading": "From start to finish",
+        "steps": [
+          {
+            "title": "Step one",
+            "description": "Describe this step."
+          },
+          {
+            "title": "Step two",
+            "description": "Describe this step."
+          },
+          {
+            "title": "Step three",
+            "description": "Describe this step."
+          }
+        ]
+      }
+    },
+    {
+      "id": "testimonials-1790454459044",
+      "type": "testimonials",
+      "props": {
+        "heading": "What our customers say",
+        "items": [
+          {
+            "quote": "Excellent service and great results!",
+            "author": "Jane D.",
+            "rating": 5
+          },
+          {
+            "quote": "Highly recommended. Professional and fast.",
+            "author": "John S.",
+            "rating": 5
+          }
+        ]
+      }
+    }
+  ],
+  "updatedAt": "2026-09-26T20:27:28.171Z"
+}

@@ -4,7 +4,12 @@
   "locale": "sv-SE",
   "url": "https://salongnova.example",
   "theme": {
-    "preset": "gastfrihet"
+    "preset": "salong",
+    "overrides": {
+      "layout": {
+        "content": "820px"
+      }
+    }
   },
   "brand": {
     "copyright": "© 2026 Salong Nova"
@@ -46,6 +51,10 @@
       {
         "label": "Kontakt",
         "href": "/kontakt"
+      },
+      {
+        "label": "Om Oss",
+        "href": "/about"
       }
     ],
     "footer": [

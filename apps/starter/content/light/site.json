@@ -4,7 +4,7 @@
   "locale": "sv-SE",
   "url": "https://demo.staarkinc.com",
   "theme": {
-    "preset": "scandinavian"
+    "preset": "local-business"
   },
   "brand": {
     "copyright": "© 2026 Staark Demo"
@@ -36,8 +36,8 @@
         "href": "/#process"
       },
       {
-        "label": "Kontakt",
-        "href": "/kontakt"
+        "label": "Om oss",
+        "href": "/about"
       }
     ],
     "footer": [
