@@ -17,7 +17,7 @@
         "primaryDark": "#173BB7",
         "primarySoft": "#EEF3FF",
         "success": "#0B7853",
-        "forest": "#142720",
+        "forest": "#304969",
         "forestDeep": "#0D1916",
         "gold": "#D59531"
       },
@@ -43,7 +43,7 @@
       "buttons": "solid",
       "cards": "soft",
       "hero": "split",
-      "footer": "dark"
+      "footer": "surface"
     }
   },
   "brand": {
@@ -72,10 +72,6 @@
         "href": "/tjanster"
       },
       {
-        "label": "Process",
-        "href": "/process"
-      },
-      {
         "label": "Om oss",
         "href": "/about"
       }
@@ -88,6 +84,10 @@
       {
         "label": "Kontakt",
         "href": "/kontakt"
+      },
+      {
+        "label": "Process",
+        "href": "/process"
       }
     ],
     "cta": {

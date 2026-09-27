@@ -3,12 +3,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./media.module.css";
 
+type MediaUsage = {
+  source: string;
+  label: string;
+  field: string;
+  href?: string;
+};
+
 type MediaFile = {
   name: string;
   url: string;
   size: number;
   modifiedAt: string;
   alt: string;
+  usage: MediaUsage[];
+  usageCount: number;
 };
 
 type Toast = { msg: string; ok: boolean } | null;
@@ -120,7 +129,17 @@ export default function MediaPage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      showToast((data as { error?: string }).error ?? "Delete failed.", false);
+      const blocked = data as { error?: string; usage?: MediaUsage[]; inUse?: boolean };
+      if (blocked.inUse && blocked.usage) {
+        setFiles((prev) =>
+          prev.map((file) =>
+            file.name === name
+              ? { ...file, usage: blocked.usage ?? [], usageCount: blocked.usage?.length ?? 0 }
+              : file,
+          ),
+        );
+      }
+      showToast(blocked.error ?? "Delete failed.", false);
       return;
     }
     setFiles((prev) => prev.filter((file) => file.name !== name));
@@ -192,9 +211,9 @@ export default function MediaPage() {
           <div className="sa-stat__desc">Current local media size</div>
         </article>
         <article className="sa-stat sa-stat--v2">
-          <div className="sa-stat__label">Location</div>
-          <div className="sa-stat__value sa-stat__value--sm">/uploads/</div>
-          <div className="sa-stat__desc">Public media URL</div>
+          <div className="sa-stat__label">Protected</div>
+          <div className="sa-stat__value">{files.filter((file) => file.usageCount > 0).length}</div>
+          <div className="sa-stat__desc">Images referenced by content</div>
         </article>
         <article className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Metadata</div>
@@ -266,7 +285,9 @@ export default function MediaPage() {
                     </button>
                     <div className={styles.itemBody}>
                       <button className={styles.fileName} type="button" onClick={() => setSelectedName(file.name)} title={file.name}>{file.name}</button>
-                      <div className={styles.fileMeta}>{formatBytes(file.size)} · {file.alt ? "Alt set" : "No alt"}</div>
+                      <div className={styles.fileMeta}>
+                        {formatBytes(file.size)} · {file.alt ? "Alt set" : "No alt"} · {file.usageCount ? `Used ${file.usageCount}×` : "Unused"}
+                      </div>
                       <div className={styles.itemActions}>
                         <button type="button" onClick={() => void copyUrl(file.url)}>Copy URL</button>
                         <button type="button" onClick={() => setSelectedName(file.name)}>Details</button>
@@ -290,7 +311,40 @@ export default function MediaPage() {
                   <div><dt>URL</dt><dd><code>{selected.url}</code></dd></div>
                   <div><dt>Size</dt><dd>{formatBytes(selected.size)}</dd></div>
                   <div><dt>Updated</dt><dd>{formatDate(selected.modifiedAt)}</dd></div>
+                  <div><dt>Usage</dt><dd>{selected.usageCount ? `${selected.usageCount} reference${selected.usageCount === 1 ? "" : "s"}` : "Unused"}</dd></div>
                 </dl>
+
+                <section className={styles.usagePanel}>
+                  <div className={styles.usageHead}>
+                    <strong>Used in</strong>
+                    <span className={selected.usageCount ? styles.usageBadgeProtected : styles.usageBadgeSafe}>
+                      {selected.usageCount || "0"}
+                    </span>
+                  </div>
+                  {selected.usageCount ? (
+                    <div className={styles.usageList}>
+                      {selected.usage.map((usage, index) => {
+                        const content = (
+                          <>
+                            <strong>{usage.label}</strong>
+                            <small>{usage.source} · {usage.field}</small>
+                          </>
+                        );
+                        return usage.href ? (
+                          <a href={usage.href} className={styles.usageItem} key={`${usage.source}-${usage.field}-${index}`}>
+                            {content}<span aria-hidden="true">→</span>
+                          </a>
+                        ) : (
+                          <div className={styles.usageItem} key={`${usage.source}-${usage.field}-${index}`}>
+                            {content}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className={styles.usageSafe}>No references found in the active site content. This image can be deleted safely.</div>
+                  )}
+                </section>
 
                 <div className="sa-field">
                   <label htmlFor="media-alt">Alt text</label>
@@ -304,8 +358,21 @@ export default function MediaPage() {
                 <div className={styles.inspectorActions}>
                   <button className="sa-btn sa-btn--ghost sa-btn--sm" type="button" onClick={() => void copyUrl(selected.url)}>Copy URL</button>
                   <button className="sa-btn sa-btn--ghost sa-btn--sm" type="button" onClick={() => replaceInputRef.current?.click()} disabled={uploading}>Replace</button>
-                  <button className="sa-btn sa-btn--danger sa-btn--sm" type="button" onClick={() => void deleteFile(selected.name)}>Delete</button>
+                  <button
+                    className="sa-btn sa-btn--danger sa-btn--sm"
+                    type="button"
+                    onClick={() => void deleteFile(selected.name)}
+                    disabled={selected.usageCount > 0}
+                    title={selected.usageCount > 0 ? "Remove all content references before deleting this image." : undefined}
+                  >
+                    Delete
+                  </button>
                 </div>
+                {selected.usageCount > 0 ? (
+                  <div className={styles.deleteGuard}>
+                    Protected from deletion. Replace this file to keep its public URL, or remove the references listed above first.
+                  </div>
+                ) : null}
                 <input
                   ref={replaceInputRef}
                   type="file"

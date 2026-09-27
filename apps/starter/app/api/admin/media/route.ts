@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { buildMediaUsageIndex, findMediaUsage } from "@/lib/admin-media-usage";
 import { requireAuth } from "../guard";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -69,9 +70,17 @@ export async function GET() {
   const dir = uploadsDir();
   try {
     await mkdir(dir, { recursive: true });
-    const [entries, metadata] = await Promise.all([readdir(dir), readMetadata()]);
+    const [entries, metadata, usageIndex] = await Promise.all([
+      readdir(dir),
+      readMetadata(),
+      buildMediaUsageIndex(),
+    ]);
     const imageNames = entries.filter((name) => IMAGE_EXTENSION.test(name)).sort((a, b) => a.localeCompare(b));
-    const files = await Promise.all(imageNames.map((name) => describeFile(dir, name, metadata)));
+    const described = await Promise.all(imageNames.map((name) => describeFile(dir, name, metadata)));
+    const files = described.map((file) => {
+      const usage = usageIndex[file.name] ?? [];
+      return { ...file, usage, usageCount: usage.length };
+    });
     return NextResponse.json({ files });
   } catch {
     return NextResponse.json({ files: [] });
@@ -157,8 +166,29 @@ export async function DELETE(req: NextRequest) {
   if (!requestedName) return NextResponse.json({ error: "Missing file name." }, { status: 400 });
 
   const name = safeName(requestedName);
+  if (!name || name !== requestedName) {
+    return NextResponse.json({ error: "Invalid file name." }, { status: 400 });
+  }
+
+  const target = path.join(uploadsDir(), name);
+  if (!(await fileExists(target))) {
+    return NextResponse.json({ error: "File not found." }, { status: 404 });
+  }
+
+  const usage = await findMediaUsage(name);
+  if (usage.length) {
+    return NextResponse.json(
+      {
+        error: `${name} is used in ${usage.length} place${usage.length === 1 ? "" : "s"}. Remove those references or replace the image instead.`,
+        inUse: true,
+        usage,
+      },
+      { status: 409 },
+    );
+  }
+
   try {
-    await unlink(path.join(uploadsDir(), name));
+    await unlink(target);
     const metadata = await readMetadata();
     if (metadata[name]) {
       delete metadata[name];
