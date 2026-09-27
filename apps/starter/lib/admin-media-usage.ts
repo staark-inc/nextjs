@@ -1,5 +1,9 @@
-import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
+import {
+  contentStoragePath,
+  listContent,
+  readContentJson,
+} from "./storage";
 
 export type MediaUsageReference = {
   source: string;
@@ -9,35 +13,6 @@ export type MediaUsageReference = {
 };
 
 export type MediaUsageIndex = Record<string, MediaUsageReference[]>;
-
-function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir)
-    ? dir
-    : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
-async function exists(target: string): Promise<boolean> {
-  try {
-    await stat(target);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function collectJsonFiles(dir: string, out: string[]): Promise<void> {
-  if (!(await exists(dir))) return;
-
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    const target = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      await collectJsonFiles(target, out);
-      continue;
-    }
-    if (entry.isFile() && entry.name.endsWith(".json")) out.push(target);
-  }
-}
 
 function sourceInfo(
   relative: string,
@@ -112,17 +87,20 @@ function scanValue(
 }
 
 export async function buildMediaUsageIndex(): Promise<MediaUsageIndex> {
-  const root = contentRoot();
-  const files: string[] = [];
-  await collectJsonFiles(root, files);
+  const root = contentStoragePath();
+  const prefix = `${root}/`;
+  const files = (await listContent(""))
+    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
+    .filter((relative) => Boolean(relative) && relative.endsWith(".json"))
+    .sort();
 
   const index: MediaUsageIndex = {};
   const seen = new Set<string>();
 
-  for (const file of files.sort()) {
+  for (const source of files) {
     try {
-      const document = JSON.parse(await readFile(file, "utf8")) as Record<string, unknown>;
-      const source = path.relative(root, file).replaceAll("\\", "/");
+      const document = await readContentJson<Record<string, unknown>>(source);
+      if (!document) continue;
       const info = sourceInfo(source, document);
 
       scanValue(
@@ -133,7 +111,7 @@ export async function buildMediaUsageIndex(): Promise<MediaUsageIndex> {
         seen,
       );
     } catch {
-      // A malformed content file should not make the media library unusable.
+      // A malformed content object should not make the media library unusable.
     }
   }
 

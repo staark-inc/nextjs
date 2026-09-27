@@ -238,3 +238,45 @@ export async function deleteContent(relativePath: string): Promise<void> {
   await ensureLocalContentSeed();
   await getStorage().delete(contentStoragePath(relativePath));
 }
+
+
+/** Generic persistent admin-state helpers under `.staark/`. */
+export async function readStateText(
+  relativePath: string,
+): Promise<string | null> {
+  return getStorage().readText(stateStoragePath(relativePath));
+}
+
+export async function writeStateText(
+  relativePath: string,
+  value: string,
+): Promise<void> {
+  await getStorage().write(stateStoragePath(relativePath), value);
+}
+
+export async function readStateJson<T>(
+  relativePath: string,
+): Promise<T | null> {
+  return readStorageJson<T>(getStorage(), stateStoragePath(relativePath));
+}
+
+export async function writeStateJson(
+  relativePath: string,
+  value: unknown,
+): Promise<void> {
+  await writeStorageJson(getStorage(), stateStoragePath(relativePath), value);
+}
+
+export async function listState(
+  relativePrefix: string,
+): Promise<StorageEntry[]> {
+  return getStorage().list(stateStoragePath(relativePrefix));
+}
+
+export async function stateExists(relativePath: string): Promise<boolean> {
+  return getStorage().exists(stateStoragePath(relativePath));
+}
+
+export async function deleteState(relativePath: string): Promise<void> {
+  await getStorage().delete(stateStoragePath(relativePath));
+}

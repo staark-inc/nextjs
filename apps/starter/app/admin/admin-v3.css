@@ -885,8 +885,10 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 }
 
 /* Native buttons on module pages inherit the same visual language. */
-.sa-main--v2 button:not(.sa-btn):not(.sa-mobile-menu),
-.sa-main--v2 input[type="submit"] {
+:where(
+  .sa-main--v2 button:not(.sa-btn):not(.sa-mobile-menu),
+  .sa-main--v2 input[type="submit"]
+) {
   min-height: 36px;
   padding: 7px 12px;
   border: 1px solid var(--sa-line-strong);
@@ -899,8 +901,10 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   cursor: pointer;
 }
 
-.sa-main--v2 button:not(.sa-btn):not(.sa-mobile-menu):hover,
-.sa-main--v2 input[type="submit"]:hover {
+:where(
+  .sa-main--v2 button:not(.sa-btn):not(.sa-mobile-menu):hover,
+  .sa-main--v2 input[type="submit"]:hover
+) {
   border-color: var(--sa-primary-line);
   background: var(--sa-primary-soft);
   color: #075fb9;
@@ -1416,6 +1420,260 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 }
 
 /* =========================================================
+   DENSITY / VERTICAL RHYTHM
+   Keep the ACP compact: spacing should describe hierarchy,
+   not create empty visual bands between controls.
+   ========================================================= */
+
+.sa-main--v2 {
+  padding-top: 24px;
+}
+
+.sa-page-header {
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.sa-page-eyebrow,
+.sa-card__eyebrow {
+  margin-bottom: 4px;
+}
+
+.sa-h1 {
+  margin-bottom: 4px;
+}
+
+.sa-subtitle {
+  line-height: 1.5;
+}
+
+.sa-toolbar {
+  margin-bottom: 14px;
+}
+
+.sa-stats,
+.sa-stats--dashboard {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sa-stat,
+.sa-stat--v2 {
+  padding: 15px 18px;
+}
+
+.sa-stat__value {
+  margin-top: 4px;
+  font-size: 27px;
+  line-height: 1.08;
+}
+
+.sa-stat__desc {
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.sa-dashboard-grid,
+.sa-dashboard-side,
+.sa-overview-main {
+  gap: 14px;
+}
+
+.sa-dashboard-grid .sa-card {
+  margin-bottom: 0;
+}
+
+.sa-dashboard-panel .sa-card__header,
+.sa-overview-seo .sa-card__header,
+.sa-shortcuts .sa-card__header {
+  padding: 15px 18px;
+}
+
+.sa-dashboard-page {
+  min-height: 56px;
+  padding: 8px 18px;
+}
+
+.sa-deployment-card {
+  padding: 16px 18px;
+}
+
+.sa-deployment-card p {
+  margin: 8px 0 12px;
+  line-height: 1.5;
+}
+
+.sa-deployment-meta div {
+  padding: 7px 0;
+}
+
+.sa-shortcut-list a {
+  padding: 10px 18px;
+}
+
+.sa-overview-attention {
+  margin-bottom: 14px;
+}
+
+.sa-overview-section-head {
+  padding: 14px 18px;
+}
+
+.sa-overview-main .sa-overview-seo {
+  margin-top: 0;
+}
+
+/* Theme editor: tabs sit directly on the divider; no floating padding band. */
+.sa-theme-grid--compact {
+  margin-bottom: 16px;
+}
+
+.sa-theme-editor__head {
+  padding: 18px 22px;
+}
+
+.sa-theme-editor__preset {
+  padding: 16px 22px;
+}
+
+.sa-theme-editor__tabs {
+  padding: 0 16px;
+}
+
+.sa-theme-editor__tabs button {
+  padding: 9px 12px 8px;
+}
+
+.sa-theme-editor__body {
+  min-height: 0;
+  padding: 18px 22px 8px;
+}
+
+/* =========================================================
+   INBOX / DETAIL DENSITY
+   The inbox is data-heavy UI: remove inherited card padding and
+   stacked margins so rows and detail sections read as one workflow.
+   ========================================================= */
+
+/* Inbox list: the table owns its own cell padding; the card should not
+   add a second 20px frame around it. */
+.sa-table-card {
+  padding: 0 !important;
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+.sa-table-card .sa-table-scroll {
+  margin: 0;
+}
+
+.sa-inbox-table th {
+  padding: 8px 12px;
+}
+
+.sa-inbox-table td {
+  padding: 9px 12px;
+}
+
+.sa-inbox-preview {
+  margin-top: 3px;
+  line-height: 1.35;
+}
+
+/* Inbox detail: compact stacked cards and remove legacy card margins. */
+.sa-inbox-detail-grid {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 12px;
+}
+
+.sa-inbox-detail-main,
+.sa-inbox-detail-side {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.sa-inbox-detail-main > .sa-card,
+.sa-inbox-detail-side > .sa-card {
+  margin: 0;
+  padding: 14px 18px;
+}
+
+.sa-inbox-detail-grid .sa-card__header {
+  gap: 12px;
+  padding-bottom: 9px;
+}
+
+.sa-inbox-detail-grid .sa-card__eyebrow {
+  margin-bottom: 2px;
+}
+
+.sa-field-list > div,
+.sa-detail-list > div {
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  padding: 7px 0;
+}
+
+.sa-inbox-detail-main .sa-field {
+  margin-bottom: 11px;
+}
+
+.sa-inbox-detail-main .sa-card__header + .sa-field,
+.sa-inbox-detail-main .sa-card__header + .sa-message-box,
+.sa-inbox-detail-main .sa-card__header + .sa-field-list {
+  margin-top: 10px;
+}
+
+.sa-message-box {
+  margin-bottom: 10px;
+  padding: 11px 13px;
+  line-height: 1.45;
+}
+
+.sa-status-select {
+  margin-top: 9px;
+  padding-top: 10px;
+}
+
+.sa-status-select.sa-field {
+  margin-bottom: 0;
+}
+
+.sa-reply-message {
+  min-height: 118px !important;
+}
+
+.sa-activity-list {
+  margin-top: 8px;
+}
+
+.sa-activity-list li {
+  padding-bottom: 12px;
+}
+
+.sa-activity-list li:last-child {
+  padding-bottom: 0;
+}
+
+.sa-booking-facts {
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.sa-booking-facts > div {
+  padding: 9px 10px;
+}
+
+.sa-inbox-detail-main .sa-inline-actions {
+  margin-top: 2px;
+}
+
+.sa-inbox-detail-main .sa-note {
+  margin-top: 8px;
+}
+
+/* =========================================================
    RESPONSIVE
    ========================================================= */
 
@@ -1566,4 +1824,138 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   .sa-theme-card {
     transition: none !important;
   }
+}
+
+/* =========================================================
+   ADMIN CSS AUDIT / RHYTHM NORMALIZATION
+   Final shared pass: remove legacy spacing leaks from admin.css/admin-v2.css
+   and make vertical spacing come from layout context instead of random margins.
+   ========================================================= */
+
+/* Typography should not push the next component by itself. */
+.sa-subtitle {
+  margin: 0 !important;
+  line-height: 1.45;
+}
+
+/* Legacy .sa-card still carries margin-bottom from admin.css. In v3, layout
+   containers own spacing so cards do not create double gaps inside grids. */
+:where(.sa-main--v2 .sa-card) {
+  margin-bottom: 0;
+}
+
+/* Direct page-level stacked cards still need a deliberate, compact gap. */
+.sa-main__inner > .sa-card + .sa-card {
+  margin-top: 12px;
+}
+
+.sa-main__inner > .sa-subtitle + .sa-stats,
+.sa-main__inner > .sa-subtitle + .sa-stats--dashboard,
+.sa-main__inner > .sa-subtitle + .sa-card,
+.sa-main__inner > .sa-subtitle + .sa-toolbar {
+  margin-top: 12px;
+}
+
+.sa-card h3 {
+  margin-bottom: 8px;
+}
+
+.sa-field {
+  margin-bottom: 12px;
+}
+
+.sa-toolbar {
+  gap: 8px;
+}
+
+.sa-page-list li {
+  min-height: 54px;
+  padding: 10px 14px;
+}
+
+.sa-table th,
+.sa-main--v2 table th {
+  padding: 8px 12px;
+}
+
+.sa-table td,
+.sa-main--v2 table td {
+  padding: 10px 12px;
+}
+
+/* Theme editor tabs are navigation, not a card inside a card. Let the buttons
+   provide the hit-area; the tab rail itself must sit flush to the editor. */
+.sa-theme-editor__tabs {
+  gap: 0;
+  padding: 0 !important;
+}
+
+.sa-theme-editor__tabs button {
+  padding: 10px 14px 9px;
+}
+
+.sa-theme-editor__head {
+  padding: 16px 18px;
+}
+
+.sa-theme-editor__preset {
+  gap: 18px;
+  padding: 14px 18px;
+}
+
+.sa-theme-editor__body {
+  padding: 16px 18px 8px;
+}
+
+.sa-theme-editor__footer {
+  padding: 10px 18px;
+}
+
+.sa-theme-grid--compact {
+  gap: 12px;
+}
+
+.sa-theme-grid--compact .sa-theme-card {
+  gap: 10px;
+  padding: 15px;
+}
+
+/* Inbox/page data tables should not inherit roomy marketing-card spacing. */
+.sa-table-card .sa-table-scroll,
+.sa-table-card table {
+  margin: 0;
+}
+
+/* Keep compact groups aligned without hidden legacy margins. */
+.sa-inbox-detail-main > .sa-card,
+.sa-inbox-detail-side > .sa-card,
+.sa-dashboard-grid .sa-card,
+.sa-dashboard-side .sa-card {
+  margin: 0;
+}
+
+/* Contextual controls own their geometry. The generic native-button baseline
+   must never turn tabs, toggles or text actions into boxed ACP buttons. */
+.sa-main--v2 .sa-theme-editor__tabs button {
+  min-height: 0;
+  padding: 10px 14px 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sa-main--v2 .sa-theme-editor__tabs button:hover {
+  border-color: transparent;
+  border-bottom-color: transparent;
+  background: #f8fbff;
+  color: var(--sa-ink);
+}
+
+.sa-main--v2 .sa-theme-editor__tabs button.is-active,
+.sa-main--v2 .sa-theme-editor__tabs button.is-active:hover {
+  border-bottom-color: var(--sa-primary);
+  background: transparent;
+  color: var(--sa-primary);
 }

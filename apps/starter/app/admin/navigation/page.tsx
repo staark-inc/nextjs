@@ -148,9 +148,13 @@ export default function NavigationPage() {
           <h1 className="sa-h1">Navigation</h1>
           <p className="sa-subtitle">Control the header, footer and primary call-to-action without editing page content.</p>
         </div>
-        <button className="sa-btn sa-btn--primary" onClick={() => void save()} disabled={saving || !dirty}>
-          {saving ? "Saving…" : dirty ? "Save navigation" : "Saved"}
-        </button>
+        {dirty || saving ? (
+          <button className="sa-btn sa-btn--primary" onClick={() => void save()} disabled={saving}>
+            {saving ? "Saving…" : "Save navigation"}
+          </button>
+        ) : (
+          <span className={styles.saved}>Saved</span>
+        )}
       </div>
 
       {warnings.length ? (

@@ -398,25 +398,27 @@ export default function SeoPage() {
         </div>
       ) : null}
 
-      <div className="sa-card">
-        <h3>Google preview</h3>
-        <p className="sa-subtitle" style={{ marginBottom: 8 }}>How your homepage may appear in search results.</p>
-        <div className="sa-seo-preview">
-          <div className="sa-seo-preview__title">
-            {siteSeo.titleTemplate
-              ? siteSeo.titleTemplate.replace("%s", pages[0]?.seoTitle || pages[0]?.title || "Home")
-              : pages[0]?.seoTitle || pages[0]?.title || "Home"}
-          </div>
-          <div className="sa-seo-preview__url">
-            {siteData && typeof (siteData as Record<string, unknown>).url === "string"
-              ? String((siteData as Record<string, unknown>).url)
-              : "https://example.com"}
-          </div>
-          <div className="sa-seo-preview__desc">
-            {pages[0]?.seoDescription || siteSeo.defaultDescription || "No description set."}
+      {!selectedPage ? (
+        <div className="sa-card">
+          <h3>Google preview</h3>
+          <p className="sa-subtitle" style={{ marginBottom: 8 }}>How your homepage may appear in search results.</p>
+          <div className="sa-seo-preview">
+            <div className="sa-seo-preview__title">
+              {siteSeo.titleTemplate
+                ? siteSeo.titleTemplate.replace("%s", pages[0]?.seoTitle || pages[0]?.title || "Home")
+                : pages[0]?.seoTitle || pages[0]?.title || "Home"}
+            </div>
+            <div className="sa-seo-preview__url">
+              {siteData && typeof (siteData as Record<string, unknown>).url === "string"
+                ? String((siteData as Record<string, unknown>).url)
+                : "https://example.com"}
+            </div>
+            <div className="sa-seo-preview__desc">
+              {pages[0]?.seoDescription || siteSeo.defaultDescription || "No description set."}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {toast && <div className={`sa-toast ${toast.ok ? "sa-toast--success" : "sa-toast--error"}`}>{toast.msg}</div>}
     </>

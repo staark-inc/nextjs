@@ -71,24 +71,24 @@
       "id": "process",
       "type": "process",
       "props": {
-        "eyebrow": "Så jobbar vi",
-        "heading": "Från briefing till lansering",
+        "eyebrow": "How we work",
+        "heading": "From briefing to launch",
         "steps": [
           {
             "title": "Briefing",
-            "description": "Vi träffas och går igenom era mål, målgrupp och konkurrenter."
+            "description": "We meet to go through your goals, target audience, and competitors."
           },
           {
-            "title": "Koncept & design",
-            "description": "Vi tar fram förslag och itererar tills ni är nöjda."
+            "title": "Concept & design",
+            "description": "We develop proposals and iterate until you are satisfied."
           },
           {
-            "title": "Utveckling",
-            "description": "Vi bygger sajten och testar den ordentligt innan lansering."
+            "title": "Development & Platform",
+            "description": "We are building the site and testing it thoroughly before launch."
           },
           {
-            "title": "Lansering",
-            "description": "Sajten går live och vi följer upp med analys och optimering."
+            "title": "Launch Site",
+            "description": "The site goes live, and we follow up with analysis and optimization."
           }
         ]
       }
@@ -97,7 +97,7 @@
       "id": "reviews",
       "type": "testimonials",
       "props": {
-        "heading": "Vad kunderna säger",
+        "heading": "What customers say",
         "items": [
           {
             "quote": "Proffsigt, snabbt och med känsla för detaljer. Vår nya sajt levererar resultat.",
@@ -116,14 +116,14 @@
       "id": "cta",
       "type": "cta",
       "props": {
-        "heading": "Redo att ta nästa steg?",
-        "intro": "Berätta om ert projekt så hör vi av oss med ett förslag.",
+        "heading": "Ready to take the next step?",
+        "intro": "Tell us about a project, and we’ll get back to you with a proposal.",
         "cta": {
-          "label": "Kontakta oss",
+          "label": "Contact us",
           "href": "/kontakt"
         }
       }
     }
   ],
-  "updatedAt": "2026-09-27T09:11:37.774Z"
+  "updatedAt": "2026-09-27T09:48:03.894Z"
 }

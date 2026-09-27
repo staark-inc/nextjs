@@ -1,5 +1,9 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import {
+  readStateJson,
+  readStateText,
+  writeStateJson,
+  writeStateText,
+} from "./storage";
 
 export type InboxStatus = "new" | "read" | "replied" | "archived";
 export type BookingStatus = "pending" | "confirmed" | "declined";
@@ -30,10 +34,6 @@ type InboxState = {
 
 type InboxStateFile = Record<string, InboxState>;
 
-const STAARK_DIR = path.join(process.cwd(), ".staark");
-const SUBMISSIONS_FILE = path.join(STAARK_DIR, "submissions.jsonl");
-const STATE_FILE = path.join(STAARK_DIR, "inbox-state.json");
-
 function submissionId(index: number): string {
   return `SFS-${String(index + 1).padStart(5, "0")}`;
 }
@@ -50,7 +50,7 @@ function isBooking(fields: Record<string, unknown>, formId: string): boolean {
 
 async function readState(): Promise<InboxStateFile> {
   try {
-    const parsed: unknown = JSON.parse(await readFile(STATE_FILE, "utf8"));
+    const parsed = await readStateJson<unknown>("inbox-state.json");
     return parsed && typeof parsed === "object" ? (parsed as InboxStateFile) : {};
   } catch {
     return {};
@@ -58,14 +58,14 @@ async function readState(): Promise<InboxStateFile> {
 }
 
 async function writeState(state: InboxStateFile): Promise<void> {
-  await mkdir(STAARK_DIR, { recursive: true });
-  await writeFile(STATE_FILE, JSON.stringify(state, null, 2) + "\n", "utf8");
+  await writeStateJson("inbox-state.json", state);
 }
 
 export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
   let lines: string[] = [];
   try {
-    const raw = await readFile(SUBMISSIONS_FILE, "utf8");
+    const raw = await readStateText("submissions.jsonl");
+    if (raw === null) return [];
     lines = raw.trim().split("\n").filter(Boolean);
   } catch {
     return [];
@@ -149,9 +149,8 @@ export async function updateInboxSubmission(
 }
 
 export async function clearInbox(): Promise<void> {
-  await mkdir(STAARK_DIR, { recursive: true });
   await Promise.all([
-    writeFile(SUBMISSIONS_FILE, "", "utf8"),
-    writeFile(STATE_FILE, "{}\n", "utf8"),
+    writeStateText("submissions.jsonl", ""),
+    writeStateJson("inbox-state.json", {}),
   ]);
 }

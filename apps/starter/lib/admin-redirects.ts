@@ -1,6 +1,5 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { readStateJson, writeStateJson } from "./storage";
 
 export type RedirectStatus = 301 | 302;
 
@@ -32,14 +31,6 @@ const EMPTY_DOCUMENT: RedirectDocument = {
   version: 1,
   redirects: [],
 };
-
-function redirectFile(): string {
-  return path.join(
-    /* turbopackIgnore: true */ process.cwd(),
-    ".staark",
-    "redirects.json",
-  );
-}
 
 export function normalizeRedirectPath(value: string): string {
   let pathValue = value.trim();
@@ -116,34 +107,22 @@ function sanitizeRule(input: Partial<RedirectRule>, existing?: RedirectRule): Re
 }
 
 async function readDocument(): Promise<RedirectDocument> {
-  try {
-    const raw = JSON.parse(await readFile(redirectFile(), "utf8")) as Partial<RedirectDocument>;
-    if (raw.schema !== "staark-redirects/v1" || raw.version !== 1 || !Array.isArray(raw.redirects)) {
-      throw new Error("Unsupported redirect storage format.");
-    }
-    return {
-      schema: "staark-redirects/v1",
-      version: 1,
-      redirects: raw.redirects,
-    } as RedirectDocument;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { ...EMPTY_DOCUMENT, redirects: [] };
-    throw error;
+  const raw = await readStateJson<Partial<RedirectDocument>>("redirects.json");
+  if (raw === null) return { ...EMPTY_DOCUMENT, redirects: [] };
+
+  if (raw.schema !== "staark-redirects/v1" || raw.version !== 1 || !Array.isArray(raw.redirects)) {
+    throw new Error("Unsupported redirect storage format.");
   }
+
+  return {
+    schema: "staark-redirects/v1",
+    version: 1,
+    redirects: raw.redirects,
+  } as RedirectDocument;
 }
 
 async function writeDocument(document: RedirectDocument): Promise<void> {
-  const target = redirectFile();
-  await mkdir(path.dirname(target), { recursive: true });
-  const temporary = `${target}.${process.pid}.tmp`;
-
-  try {
-    await writeFile(temporary, JSON.stringify(document, null, 2) + "\n", "utf8");
-    await rename(temporary, target);
-  } catch (error) {
-    await rm(temporary, { force: true }).catch(() => undefined);
-    throw error;
-  }
+  await writeStateJson("redirects.json", document);
 }
 
 export function inspectRedirects(rules: RedirectRule[]): RedirectIssue[] {

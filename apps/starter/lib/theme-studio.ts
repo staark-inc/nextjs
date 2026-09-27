@@ -1,15 +1,20 @@
-import { access, mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
 import {
-  contentRoot,
-  readSite,
   readThemePresets,
   sanitizeComponents,
   sanitizeOverrides,
-  writeSite,
   type AdminThemePreset,
   type ThemeOverrides,
 } from "@/lib/admin-theme";
+import {
+  deleteState,
+  listState,
+  readContentJson,
+  readStateJson,
+  stateExists,
+  stateStoragePath,
+  writeContentJson,
+  writeStateJson,
+} from "@/lib/storage";
 
 export const THEME_STUDIO_SCHEMA = "staark-theme/v1" as const;
 export const THEME_STUDIO_VERSION = 1 as const;
@@ -47,12 +52,8 @@ type CreateThemeInput = {
   components?: unknown;
 };
 
-function studioDir(): string {
-  return path.join(process.cwd(), ".staark", "themes");
-}
-
 function themeFile(id: string): string {
-  return path.join(studioDir(), `${id}.json`);
+  return `themes/${id}.json`;
 }
 
 export function slugifyThemeId(value: string): string {
@@ -100,22 +101,21 @@ async function resolveBasePreset(baseTheme: BuiltInThemeId, requested: string): 
 }
 
 async function exists(id: string): Promise<boolean> {
-  try {
-    await access(themeFile(id));
-    return true;
-  } catch {
-    return false;
-  }
+  return stateExists(themeFile(id));
 }
 
 export async function listStudioThemes(): Promise<ThemeStudioSummary[]> {
-  await mkdir(studioDir(), { recursive: true });
-  const files = (await readdir(studioDir())).filter((file) => file.endsWith(".json")).sort();
+  const prefix = `${stateStoragePath("themes")}/`;
+  const files = (await listState("themes"))
+    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
+    .filter((file) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
+    .sort();
   const themes: ThemeStudioSummary[] = [];
 
   for (const file of files) {
     try {
-      const raw = JSON.parse(await readFile(path.join(studioDir(), file), "utf8"));
+      const raw = await readStateJson<unknown>(`themes/${file}`);
+      if (!raw) continue;
       const theme = parseStudioTheme(raw);
       themes.push({
         id: theme.id,
@@ -136,7 +136,8 @@ export async function listStudioThemes(): Promise<ThemeStudioSummary[]> {
 
 export async function readStudioTheme(id: string): Promise<ThemeStudioDocument> {
   if (!isThemeId(id)) throw new Error("Invalid theme id.");
-  const raw = JSON.parse(await readFile(themeFile(id), "utf8"));
+  const raw = await readStateJson<unknown>(themeFile(id));
+  if (!raw) throw new Error("Theme not found.");
   return parseStudioTheme(raw);
 }
 
@@ -215,13 +216,12 @@ export async function updateStudioTheme(
 }
 
 export async function writeStudioTheme(theme: ThemeStudioDocument): Promise<void> {
-  await mkdir(studioDir(), { recursive: true });
-  await writeFile(themeFile(theme.id), JSON.stringify(theme, null, 2) + "\n", "utf8");
+  await writeStateJson(themeFile(theme.id), theme);
 }
 
 export async function deleteStudioTheme(id: string): Promise<void> {
   if (!isThemeId(id)) throw new Error("Invalid theme id.");
-  await unlink(themeFile(id));
+  await deleteState(themeFile(id));
 }
 
 export function parseStudioTheme(input: unknown): ThemeStudioDocument {
@@ -304,7 +304,6 @@ export async function applyStudioTheme(id: string): Promise<{
   crossFamily: boolean;
 }> {
   const theme = await readStudioTheme(id);
-  const root = contentRoot();
   const contentDir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
   const activeBaseTheme = process.env.STAARK_THEME?.trim() || "salong";
   const activePresets = await readThemePresets(activeBaseTheme);
@@ -313,7 +312,8 @@ export async function applyStudioTheme(id: string): Promise<{
     throw new Error(`Active theme family "${activeBaseTheme}" has no readable presets.`);
   }
 
-  const site = await readSite(root);
+  const site = await readContentJson<Record<string, unknown>>("site.json");
+  if (!site) throw new Error("Site settings not found.");
   const previousTheme =
     site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
       ? (site.theme as Record<string, unknown>)
@@ -343,7 +343,7 @@ export async function applyStudioTheme(id: string): Promise<{
       appliedAt,
     },
   };
-  await writeSite(site, root);
+  await writeContentJson("site.json", site);
 
   return {
     theme,

@@ -1,11 +1,11 @@
-import { readdir, readFile, stat } from "node:fs/promises";
-import path from "node:path";
 import { listInboxSubmissions } from "@/lib/admin-inbox";
-
-function contentDir(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
+import { listMediaFiles } from "@/lib/admin-media";
+import { readStudioTheme } from "@/lib/theme-studio";
+import {
+  contentStoragePath,
+  listContent,
+  readContentJson,
+} from "@/lib/storage";
 
 type DashboardPage = {
   file: string;
@@ -15,6 +15,25 @@ type DashboardPage = {
   seoDescription: string;
   noindex: boolean;
   updatedAt: string;
+};
+
+type DashboardSite = {
+  name?: string;
+  theme?: {
+    preset?: string;
+    studio?: {
+      id?: string;
+      name?: string;
+      sourceUpdatedAt?: string;
+    };
+    overrides?: {
+      colors?: {
+        primary?: string;
+        surface?: string;
+        ink?: string;
+      };
+    };
+  };
 };
 
 function seoIssues(page: DashboardPage): string[] {
@@ -55,16 +74,26 @@ function ArrowIcon() {
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const dir = contentDir();
-  const site = JSON.parse(await readFile(path.join(dir, "site.json"), "utf8"));
-  const files = (await readdir(path.join(dir, "pages"))).filter((file) => file.endsWith(".json"));
+  const site = await readContentJson<DashboardSite>("site.json");
+  if (!site) throw new Error("Site settings not found in storage.");
+
+  const pagesPrefix = `${contentStoragePath("pages")}/`;
+  const pageEntries = (await listContent("pages"))
+    .map((entry) => ({
+      entry,
+      file: entry.path.startsWith(pagesPrefix)
+        ? entry.path.slice(pagesPrefix.length)
+        : "",
+    }))
+    .filter(({ file }) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
+    .sort((a, b) => a.file.localeCompare(b.file));
+  const files = pageEntries.map(({ file }) => file);
 
   const pages: DashboardPage[] = await Promise.all(
-    files.map(async (file) => {
+    pageEntries.map(async ({ entry, file }) => {
       try {
-        const filePath = path.join(dir, "pages", file);
-        const [raw, details] = await Promise.all([readFile(filePath, "utf8"), stat(filePath)]);
-        const data = JSON.parse(raw) as Record<string, unknown>;
+        const data = await readContentJson<Record<string, unknown>>(`pages/${file}`);
+        if (!data) throw new Error("Page object is missing.");
         const seo =
           data.seo && typeof data.seo === "object" && !Array.isArray(data.seo)
             ? (data.seo as Record<string, unknown>)
@@ -77,7 +106,12 @@ export default async function AdminDashboard() {
           seoTitle: typeof seo.title === "string" ? seo.title : "",
           seoDescription: typeof seo.description === "string" ? seo.description : "",
           noindex: seo.noindex === true,
-          updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : details.mtime.toISOString(),
+          updatedAt:
+            typeof data.updatedAt === "string"
+              ? data.updatedAt
+              : entry.mtime > 0
+                ? new Date(entry.mtime).toISOString()
+                : "",
         };
       } catch {
         return {
@@ -106,36 +140,13 @@ export default async function AdminDashboard() {
   let mediaMissingAlt = 0;
   let mediaBytes = 0;
   try {
-    const uploads = path.join(process.cwd(), "public", "uploads");
-    const metadataPath = path.join(process.cwd(), ".staark", "media.json");
-    const names = (await readdir(uploads))
-      .filter((name) => /\.(jpg|jpeg|png|gif|webp|svg|avif|ico)$/i.test(name));
-
-    let metadata: Record<string, { alt?: string }> = {};
-    try {
-      metadata = JSON.parse(await readFile(metadataPath, "utf8")) as Record<string, { alt?: string }>;
-    } catch {}
-
-    const sizes = await Promise.all(
-      names.map(async (name) => {
-        try {
-          return (await stat(path.join(uploads, name))).size;
-        } catch {
-          return 0;
-        }
-      }),
-    );
-
-    mediaCount = names.length;
-    mediaMissingAlt = names.filter((name) => !metadata[name]?.alt?.trim()).length;
-    mediaBytes = sizes.reduce((sum, size) => sum + size, 0);
+    const media = await listMediaFiles();
+    mediaCount = media.length;
+    mediaMissingAlt = media.filter((file) => !file.alt.trim()).length;
+    mediaBytes = media.reduce((sum, file) => sum + file.size, 0);
   } catch {}
 
-  let submissionCount = 0;
-  try {
-    const submissions = await readFile(path.join(process.cwd(), ".staark", "submissions.jsonl"), "utf8");
-    submissionCount = submissions.trim().split("\n").filter(Boolean).length;
-  } catch {}
+  const submissionCount = inbox.length;
 
   const theme = process.env.STAARK_THEME?.trim() || "salong";
   const source =
@@ -156,11 +167,8 @@ export default async function AdminDashboard() {
   let studioPending = false;
   if (studioId && /^[a-z0-9-]+$/.test(studioId)) {
     try {
-      const draft = JSON.parse(
-        await readFile(path.join(process.cwd(), ".staark", "themes", `${studioId}.json`), "utf8"),
-      ) as { updatedAt?: unknown };
+      const draft = await readStudioTheme(studioId);
       studioPending =
-        typeof draft.updatedAt === "string" &&
         Boolean(studioSourceUpdatedAt) &&
         draft.updatedAt !== studioSourceUpdatedAt;
     } catch {}

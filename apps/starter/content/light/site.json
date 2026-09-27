@@ -68,11 +68,15 @@
   "navigation": {
     "primary": [
       {
-        "label": "Tjänster",
+        "label": "Services",
         "href": "/tjanster"
       },
       {
-        "label": "Om oss",
+        "label": "Projects",
+        "href": "/project"
+      },
+      {
+        "label": "About us",
         "href": "/about"
       }
     ],

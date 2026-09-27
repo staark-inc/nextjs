@@ -1,13 +1,16 @@
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import { getStorage } from "@staark/platform/server";
+import { ensureMediaSeed } from "./admin-media";
+import {
+  contentStoragePrefix,
+  ensureLocalContentSeed,
+  stateStoragePath,
+  storagePath,
+} from "./storage";
 
 const BACKUP_SCHEMA = "staark-backup/v1" as const;
-const BACKUPS_DIR = path.join(
-  /* turbopackIgnore: true */ process.cwd(),
-  ".staark",
-  "backups",
-);
+const BACKUP_PREFIX = stateStoragePath("backups");
 
 const ALLOWED_SCOPES = new Set([
   "content",
@@ -47,16 +50,9 @@ export type BackupSummary = Pick<
   includesRedirects: boolean;
 };
 
-function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir)
-    ? dir
-    : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
-function backupPath(id: string): string {
+function backupStoragePath(id: string): string {
   if (!/^[a-z0-9-]+$/i.test(id)) throw new Error("Invalid backup id.");
-  return path.join(BACKUPS_DIR, `${id}.json`);
+  return stateStoragePath("backups", `${id}.json`);
 }
 
 function createId(): string {
@@ -64,13 +60,11 @@ function createId(): string {
   return `${stamp}-${randomBytes(3).toString("hex")}`;
 }
 
-async function exists(target: string): Promise<boolean> {
-  try {
-    await stat(target);
-    return true;
-  } catch {
-    return false;
-  }
+function usesFixtureContent(env: NodeJS.ProcessEnv = process.env): boolean {
+  const explicit = env.STAARK_CONTENT_SOURCE?.trim();
+  if (explicit === "fixtures") return true;
+  if (explicit === "hub") return false;
+  return !(env.STAARK_SITE_ID?.trim() && env.STAARK_SITE_SECRET?.trim());
 }
 
 function safeRelative(value: string): string {
@@ -106,63 +100,84 @@ function belongsToScope(relative: string, scope: string): boolean {
   return relative === scope || relative.startsWith(`${scope}/`);
 }
 
-function targetForRelative(value: string): string {
+/**
+ * Backup packages keep portable logical paths such as `content/pages/home.json`.
+ * Runtime storage may place that content at another prefix (for example
+ * `content/webb`), so translate only at the storage boundary.
+ */
+function storagePathForRelative(value: string): string {
   const relative = safeRelative(value);
-  if (relative === "content") return contentRoot();
+  if (relative === "content") return contentStoragePrefix();
   if (relative.startsWith("content/")) {
-    return path.join(contentRoot(), relative.slice("content/".length));
+    return storagePath(
+      contentStoragePrefix(),
+      relative.slice("content/".length),
+    );
   }
-  return path.join(/* turbopackIgnore: true */ process.cwd(), relative);
+  return storagePath(relative);
 }
 
-async function collectFiles(
-  absolute: string,
-  relative: string,
-  out: BackupFile[],
-): Promise<void> {
-  if (!(await exists(absolute))) return;
-  const info = await stat(absolute);
+function logicalPathForStorage(
+  storageObjectPath: string,
+  scope: string,
+  storagePrefix: string,
+): string {
+  if (storageObjectPath === storagePrefix) return scope;
+  if (!storageObjectPath.startsWith(`${storagePrefix}/`)) {
+    throw new Error(`Storage returned an object outside ${scope}.`);
+  }
+  return safeRelative(
+    `${scope}/${storageObjectPath.slice(storagePrefix.length + 1)}`,
+  );
+}
 
-  if (info.isDirectory()) {
-    const entries = await readdir(absolute);
-    for (const entry of entries.sort()) {
-      await collectFiles(
-        path.join(absolute, entry),
-        path.posix.join(relative.replaceAll("\\", "/"), entry),
-        out,
-      );
-    }
+async function collectScope(scope: string, out: BackupFile[]): Promise<void> {
+  const storage = getStorage();
+  const storagePrefix = storagePathForRelative(scope);
+
+  const exact = await storage.stat(storagePrefix);
+  if (exact) {
+    const data = await storage.read(storagePrefix);
+    if (data === null) return;
+    out.push({
+      path: scope,
+      size: data.byteLength,
+      contentBase64: Buffer.from(data).toString("base64"),
+    });
     return;
   }
 
-  if (!info.isFile()) return;
-  const data = await readFile(absolute);
-  out.push({
-    path: safeRelative(relative),
-    size: data.byteLength,
-    contentBase64: data.toString("base64"),
-  });
-}
+  const entries = (await storage.list(storagePrefix))
+    .filter(
+      (entry) =>
+        entry.path === storagePrefix ||
+        entry.path.startsWith(`${storagePrefix}/`),
+    )
+    .sort((a, b) => a.path.localeCompare(b.path));
 
-function sources(includeUploads: boolean): Array<{ scope: string; absolute: string }> {
-  const app = /* turbopackIgnore: true */ process.cwd();
-  const managed = [
-    { scope: "content", absolute: contentRoot() },
-    { scope: ".staark/themes", absolute: path.join(app, ".staark", "themes") },
-    { scope: ".staark/media.json", absolute: path.join(app, ".staark", "media.json") },
-    { scope: ".staark/inbox-state.json", absolute: path.join(app, ".staark", "inbox-state.json") },
-    { scope: ".staark/submissions.jsonl", absolute: path.join(app, ".staark", "submissions.jsonl") },
-    { scope: ".staark/revisions", absolute: path.join(app, ".staark", "revisions") },
-    { scope: ".staark/redirects.json", absolute: path.join(app, ".staark", "redirects.json") },
-  ];
-
-  if (includeUploads) {
-    managed.push({
-      scope: "public/uploads",
-      absolute: path.join(app, "public", "uploads"),
+  for (const entry of entries) {
+    const data = await storage.read(entry.path);
+    if (data === null) continue;
+    out.push({
+      path: logicalPathForStorage(entry.path, scope, storagePrefix),
+      size: data.byteLength,
+      contentBase64: Buffer.from(data).toString("base64"),
     });
   }
+}
 
+function sources(includeUploads: boolean): string[] {
+  const managed = [
+    "content",
+    ".staark/themes",
+    ".staark/media.json",
+    ".staark/inbox-state.json",
+    ".staark/submissions.jsonl",
+    ".staark/revisions",
+    ".staark/redirects.json",
+  ];
+
+  if (includeUploads) managed.push("public/uploads");
   return managed;
 }
 
@@ -268,28 +283,27 @@ function summary(pkg: BackupPackage): BackupSummary {
 }
 
 async function writePackage(pkg: BackupPackage): Promise<void> {
-  await mkdir(BACKUPS_DIR, { recursive: true });
-  const target = backupPath(pkg.id);
-  const temporary = `${target}.${process.pid}.tmp`;
-
-  try {
-    await writeFile(temporary, JSON.stringify(pkg) + "\n", "utf8");
-    await rename(temporary, target);
-  } catch (error) {
-    await rm(temporary, { force: true }).catch(() => undefined);
-    throw error;
-  }
+  await getStorage().write(
+    backupStoragePath(pkg.id),
+    JSON.stringify(pkg) + "\n",
+  );
 }
 
 export async function createBackup(
   label = "Manual backup",
   includeUploads = true,
 ): Promise<BackupSummary> {
+  // A backup must snapshot the runtime source of truth. Fixture deployments
+  // materialize their packaged seed first; Hub deployments must not invent
+  // local content just because a recovery point was requested.
+  if (usesFixtureContent()) await ensureLocalContentSeed();
+  if (includeUploads) await ensureMediaSeed();
+
   const files: BackupFile[] = [];
   const managed = sources(includeUploads);
 
-  for (const source of managed) {
-    await collectFiles(source.absolute, source.scope, files);
+  for (const scope of managed) {
+    await collectScope(scope, files);
   }
 
   const pkg: BackupPackage = {
@@ -300,7 +314,7 @@ export async function createBackup(
     createdAt: new Date().toISOString(),
     includeUploads,
     totalBytes: files.reduce((sum, file) => sum + file.size, 0),
-    scopes: managed.map((source) => source.scope),
+    scopes: managed,
     files,
   };
 
@@ -309,18 +323,23 @@ export async function createBackup(
 }
 
 export async function listBackups(): Promise<BackupSummary[]> {
-  await mkdir(BACKUPS_DIR, { recursive: true });
-  const entries = (await readdir(BACKUPS_DIR))
-    .filter((name) => /^[a-z0-9-]+\.json$/i.test(name))
-    .sort()
-    .reverse();
+  const storage = getStorage();
+  const prefix = `${BACKUP_PREFIX}/`;
+  const entries = (await storage.list(BACKUP_PREFIX))
+    .filter(
+      (entry) =>
+        entry.path.startsWith(prefix) &&
+        !entry.path.slice(prefix.length).includes("/") &&
+        /^[a-z0-9-]+\.json$/i.test(entry.path.slice(prefix.length)),
+    )
+    .sort((a, b) => b.path.localeCompare(a.path));
 
   const backups: BackupSummary[] = [];
   for (const entry of entries) {
     try {
-      const pkg = parsePackage(
-        JSON.parse(await readFile(path.join(BACKUPS_DIR, entry), "utf8")),
-      );
+      const raw = await storage.readText(entry.path);
+      if (raw === null) continue;
+      const pkg = parsePackage(JSON.parse(raw));
       backups.push(summary(pkg));
     } catch {
       // One malformed snapshot must not make the recovery screen unusable.
@@ -331,21 +350,39 @@ export async function listBackups(): Promise<BackupSummary[]> {
 }
 
 export async function readBackup(id: string): Promise<BackupPackage> {
-  const pkg = parsePackage(JSON.parse(await readFile(backupPath(id), "utf8")));
+  const raw = await getStorage().readText(backupStoragePath(id));
+  if (raw === null) throw new Error("Backup not found.");
+
+  const pkg = parsePackage(JSON.parse(raw));
   if (pkg.id !== id) throw new Error("Backup id does not match its filename.");
   return pkg;
 }
 
 export async function deleteBackup(id: string): Promise<void> {
-  await rm(backupPath(id), { force: false });
+  const target = backupStoragePath(id);
+  const storage = getStorage();
+  if (!(await storage.exists(target))) throw new Error("Backup not found.");
+  await storage.delete(target);
 }
 
 async function clearScope(scope: string): Promise<void> {
-  const target = targetForRelative(scope);
-  await rm(target, { recursive: true, force: true });
+  const storage = getStorage();
+  const storagePrefix = storagePathForRelative(scope);
 
-  if (path.extname(scope) === "") {
-    await mkdir(target, { recursive: true });
+  if (await storage.exists(storagePrefix)) {
+    await storage.delete(storagePrefix);
+  }
+
+  const entries = (await storage.list(storagePrefix))
+    .filter(
+      (entry) =>
+        entry.path === storagePrefix ||
+        entry.path.startsWith(`${storagePrefix}/`),
+    )
+    .sort((a, b) => b.path.length - a.path.length);
+
+  for (const entry of entries) {
+    await storage.delete(entry.path);
   }
 }
 
@@ -355,14 +392,12 @@ async function writeBackupFile(file: BackupFile, scopes: string[]): Promise<void
     throw new Error(`Backup file is outside managed scopes: ${relative}`);
   }
 
-  const target = targetForRelative(relative);
   const data = Buffer.from(file.contentBase64, "base64");
   if (data.byteLength !== file.size) {
     throw new Error(`Backup file size mismatch: ${relative}`);
   }
 
-  await mkdir(path.dirname(target), { recursive: true });
-  await writeFile(target, data);
+  await getStorage().write(storagePathForRelative(relative), data);
 }
 
 export async function restoreBackup(id: string): Promise<{
@@ -372,6 +407,8 @@ export async function restoreBackup(id: string): Promise<{
   // readBackup fully validates every scope/file before we create or delete anything.
   const pkg = await readBackup(id);
 
+  // The safety point is stored through the same driver but under .staark/backups,
+  // which is deliberately outside every restore scope.
   const safetyBackup = await createBackup(
     `Safety backup before restoring ${pkg.label}`,
     true,

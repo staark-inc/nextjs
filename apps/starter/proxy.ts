@@ -37,6 +37,19 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const adminRequest = isAdminRequest(pathname);
 
+  if (
+    !adminRequest &&
+    (req.method === "GET" || req.method === "HEAD") &&
+    pathname.startsWith("/uploads/")
+  ) {
+    const name = pathname.slice("/uploads/".length);
+    if (name && !name.includes("/")) {
+      const destination = req.nextUrl.clone();
+      destination.pathname = `/api/staark/uploads/${encodeURIComponent(name)}`;
+      return NextResponse.rewrite(destination);
+    }
+  }
+
   if (!adminRequest && canRedirectPublicRequest(req)) {
     try {
       const rule = await findMatchingRedirect(pathname);
@@ -93,6 +106,7 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/api/admin/:path*",
+    "/uploads/:path*",
     "/((?!api/|admin/|_next/|uploads/|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 };

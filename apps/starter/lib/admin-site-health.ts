@@ -1,9 +1,13 @@
-import { readFile, readdir } from "node:fs/promises";
-import path from "node:path";
 import { PageSchema, SiteSettingsSchema } from "@staark/core";
 import { themeRegistry } from "@/staark.config";
+import { listMediaFiles } from "./admin-media";
 import { buildMediaUsageIndex } from "./admin-media-usage";
 import { listRedirects, type RedirectRule } from "./admin-redirects";
+import {
+  contentStoragePath,
+  listContent,
+  readContentJson,
+} from "./storage";
 
 export type HealthSeverity = "error" | "warning";
 export type HealthCategory =
@@ -75,35 +79,6 @@ const BASE_BLOCK_TYPES = new Set([
   "contact",
 ]);
 
-const IMAGE_EXTENSION = /\.(jpg|jpeg|png|gif|webp|svg|avif|ico)$/i;
-
-function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir)
-    ? dir
-    : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
-function pagesDir(): string {
-  return path.join(contentRoot(), "pages");
-}
-
-function uploadsDir(): string {
-  return path.join(
-    /* turbopackIgnore: true */ process.cwd(),
-    "public",
-    "uploads",
-  );
-}
-
-function mediaMetadataFile(): string {
-  return path.join(
-    /* turbopackIgnore: true */ process.cwd(),
-    ".staark",
-    "media.json",
-  );
-}
-
 function pageEditorHref(file: string): string {
   return `/admin/pages/${encodeURIComponent(file)}`;
 }
@@ -168,20 +143,21 @@ function issueId(
   return `${category}:${source}:${code}`;
 }
 
-async function readJson(file: string): Promise<JsonObject> {
-  return JSON.parse(await readFile(file, "utf8")) as JsonObject;
-}
-
 async function readPages(issues: HealthIssue[]): Promise<PageRecord[]> {
-  let entries;
+  const prefix = `${contentStoragePath("pages")}/`;
+  let files: string[];
+
   try {
-    entries = await readdir(pagesDir(), { withFileTypes: true });
+    files = (await listContent("pages"))
+      .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
+      .filter((file) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
+      .sort();
   } catch (error) {
     issues.push({
-      id: issueId("content", "pages", "directory-unreadable"),
+      id: issueId("content", "pages", "storage-unreadable"),
       category: "content",
       severity: "error",
-      title: "Pages directory cannot be read",
+      title: "Page storage cannot be read",
       detail: (error as Error).message,
       href: "/admin/pages",
     });
@@ -190,21 +166,22 @@ async function readPages(issues: HealthIssue[]): Promise<PageRecord[]> {
 
   const pages: PageRecord[] = [];
 
-  for (const entry of entries.filter((item) => item.isFile() && item.name.endsWith(".json")).sort((a, b) => a.name.localeCompare(b.name))) {
-    const filePath = path.join(pagesDir(), entry.name);
+  for (const file of files) {
     let data: JsonObject;
 
     try {
-      data = await readJson(filePath);
+      const stored = await readContentJson<JsonObject>(`pages/${file}`);
+      if (!stored) throw new Error("Page object is missing.");
+      data = stored;
     } catch (error) {
       issues.push({
-        id: issueId("content", entry.name, "invalid-json"),
+        id: issueId("content", file, "invalid-json"),
         category: "content",
         severity: "error",
         title: "Invalid page JSON",
-        detail: `${entry.name}: ${(error as Error).message}`,
-        source: entry.name,
-        href: pageEditorHref(entry.name),
+        detail: `${file}: ${(error as Error).message}`,
+        source: file,
+        href: pageEditorHref(file),
       });
       continue;
     }
@@ -213,18 +190,18 @@ async function readPages(issues: HealthIssue[]): Promise<PageRecord[]> {
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       issues.push({
-        id: issueId("content", entry.name, "schema"),
+        id: issueId("content", file, "schema"),
         category: "content",
         severity: "error",
         title: "Page does not match the content schema",
-        detail: `${entry.name}: ${first?.path.join(".") || "page"} ${first?.message || "is invalid"}`,
-        source: entry.name,
-        href: pageEditorHref(entry.name),
+        detail: `${file}: ${first?.path.join(".") || "page"} ${first?.message || "is invalid"}`,
+        source: file,
+        href: pageEditorHref(file),
       });
     }
 
     pages.push({
-      file: entry.name,
+      file,
       data,
       path: typeof data.path === "string" ? data.path : undefined,
       title: typeof data.title === "string" ? data.title : undefined,
@@ -615,17 +592,11 @@ function addRedirectIssues(
 }
 
 async function addMediaIssues(issues: HealthIssue[]): Promise<void> {
-  const usageIndex = await buildMediaUsageIndex();
-
-  let uploadNames: string[] = [];
-  try {
-    uploadNames = (await readdir(uploadsDir()))
-      .filter((name) => IMAGE_EXTENSION.test(name));
-  } catch {
-    uploadNames = [];
-  }
-
-  const available = new Set(uploadNames);
+  const [usageIndex, media] = await Promise.all([
+    buildMediaUsageIndex(),
+    listMediaFiles(),
+  ]);
+  const available = new Set(media.map((file) => file.name));
 
   for (const [name, references] of Object.entries(usageIndex)) {
     if (available.has(name)) continue;
@@ -636,28 +607,21 @@ async function addMediaIssues(issues: HealthIssue[]): Promise<void> {
       category: "media",
       severity: "error",
       title: "Referenced media file is missing",
-      detail: `${name} is referenced ${references.length} time${references.length === 1 ? "" : "s"} but does not exist in public/uploads.`,
+      detail: `${name} is referenced ${references.length} time${references.length === 1 ? "" : "s"} but does not exist in media storage.`,
       source: first ? `${first.source} · ${first.field}` : name,
       href: first?.href ?? "/admin/media",
     });
   }
 
-  let metadata: Record<string, { alt?: string }> = {};
-  try {
-    metadata = JSON.parse(await readFile(mediaMetadataFile(), "utf8")) as Record<string, { alt?: string }>;
-  } catch {
-    metadata = {};
-  }
-
-  for (const name of uploadNames.sort()) {
-    if (metadata[name]?.alt?.trim()) continue;
+  for (const file of media) {
+    if (file.alt.trim()) continue;
     issues.push({
-      id: issueId("media", name, "missing-alt"),
+      id: issueId("media", file.name, "missing-alt"),
       category: "media",
       severity: "warning",
       title: "Media alt text is missing",
-      detail: `${name} has no alt text in the media library.`,
-      source: name,
+      detail: `${file.name} has no alt text in the media library.`,
+      source: file.name,
       href: "/admin/media",
     });
   }
@@ -686,7 +650,9 @@ export async function runSiteHealth(): Promise<SiteHealthReport> {
 
   let site: JsonObject = {};
   try {
-    site = await readJson(path.join(contentRoot(), "site.json"));
+    const storedSite = await readContentJson<JsonObject>("site.json");
+    if (!storedSite) throw new Error("Site settings not found in storage.");
+    site = storedSite;
     const parsed = SiteSettingsSchema.safeParse(site);
     if (!parsed.success) {
       const first = parsed.error.issues[0];

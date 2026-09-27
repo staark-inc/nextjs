@@ -1,6 +1,14 @@
 import { createHash, randomBytes } from "node:crypto";
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  deleteState,
+  listState,
+  readContentJson,
+  readStateJson,
+  stateStoragePath,
+  writeContentJson,
+  writeStateJson,
+} from "./storage";
 
 const REVISION_SCHEMA = "staark-page-revision/v1" as const;
 const MAX_REVISIONS_PER_PAGE = 50;
@@ -25,13 +33,8 @@ export type PageRevisionSummary = Pick<
   blocks: number;
 };
 
-function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
 function safeFile(file: string): string {
-  if (!file || path.basename(file) !== file || !file.endsWith(".json")) {
+  if (!file || path.posix.basename(file) !== file || !file.endsWith(".json")) {
     throw new Error("Invalid page file.");
   }
   return file;
@@ -42,22 +45,12 @@ function safeId(id: string): string {
   return id;
 }
 
-function revisionDir(file: string): string {
-  return path.join(
-    /* turbopackIgnore: true */ process.cwd(),
-    ".staark",
-    "revisions",
-    "pages",
-    safeFile(file).replace(/[^a-zA-Z0-9._-]/g, "_"),
-  );
+function revisionPrefix(file: string): string {
+  return `revisions/pages/${safeFile(file).replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 }
 
 function revisionPath(file: string, id: string): string {
-  return path.join(revisionDir(file), `${safeId(id)}.json`);
-}
-
-function pagePath(file: string): string {
-  return path.join(contentRoot(), "pages", safeFile(file));
+  return `${revisionPrefix(file)}/${safeId(id)}.json`;
 }
 
 function hashPage(page: Record<string, unknown>): string {
@@ -99,9 +92,6 @@ export async function createPageRevision(
   page: Record<string, unknown>,
   reason: string,
 ): Promise<PageRevisionSummary> {
-  const dir = revisionDir(file);
-  await mkdir(dir, { recursive: true });
-
   const revision: PageRevision = {
     schema: REVISION_SCHEMA,
     version: 1,
@@ -119,33 +109,35 @@ export async function createPageRevision(
     return latest;
   }
 
-  await writeFile(
-    revisionPath(file, revision.id),
-    JSON.stringify(revision, null, 2) + "\n",
-    "utf8",
-  );
+  await writeStateJson(revisionPath(file, revision.id), revision);
 
   const after = await listPageRevisions(file);
   for (const stale of after.slice(MAX_REVISIONS_PER_PAGE)) {
-    await rm(revisionPath(file, stale.id), { force: true });
+    await deleteState(revisionPath(file, stale.id));
   }
 
   return summary(revision);
 }
 
 export async function listPageRevisions(file: string): Promise<PageRevisionSummary[]> {
-  const dir = revisionDir(file);
-  await mkdir(dir, { recursive: true });
-  const names = (await readdir(dir))
-    .filter((name) => name.endsWith(".json"))
+  const relativePrefix = revisionPrefix(file);
+  const absolutePrefix = `${stateStoragePath(relativePrefix)}/`;
+  const names = (await listState(relativePrefix))
+    .map((entry) =>
+      entry.path.startsWith(absolutePrefix)
+        ? entry.path.slice(absolutePrefix.length)
+        : "",
+    )
+    .filter((name) => Boolean(name) && !name.includes("/") && name.endsWith(".json"))
     .sort()
     .reverse();
 
   const revisions: PageRevisionSummary[] = [];
   for (const name of names) {
     try {
-      const revision = parseRevision(JSON.parse(await readFile(path.join(dir, name), "utf8")));
-      revisions.push(summary(revision));
+      const revision = await readStateJson<PageRevision>(`${relativePrefix}/${name}`);
+      if (!revision) continue;
+      revisions.push(summary(parseRevision(revision)));
     } catch {
       // Skip malformed historical entries.
     }
@@ -154,7 +146,9 @@ export async function listPageRevisions(file: string): Promise<PageRevisionSumma
 }
 
 export async function readPageRevision(file: string, id: string): Promise<PageRevision> {
-  return parseRevision(JSON.parse(await readFile(revisionPath(file, id), "utf8")));
+  const revision = await readStateJson<PageRevision>(revisionPath(file, id));
+  if (!revision) throw new Error("Revision not found.");
+  return parseRevision(revision);
 }
 
 export async function restorePageRevision(
@@ -162,13 +156,14 @@ export async function restorePageRevision(
   id: string,
 ): Promise<Record<string, unknown>> {
   const target = await readPageRevision(file, id);
-  const current = JSON.parse(await readFile(pagePath(file), "utf8")) as Record<string, unknown>;
+  const current = await readContentJson<Record<string, unknown>>(`pages/${safeFile(file)}`);
+  if (!current) throw new Error("Page not found.");
   await createPageRevision(file, current, "before-restore");
 
   const restored = {
     ...target.page,
     updatedAt: new Date().toISOString(),
   };
-  await writeFile(pagePath(file), JSON.stringify(restored, null, 2) + "\n", "utf8");
+  await writeContentJson(`pages/${safeFile(file)}`, restored);
   return restored;
 }
