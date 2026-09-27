@@ -1,28 +1,45 @@
 import { NextResponse } from "next/server";
-import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { PageSchema } from "@staark/core";
+import {
+  contentStoragePath,
+  listContent,
+  readContentJson,
+  writeContentJson,
+} from "@/lib/storage";
 import { requireAuth } from "../../guard";
 
-function contentDir(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
 export const dynamic = "force-dynamic";
+
+async function pageFiles(): Promise<string[]> {
+  const prefix = `${contentStoragePath("pages")}/`;
+  return (await listContent("pages"))
+    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
+    .filter((file) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
+    .sort();
+}
 
 export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
-  const dir = contentDir();
-  const pagesDir = path.join(dir, "pages");
 
   try {
-    const files = (await readdir(pagesDir)).filter((f) => f.endsWith(".json"));
+    const files = await pageFiles();
     const pages = await Promise.all(
       files.map(async (file) => {
-        const raw = await readFile(path.join(pagesDir, file), "utf8");
-        const data = JSON.parse(raw);
+        const data = await readContentJson<{
+          path?: string;
+          title?: string;
+          seo?: {
+            title?: string;
+            description?: string;
+            ogImage?: string;
+            noindex?: boolean;
+          };
+          updatedAt?: string;
+        }>(`pages/${file}`);
+
+        if (!data) throw new Error(`Page ${file} disappeared while reading SEO data.`);
         return {
           file,
           path: data.path ?? "/",
@@ -54,17 +71,18 @@ export async function PUT(req: Request) {
 
   const body = (await req.json()) as Record<string, unknown>;
   const file = typeof body.file === "string" ? body.file : "";
-  const safe = path.basename(file);
+  const safe = path.posix.basename(file);
 
   if (!file || safe !== file || !safe.endsWith(".json")) {
     return NextResponse.json({ error: "Invalid page file." }, { status: 400 });
   }
 
-  const pagesDir = path.join(contentDir(), "pages");
-  const filePath = path.join(pagesDir, safe);
-
   try {
-    const current = JSON.parse(await readFile(filePath, "utf8")) as Record<string, unknown>;
+    const current = await readContentJson<Record<string, unknown>>(`pages/${safe}`);
+    if (!current) {
+      return NextResponse.json({ error: "Page not found." }, { status: 404 });
+    }
+
     const currentSeo =
       current.seo && typeof current.seo === "object" && !Array.isArray(current.seo)
         ? (current.seo as Record<string, unknown>)
@@ -90,7 +108,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    await writeFile(filePath, JSON.stringify(parsed.data, null, 2) + "\n", "utf8");
+    await writeContentJson(`pages/${safe}`, parsed.data);
     return NextResponse.json({
       ok: true,
       page: {

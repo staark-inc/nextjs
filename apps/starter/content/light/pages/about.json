@@ -3,7 +3,9 @@
   "title": "Omm os",
   "seo": {
     "title": "Omm os",
-    "description": "Omm os - Excellent service and great results, en digital byrå i Stockholm som bygger webbplatser och varumärken."
+    "description": "Omm os - Excellent service and great results, en digital byrå i Stockholm som bygger webbplatser och varumärken.",
+    "ogImage": "/uploads/banner.png",
+    "noindex": false
   },
   "blocks": [
     {
@@ -79,5 +81,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-27T07:48:48.960Z"
+  "updatedAt": "2026-09-27T09:21:29.673Z"
 }

@@ -7,14 +7,14 @@
  */
 
 :root {
-  --sa-bg: #f4f7fb;
-  --sa-bg-deep: #edf3fa;
+  --sa-bg: #f6f7f9;
+  --sa-bg-deep: #eef1f4;
   --sa-surface: #ffffff;
-  --sa-surface-soft: #f8faff;
-  --sa-surface-blue: #f2f7ff;
-  --sa-sidebar: #061225;
-  --sa-sidebar-deep: #020a16;
-  --sa-sidebar-hover: rgba(45, 132, 255, 0.1);
+  --sa-surface-soft: #f7f8fa;
+  --sa-surface-blue: #f3f6fa;
+  --sa-sidebar: #0c1522;
+  --sa-sidebar-deep: #0c1522;
+  --sa-sidebar-hover: #121f30;
   --sa-sidebar-text: #9aabc2;
   --sa-sidebar-active: #ffffff;
   --sa-ink: #0b1729;
@@ -38,12 +38,12 @@
   --sa-warning: #b77108;
   --sa-warning-soft: #fff8e8;
   --sa-warning-line: #f4dda7;
-  --sa-radius: 16px;
-  --sa-radius-sm: 10px;
+  --sa-radius: 14px;
+  --sa-radius-sm: 9px;
   --sa-radius-xs: 8px;
   --sa-font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --sa-shadow: 0 1px 2px rgba(8, 29, 58, 0.04), 0 10px 28px rgba(8, 29, 58, 0.055);
-  --sa-shadow-lg: 0 24px 70px rgba(3, 18, 43, 0.16);
+  --sa-shadow: none;
+  --sa-shadow-lg: none;
 }
 
 html {
@@ -52,9 +52,7 @@ html {
 
 body {
   min-width: 0;
-  background:
-    radial-gradient(circle at 78% -12%, rgba(20, 126, 255, 0.08), transparent 34rem),
-    var(--sa-bg);
+  background: var(--sa-bg);
   color: var(--sa-ink);
   font-family: var(--sa-font);
   font-size: 14px;
@@ -80,7 +78,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 
 .sa-shell--v2 {
   display: grid;
-  grid-template-columns: 272px minmax(0, 1fr);
+  grid-template-columns: 252px minmax(0, 1fr);
   min-height: 100vh;
   background: transparent;
 }
@@ -100,11 +98,9 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   padding: 14px 12px 12px;
   overflow-x: hidden;
   overflow-y: auto;
-  border-right: 1px solid rgba(83, 157, 255, 0.13);
-  background:
-    radial-gradient(circle at 35% 0%, rgba(0, 125, 255, 0.22), transparent 19rem),
-    linear-gradient(180deg, #07172d 0%, #04101f 54%, #020b17 100%);
-  box-shadow: 18px 0 60px rgba(3, 20, 45, 0.07);
+  border-right: 1px solid #1d2938;
+  background: var(--sa-sidebar);
+  box-shadow: none;
   scrollbar-width: thin;
   scrollbar-color: rgba(125, 165, 214, 0.26) transparent;
 }
@@ -122,7 +118,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 
 .sa-sidebar__brand--v2 {
   display: flex;
-  min-height: 72px;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -136,7 +132,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: #fff;
   text-decoration: none;
 }
@@ -144,38 +140,28 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 .sa-logo--v2.sa-logo--brand {
   position: relative;
   display: grid;
-  width: 43px;
-  height: 43px;
-  flex: 0 0 43px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   place-items: center;
   overflow: visible;
-  border: 1px solid rgba(69, 177, 255, 0.29);
-  border-radius: 13px;
-  background: linear-gradient(145deg, rgba(8, 38, 77, 0.92), rgba(3, 20, 43, 0.86));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(20, 93, 255, 0.05),
-    0 10px 28px rgba(0, 119, 255, 0.16);
+  border: 1px solid #263a54;
+  border-radius: 9px;
+  background: #102139;
+  box-shadow: none;
   color: transparent;
   font-size: 0;
 }
 
 .sa-logo--brand::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(23, 203, 255, 0.22);
-  filter: blur(18px);
+  display: none;
 }
 
 .sa-logo__mark {
   display: block;
-  width: 31px;
-  height: 31px;
-  filter: drop-shadow(0 0 7px rgba(25, 215, 255, 0.2));
+  width: 29px;
+  height: 29px;
+  filter: none;
 }
 
 .sa-brand__copy {
@@ -197,7 +183,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 
 .sa-brand__copy small {
   overflow: hidden;
-  color: #6f8bac;
+  color: #728299;
   font-size: 9.5px;
   font-weight: 750;
   line-height: 1.25;
@@ -233,7 +219,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 
 .sa-sidebar__section-label {
   padding: 8px 12px 6px;
-  color: #526d8e;
+  color: #65758b;
   font-size: 9px;
   font-weight: 800;
   line-height: 1.3;
@@ -257,59 +243,55 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 .sa-nav--v2 li a.sa-nav__link {
   position: relative;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  min-height: 50px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  min-height: 44px;
   align-items: center;
-  gap: 5px;
-  padding: 7px 10px;
+  gap: 6px;
+  padding: 6px 9px;
   margin: 0;
   overflow: hidden;
   border: 1px solid transparent;
-  border-radius: 11px;
+  border-radius: 8px;
   background: transparent;
   color: var(--sa-sidebar-text);
   text-decoration: none;
   transition:
-    background 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    transform 150ms ease;
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 }
 
 .sa-nav--v2 li a.sa-nav__link:hover {
-  border-color: rgba(111, 169, 239, 0.1);
-  background: rgba(67, 126, 199, 0.08);
+  border-color: transparent;
+  background: var(--sa-sidebar-hover);
   color: #e9f4ff;
 }
 
 .sa-nav--v2 li a.sa-nav__link.sa-nav__link--active {
-  border-color: rgba(57, 164, 255, 0.25);
-  background:
-    linear-gradient(90deg, rgba(8, 124, 255, 0.19), rgba(15, 82, 174, 0.11) 62%, rgba(25, 215, 255, 0.04));
+  border-color: #253a55;
+  background: #15243a;
   color: #fff;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.018),
-    0 8px 24px rgba(0, 70, 168, 0.08);
+  box-shadow: none;
 }
 
 .sa-nav--v2 li a.sa-nav__link.sa-nav__link--active::before {
   content: "";
   position: absolute;
-  top: 9px;
-  bottom: 9px;
+  top: 8px;
+  bottom: 8px;
   left: -1px;
   width: 3px;
-  border-radius: 0 4px 4px 0;
-  background: linear-gradient(180deg, var(--sa-cyan), var(--sa-primary-strong));
-  box-shadow: 0 0 12px rgba(19, 186, 255, 0.55);
+  border-radius: 0 3px 3px 0;
+  background: var(--sa-primary);
+  box-shadow: none;
 }
 
 .sa-nav__icon {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 7px;
   color: #6e88a9;
   transition: color 150ms ease, background 150ms ease;
 }
@@ -319,8 +301,8 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 }
 
 .sa-nav__link--active .sa-nav__icon {
-  background: rgba(14, 125, 255, 0.1);
-  color: #43ccff;
+  background: transparent;
+  color: #5fa7ff;
 }
 
 .sa-nav__copy {
@@ -375,9 +357,9 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   height: 35px;
   flex: 0 0 35px;
   place-items: center;
-  border: 1px solid rgba(84, 166, 255, 0.24);
-  border-radius: 11px;
-  background: linear-gradient(145deg, rgba(8, 124, 255, 0.16), rgba(25, 215, 255, 0.08));
+  border: 1px solid #2b405c;
+  border-radius: 8px;
+  background: #15243a;
   color: #dff6ff;
   box-shadow: none;
   font-size: 12px;
@@ -433,15 +415,15 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   top: 0;
   z-index: 40;
   display: flex;
-  min-height: 68px;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   padding: 0 30px;
-  border-bottom: 1px solid rgba(202, 216, 233, 0.88);
-  background: rgba(255, 255, 255, 0.89);
-  box-shadow: 0 8px 30px rgba(19, 45, 78, 0.035);
-  backdrop-filter: blur(18px) saturate(145%);
+  border-bottom: 1px solid var(--sa-line);
+  background: #fff;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .sa-topbar__context {
@@ -527,9 +509,9 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   flex: 0 0 40px;
   place-items: center;
   border: 1px solid var(--sa-line);
-  border-radius: 11px;
+  border-radius: 9px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(8, 29, 58, 0.04);
+  box-shadow: none;
   cursor: pointer;
 }
 
@@ -852,9 +834,9 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 
 .sa-btn--primary {
   border-color: #0876e9;
-  background: linear-gradient(180deg, #168cff, #0875eb);
+  background: #087cf0;
   color: #fff;
-  box-shadow: 0 6px 16px rgba(8, 117, 235, 0.16) !important;
+  box-shadow: none !important;
 }
 
 .sa-btn--primary:hover {
@@ -953,7 +935,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   border-radius: 10px;
   background: #fff;
   color: var(--sa-ink);
-  box-shadow: inset 0 1px 2px rgba(8, 29, 58, 0.025);
+  box-shadow: none;
   font: inherit;
   font-size: 13px;
   transition: border-color 130ms ease, box-shadow 130ms ease, background 130ms ease;
@@ -1462,7 +1444,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
     height: 100dvh;
     transform: translateX(-104%);
     transition: transform 180ms ease;
-    box-shadow: 28px 0 70px rgba(0, 10, 25, 0.28);
+    box-shadow: none;
   }
 
   .sa-sidebar--v2.sa-sidebar--open {

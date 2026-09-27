@@ -3,7 +3,10 @@ import path from "node:path";
 import {
   getStorage,
   normalizeStoragePath,
+  readStorageJson,
+  writeStorageJson,
   type StaarkStorage,
+  type StorageEntry,
 } from "@staark/platform/server";
 
 export const STAARK_STATE_PREFIX = ".staark";
@@ -190,4 +193,48 @@ export function ensureLocalContentSeed(): Promise<StorageSeedResult> {
   }
 
   return bootstrapPromise;
+}
+
+
+/** Storage key inside the active content root. */
+export function contentStoragePath(...parts: string[]): string {
+  return storagePath(contentStoragePrefix(), ...parts);
+}
+
+/**
+ * Content helpers used by the local ACP.
+ *
+ * They deliberately bootstrap the packaged fixture content before the first
+ * read/write so a fresh /data volume or empty S3 prefix behaves like local dev.
+ */
+export async function readContentJson<T>(
+  relativePath: string,
+): Promise<T | null> {
+  await ensureLocalContentSeed();
+  return readStorageJson<T>(getStorage(), contentStoragePath(relativePath));
+}
+
+export async function writeContentJson(
+  relativePath: string,
+  value: unknown,
+): Promise<void> {
+  await ensureLocalContentSeed();
+  await writeStorageJson(getStorage(), contentStoragePath(relativePath), value);
+}
+
+export async function listContent(
+  relativePrefix: string,
+): Promise<StorageEntry[]> {
+  await ensureLocalContentSeed();
+  return getStorage().list(contentStoragePath(relativePrefix));
+}
+
+export async function contentExists(relativePath: string): Promise<boolean> {
+  await ensureLocalContentSeed();
+  return getStorage().exists(contentStoragePath(relativePath));
+}
+
+export async function deleteContent(relativePath: string): Promise<void> {
+  await ensureLocalContentSeed();
+  await getStorage().delete(contentStoragePath(relativePath));
 }

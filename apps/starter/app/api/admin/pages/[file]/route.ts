@@ -1,27 +1,18 @@
 import { NextResponse } from "next/server";
-import { readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { PageSchema } from "@staark/core";
 import { createPageRevision } from "@/lib/admin-revisions";
 import { upsertRedirect } from "@/lib/admin-redirects";
 import { validateBlocks } from "@/lib/block-fields";
+import {
+  deleteContent,
+  readContentJson,
+  writeContentJson,
+} from "@/lib/storage";
 import { requireAuth } from "../../guard";
 
-function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
-function pagesDir(): string {
-  return path.join(contentRoot(), "pages");
-}
-
-function sitePath(): string {
-  return path.join(contentRoot(), "site.json");
-}
-
 function safeFile(file: string): string | null {
-  if (!file || path.basename(file) !== file || !file.endsWith(".json")) return null;
+  if (!file || path.posix.basename(file) !== file || !file.endsWith(".json")) return null;
   return file;
 }
 
@@ -34,10 +25,12 @@ export async function GET(_req: Request, ctx: Ctx) {
   const file = safeFile(requested);
   if (!file) return NextResponse.json({ error: "Invalid page file." }, { status: 400 });
 
-  const filePath = path.join(pagesDir(), file);
   try {
-    const raw = await readFile(filePath, "utf8");
-    return NextResponse.json(JSON.parse(raw));
+    const page = await readContentJson<unknown>(`pages/${file}`);
+    if (page === null) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+    return NextResponse.json(page);
   } catch {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
   }
@@ -61,7 +54,7 @@ export async function PUT(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Page must be a JSON object." }, { status: 422 });
   }
 
-  // Validate the platform page contract before touching revisions, redirects or disk.
+  // Validate the platform page contract before touching revisions, redirects or storage.
   // We intentionally keep writing the original object after validation so future
   // deployment-owned extension fields are preserved instead of stripped by Zod.
   const parsedPage = PageSchema.safeParse(body);
@@ -81,9 +74,11 @@ export async function PUT(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Some blocks are missing required fields.", fieldErrors }, { status: 422 });
   }
 
-  const filePath = path.join(pagesDir(), file);
   try {
-    const current = JSON.parse(await readFile(filePath, "utf8")) as Record<string, unknown>;
+    const current = await readContentJson<Record<string, unknown>>(`pages/${file}`);
+    if (!current) {
+      return NextResponse.json({ error: "Page not found." }, { status: 404 });
+    }
     const incoming = body as Record<string, unknown>;
 
     const currentPath = typeof current.path === "string" ? current.path : "";
@@ -102,7 +97,7 @@ export async function PUT(req: Request, ctx: Ctx) {
     }
 
     const saved = { ...incoming, updatedAt: new Date().toISOString() };
-    await writeFile(filePath, JSON.stringify(saved, null, 2) + "\n", "utf8");
+    await writeContentJson(`pages/${file}`, saved);
     return NextResponse.json({ ok: true, page: saved, redirectCreated: currentPath && incomingPath && currentPath !== incomingPath });
   } catch (error) {
     return NextResponse.json(
@@ -119,23 +114,26 @@ export async function DELETE(_req: Request, ctx: Ctx) {
   const file = safeFile(requested);
   if (!file) return NextResponse.json({ error: "Invalid page file." }, { status: 400 });
 
-  const filePath = path.join(pagesDir(), file);
-
   try {
-    const page = JSON.parse(await readFile(filePath, "utf8")) as { path?: string };
+    const page = await readContentJson<{ path?: string }>(`pages/${file}`);
+    if (!page) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+
     await createPageRevision(file, page as Record<string, unknown>, "before-delete");
-    await unlink(filePath);
+    await deleteContent(`pages/${file}`);
 
     if (page.path) {
       try {
-        const site = JSON.parse(await readFile(sitePath(), "utf8")) as {
+        const site = await readContentJson<{
           navigation?: { primary?: { label: string; href: string }[]; footer?: { label: string; href: string }[]; [key: string]: unknown };
           [key: string]: unknown;
-        };
-        if (site.navigation) {
+        }>("site.json");
+
+        if (site?.navigation) {
           site.navigation.primary = (site.navigation.primary ?? []).filter((link) => link.href !== page.path);
           site.navigation.footer = (site.navigation.footer ?? []).filter((link) => link.href !== page.path);
-          await writeFile(sitePath(), JSON.stringify(site, null, 2) + "\n", "utf8");
+          await writeContentJson("site.json", site);
         }
       } catch {
         // Page deletion should still succeed if navigation cleanup cannot be completed.

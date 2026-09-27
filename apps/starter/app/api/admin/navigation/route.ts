@@ -1,24 +1,15 @@
 import { NextResponse } from "next/server";
-import { readdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
+import {
+  contentStoragePath,
+  listContent,
+  readContentJson,
+  writeContentJson,
+} from "@/lib/storage";
 import { requireAuth } from "../guard";
 
 type Link = { label: string; href: string };
 type Navigation = { primary: Link[]; footer: Link[]; cta?: Link };
-
-function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
-function sitePath(): string {
-  return path.join(contentRoot(), "site.json");
-}
-
-function pagesDir(): string {
-  return path.join(contentRoot(), "pages");
-}
 
 function normalizeHref(value: unknown): string {
   if (typeof value !== "string") throw new Error("Link URL must be text.");
@@ -58,12 +49,21 @@ function normalizeNavigation(input: unknown): Navigation {
   return { primary, footer, ...(cta ? { cta } : {}) };
 }
 
+async function pageFiles(): Promise<string[]> {
+  const prefix = `${contentStoragePath("pages")}/`;
+  return (await listContent("pages"))
+    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
+    .filter((file) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
+    .sort();
+}
+
 async function pageOptions(): Promise<Array<{ path: string; title: string }>> {
   try {
-    const files = (await readdir(pagesDir())).filter((file) => file.endsWith(".json"));
+    const files = await pageFiles();
     const pages = await Promise.all(files.map(async (file) => {
       try {
-        const page = JSON.parse(await readFile(path.join(pagesDir(), file), "utf8")) as Record<string, unknown>;
+        const page = await readContentJson<Record<string, unknown>>(`pages/${file}`);
+        if (!page) return null;
         return {
           path: typeof page.path === "string" ? page.path : "",
           title: typeof page.title === "string" ? page.title : file.replace(/\.json$/i, ""),
@@ -108,11 +108,14 @@ export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
-  const [raw, pages] = await Promise.all([
-    readFile(sitePath(), "utf8"),
+  const [site, pages] = await Promise.all([
+    readContentJson<Record<string, unknown>>("site.json"),
     pageOptions(),
   ]);
-  const site = JSON.parse(raw) as Record<string, unknown>;
+  if (!site) {
+    return NextResponse.json({ error: "Site settings not found." }, { status: 404 });
+  }
+
   const navigation = normalizeNavigation(site.navigation ?? { primary: [], footer: [] });
   return NextResponse.json({ navigation, pages, warnings: warnings(navigation, pages) });
 }
@@ -124,10 +127,14 @@ export async function PUT(req: Request) {
   try {
     const body = (await req.json()) as Record<string, unknown>;
     const navigation = normalizeNavigation(body.navigation);
-    const [raw, pages] = await Promise.all([readFile(sitePath(), "utf8"), pageOptions()]);
-    const site = JSON.parse(raw) as Record<string, unknown>;
+    const [site, pages] = await Promise.all([
+      readContentJson<Record<string, unknown>>("site.json"),
+      pageOptions(),
+    ]);
+    if (!site) throw new Error("Site settings not found.");
+
     site.navigation = navigation;
-    await writeFile(sitePath(), JSON.stringify(site, null, 2) + "\n", "utf8");
+    await writeContentJson("site.json", site);
     revalidatePath("/", "layout");
     return NextResponse.json({ ok: true, navigation, warnings: warnings(navigation, pages) });
   } catch (error) {

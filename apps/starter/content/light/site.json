@@ -98,6 +98,7 @@
   "seo": {
     "titleTemplate": "%s | Staark Demo",
     "defaultDescription": "Staark Demo — en digital byrå i Stockholm som bygger webbplatser och varumärken.",
+    "ogImage": "/uploads/banner.png",
     "businessType": "ProfessionalService"
   }
 }

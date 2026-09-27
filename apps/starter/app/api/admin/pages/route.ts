@@ -1,6 +1,11 @@
-import { access, readdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { NextResponse } from "next/server";
+import {
+  contentExists,
+  contentStoragePath,
+  listContent,
+  readContentJson,
+  writeContentJson,
+} from "@/lib/storage";
 import { requireAuth } from "../guard";
 
 type NavigationLink = { label: string; href: string };
@@ -19,19 +24,6 @@ type PageTemplate = {
   description: string;
   theme?: string;
 };
-
-function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
-function pagesDir(): string {
-  return path.join(contentRoot(), "pages");
-}
-
-function sitePath(): string {
-  return path.join(contentRoot(), "site.json");
-}
 
 function templatesFor(theme: string): PageTemplate[] {
   const base: PageTemplate[] = [
@@ -103,7 +95,17 @@ function blocksFor(templateId: string, title: string) {
 }
 
 async function readSite(): Promise<SiteFile> {
-  return JSON.parse(await readFile(sitePath(), "utf8")) as SiteFile;
+  const site = await readContentJson<SiteFile>("site.json");
+  if (!site) throw new Error("Site settings not found.");
+  return site;
+}
+
+async function pageFiles(): Promise<string[]> {
+  const prefix = `${contentStoragePath("pages")}/`;
+  return (await listContent("pages"))
+    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
+    .filter((file) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
+    .sort();
 }
 
 async function updateNavigation(pathname: string, label: string, primary: boolean, footer: boolean): Promise<void> {
@@ -116,7 +118,7 @@ async function updateNavigation(pathname: string, label: string, primary: boolea
   navigation.primary = primary ? [...withoutPath(primaryLinks), { label, href: pathname }] : withoutPath(primaryLinks);
   navigation.footer = footer ? [...withoutPath(footerLinks), { label, href: pathname }] : withoutPath(footerLinks);
   site.navigation = navigation;
-  await writeFile(sitePath(), JSON.stringify(site, null, 2) + "\n", "utf8");
+  await writeContentJson("site.json", site);
 }
 
 export async function GET() {
@@ -125,13 +127,14 @@ export async function GET() {
 
   const [site, files] = await Promise.all([
     readSite(),
-    readdir(pagesDir()).then((entries) => entries.filter((file) => file.endsWith(".json")).sort()),
+    pageFiles(),
   ]);
   const primary = site.navigation?.primary ?? [];
   const footer = site.navigation?.footer ?? [];
   const pages = await Promise.all(
     files.map(async (file) => {
-      const raw = JSON.parse(await readFile(path.join(pagesDir(), file), "utf8")) as { path?: string; title?: string };
+      const raw = await readContentJson<{ path?: string; title?: string }>(`pages/${file}`);
+      if (!raw) throw new Error(`Page ${file} disappeared while listing pages.`);
       const pathname = raw.path ?? "/";
       return {
         file,
@@ -162,12 +165,9 @@ export async function POST(req: Request) {
 
   const slug = pathname.replace(/^\//, "") || "index";
   const file = slug.replace(/\//g, "-") + ".json";
-  const filePath = path.join(pagesDir(), file);
-  try {
-    await access(filePath);
+  const filePath = `pages/${file}`;
+  if (await contentExists(filePath)) {
     return NextResponse.json({ error: "A page with this path already exists." }, { status: 409 });
-  } catch {
-    // Expected for a new page.
   }
 
   const theme = process.env.STAARK_THEME?.trim() || "light";
@@ -182,7 +182,7 @@ export async function POST(req: Request) {
     updatedAt: new Date().toISOString(),
   };
 
-  await writeFile(filePath, JSON.stringify(page, null, 2) + "\n", "utf8");
+  await writeContentJson(filePath, page);
 
   const addToPrimary = body.addToPrimary === true && pathname !== "/";
   const addToFooter = body.addToFooter === true && pathname !== "/";
