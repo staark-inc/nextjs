@@ -26,8 +26,8 @@ export const Freeform: SectionComponent<z.infer<typeof schema>> = ({ props, ctx 
   const backgroundImage = hasImage && p.imagePosition === "background";
   const HostImage = ctx.image;
   const blockIndex = ctx.blockIndex ?? Number.POSITIVE_INFINITY;
-  const priority = blockIndex === 0;
-  const eager = blockIndex <= 1;
+  const priority = blockIndex <= 1;
+  const eager = blockIndex <= 2;
   const classes = [
     "sk-freeform",
     `sk-freeform--align-${p.alignment}`,
@@ -64,14 +64,28 @@ export const Freeform: SectionComponent<z.infer<typeof schema>> = ({ props, ctx 
       <Container wide={p.width === "wide"}>
         <div className="sk-freeform__inner">
           {hasImage && !backgroundImage && p.image ? (
-            <div className="sk-freeform__media">
-              <img
-                src={p.image.src}
-                alt={p.image.alt}
-                loading={eager ? "eager" : "lazy"}
-                fetchPriority={priority ? "high" : undefined}
-                decoding="async"
-              />
+            <div
+              className="sk-freeform__media"
+              style={HostImage ? { position: "relative", aspectRatio: "4 / 3", overflow: "hidden" } : undefined}
+            >
+              {HostImage ? (
+                <HostImage
+                  src={p.image.src}
+                  alt={p.image.alt}
+                  fill
+                  sizes="(max-width: 860px) calc(100vw - 48px), 46vw"
+                  priority={priority}
+                  eager={eager}
+                />
+              ) : (
+                <img
+                  src={p.image.src}
+                  alt={p.image.alt}
+                  loading={eager ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : undefined}
+                  decoding="async"
+                />
+              )}
             </div>
           ) : null}
 

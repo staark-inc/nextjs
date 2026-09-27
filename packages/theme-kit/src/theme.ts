@@ -21,12 +21,28 @@ export type Preset = {
   components?: Record<string, string>;
 };
 
+export type ThemeImageProps = {
+  src: string;
+  alt: string;
+  className?: string;
+  sizes?: string;
+  fill?: boolean;
+  priority?: boolean;
+  eager?: boolean;
+};
+
+export type ThemeImageComponent = ComponentType<ThemeImageProps>;
+
 /** Props every section receives from the renderer. */
 export type SectionContext = {
   /** Absolute site URL, contact, navigation etc. — the whole SiteSettings object. */
   site: import("@staark/core").SiteSettings;
   /** Component variants from the active preset (header: "glass", hero: "split", ...). */
   components: Record<string, string>;
+  /** Host-provided image renderer. Next.js injects next/image without coupling themes to Next. */
+  image?: ThemeImageComponent;
+  /** Position in the page block list. Useful for conservative above-the-fold prioritization. */
+  blockIndex?: number;
 };
 
 export type SectionComponent<P = Record<string, unknown>> = ComponentType<{ props: P; ctx: SectionContext }>;

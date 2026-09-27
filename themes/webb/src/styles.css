@@ -3,8 +3,9 @@
 
 /* Featured project — large split card */
 .sk-feature { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: stretch; background: var(--sk-color-white, #fff); border: 1px solid var(--sk-color-line, #e1ddd5); border-radius: var(--sk-radius-lg, 26px); overflow: hidden; box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 24px 60px -32px rgba(16,24,40,.4); }
-/* No image: tinted gradient panel. With an image, the inline background-image wins. */
+/* No image: tinted gradient panel. Image variants are rendered by the host optimizer. */
 .sk-feature__media { position: relative; min-height: 360px; background-size: cover; background-position: center; background-color: var(--sk-color-primary-soft, #eef3ff); background-image: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--sk-color-primary, #2457f5) 22%, transparent), transparent 60%); }
+.sk-feature__media > img { object-fit: cover; }
 .sk-feature__result { position: absolute; left: 20px; bottom: 20px; background: var(--sk-color-white, #fff); color: var(--sk-color-ink, #101619); font-weight: 700; padding: 10px 16px; border-radius: 999px; font-size: 0.9rem; box-shadow: 0 8px 24px -10px rgba(16,24,40,.4); }
 .sk-feature__body { padding: 40px 40px 40px 8px; align-self: center; }
 .sk-feature__client { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.78rem; font-weight: 700; color: var(--sk-color-primary, #2457f5); }

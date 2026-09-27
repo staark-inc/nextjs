@@ -4,6 +4,7 @@ import { buildMetadata } from "@staark/platform/server";
 import { BlockRenderer } from "@staark/theme-kit";
 import { content } from "@/lib/staark";
 import { resolveThemeRuntime } from "@/staark.config";
+import { StaarkImage } from "@/components/StaarkImage";
 
 type Params = { slug: string[] };
 
@@ -27,5 +28,13 @@ export default async function StaarkPage({ params }: { params: Promise<Params> }
   if (!page) notFound();
 
   const runtime = resolveThemeRuntime(site.theme.family);
-  return <BlockRenderer blocks={page.blocks} site={site} theme={runtime.theme} registry={runtime.registry} />;
+  return (
+    <BlockRenderer
+      blocks={page.blocks}
+      site={site}
+      theme={runtime.theme}
+      registry={runtime.registry}
+      image={StaarkImage}
+    />
+  );
 }

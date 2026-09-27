@@ -9,6 +9,12 @@ import "@staark/theme-gastfrihet/styles.css";
 import "@staark/theme-byra/styles.css";
 import "@staark/theme-webb/styles.css";
 
+/**
+ * Public content is mutable at runtime through the ACP and persistent storage.
+ * Never serve the build-time prerender after a container restart/recreate.
+ */
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const site = await content.getSite();
   return buildRootMetadata(site);

@@ -18,8 +18,8 @@ export const Hero: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) =
   const variant = ctx.components.hero ?? "split";
   const HostImage = ctx.image;
   const blockIndex = ctx.blockIndex ?? Number.POSITIVE_INFINITY;
-  const priority = blockIndex === 0;
-  const eager = blockIndex <= 1;
+  const priority = blockIndex <= 1;
+  const eager = blockIndex <= 2;
 
   return (
     <section className={`sk-hero sk-hero--${variant}`}>

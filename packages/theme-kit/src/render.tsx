@@ -1,5 +1,5 @@
 import type { Block, SiteSettings } from "@staark/core";
-import type { SectionContext, ThemeDefinition } from "./theme";
+import type { SectionContext, ThemeDefinition, ThemeImageComponent } from "./theme";
 import { resolvePreset } from "./theme";
 
 /**
@@ -25,17 +25,22 @@ export type BlockRendererProps = {
   theme: ThemeDefinition;
   /** Optional map of id → ThemeDefinition so child themes can resolve parent sections. */
   registry?: Record<string, ThemeDefinition>;
+  /** Host image renderer (Next.js injects next/image; other hosts may omit it). */
+  image?: ThemeImageComponent;
 };
 
-export function BlockRenderer({ blocks, site, theme, registry }: BlockRendererProps) {
+export function BlockRenderer({ blocks, site, theme, registry, image }: BlockRendererProps) {
   const chain = resolveThemes(theme, registry);
   const preset = resolvePreset(theme, site.theme.preset);
-  const ctx: SectionContext = {
-    site,
-    components: { ...preset.components, ...site.theme.components },
-  };
+  const components = { ...preset.components, ...site.theme.components };
 
-  return blocks.map((block) => {
+  return blocks.map((block, blockIndex) => {
+    const ctx: SectionContext = {
+      site,
+      components,
+      image,
+      blockIndex,
+    };
     const owner = chain.find((t) => t.sections[block.type]);
     const Section = owner?.sections[block.type];
     if (!Section) {

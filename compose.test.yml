@@ -1,0 +1,17 @@
+services:
+  web:
+    ports: !override []
+    networks:
+      - staark-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=staark-network"
+
+      - "traefik.http.routers.staark-next.rule=Host(`next.staarkinc.com`)"
+      - "traefik.http.routers.staark-next.entrypoints=web"
+
+      - "traefik.http.services.staark-next.loadbalancer.server.port=3000"
+
+networks:
+  staark-network:
+    external: true

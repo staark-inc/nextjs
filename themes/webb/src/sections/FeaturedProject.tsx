@@ -21,6 +21,10 @@ const schema = z.object({
  */
 export const FeaturedProject: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) => {
   const p = schema.parse(props);
+  const HostImage = ctx.image;
+  const blockIndex = ctx.blockIndex ?? Number.POSITIVE_INFINITY;
+  const priority = blockIndex <= 1;
+  const eager = blockIndex <= 2;
   return (
     <section className="sk-section">
       <Container wide>
@@ -28,9 +32,28 @@ export const FeaturedProject: SectionComponent<z.infer<typeof schema>> = ({ prop
         <div className="sk-feature">
           <div
             className="sk-feature__media"
-            style={p.image ? { backgroundImage: `url(${p.image})` } : undefined}
             data-has-image={p.image ? "1" : undefined}
           >
+            {p.image ? (
+              HostImage ? (
+                <HostImage
+                  src={p.image}
+                  alt={p.client ? `${p.client} project` : p.title}
+                  fill
+                  sizes="(max-width: 860px) calc(100vw - 48px), 55vw"
+                  priority={priority}
+                  eager={eager}
+                />
+              ) : (
+                <img
+                  src={p.image}
+                  alt={p.client ? `${p.client} project` : p.title}
+                  loading={eager ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : undefined}
+                  decoding="async"
+                />
+              )
+            ) : null}
             {p.result ? <span className="sk-feature__result">{p.result}</span> : null}
           </div>
           <div className="sk-feature__body">

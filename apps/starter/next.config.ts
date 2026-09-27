@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   // Keep transformed image variants warm. The source upload can stay mutable;
   // /_next/image uses its own cache key (source + width + quality).
   images: {
-    formats: ["image/webp"],
+    formats: ["image/avif", "image/webp"],
     qualities: [75, 82],
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
