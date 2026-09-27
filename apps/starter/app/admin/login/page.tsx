@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import BrandMark from "../BrandMark";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -35,9 +36,9 @@ export default function LoginPage() {
   return (
     <div className="sa-login">
       <form className="sa-login__card" onSubmit={handleSubmit}>
-        <div className="sa-login__logo">S</div>
-        <h1 className="sa-login__title">Staark Admin</h1>
-        <p className="sa-login__subtitle">Sign in to manage your site.</p>
+        <div className="sa-login__logo sa-login__logo--brand"><BrandMark className="sa-login__mark" /></div>
+        <h1 className="sa-login__title">Staark Hub</h1>
+        <p className="sa-login__subtitle">NextJS Platform · Local administration</p>
 
         {error && <div className="sa-login__error">{error}</div>}
 

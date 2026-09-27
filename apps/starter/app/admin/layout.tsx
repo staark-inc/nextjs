@@ -4,9 +4,10 @@ import AdminShell from "./AdminShell";
 import "./admin.css";
 import "./admin-v2.css";
 import "./overview-control-center.css";
+import "./admin-v3.css";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Staark Admin", robots: "noindex" };
+export const metadata: Metadata = { title: "Staark Hub · NextJS Platform", robots: "noindex" };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Admin config may be missing (e.g. ADMIN_* unset in production). Never let that

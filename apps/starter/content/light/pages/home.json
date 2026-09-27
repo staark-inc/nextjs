@@ -12,26 +12,27 @@
       "id": "hero",
       "type": "hero",
       "props": {
-        "eyebrow": "Digital byrå",
-        "heading": "Webbplatser som hjälper ditt företag att växa.",
-        "intro": "Vi designar och utvecklar moderna, snabba och SEO-vänliga webbplatser för företag som vill synas bättre och få fler kunder.",
+        "eyebrow": "Web Design & Web Development",
+        "intro": "We design and develop modern, fast, and SEO-friendly websites for companies that want to increase their visibility and gain more customers.",
         "primaryCta": {
-          "label": "Kontakta oss",
+          "label": "Get a free quote",
           "href": "/kontakt"
         },
         "secondaryCta": {
-          "label": "Våra tjänster",
-          "href": "/tjanster"
+          "label": "See our projects",
+          "href": "/projects"
         },
         "image": {
           "src": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=70",
           "alt": "Webbyrå arbetsplats"
         },
         "points": [
-          "Strategi & varumärke",
-          "Design & utveckling",
-          "SEO & konvertering"
-        ]
+          "Mobile-friendly design",
+          "Basic SEO",
+          "Contact form & Leads",
+          "SSL & modern technology"
+        ],
+        "heading": "Websites that help your business grow."
       }
     },
     {
@@ -39,25 +40,31 @@
       "type": "services",
       "props": {
         "eyebrow": "Tjänster",
-        "heading": "Det vi gör",
+        "heading": "WHAT WE DO",
         "columns": 2,
         "items": [
           {
-            "title": "Webbplatser",
+            "title": "Webbdesign",
             "icon": "🖥️",
-            "description": "Snabba, responsiva sajter byggda med Next.js. Optimerade för konvertering och SEO."
+            "description": "Modern and mobile-friendly design created for your business and your customers."
           },
           {
-            "title": "Varumärke",
-            "icon": "🎨",
-            "description": "Logotyp, typografi och bildspråk som skapar igenkänning och förtroende."
+            "title": "Web Development",
+            "description": "Fast and modern websites built with technology that can grow with the company."
           },
           {
-            "title": "SEO & analys",
+            "title": "SEO & Visibility",
             "icon": "📊",
-            "description": "Teknisk SEO, innehållsstrategi och löpande uppföljning."
+            "description": "A strong technical foundation that helps the right customers find your company."
+          },
+          {
+            "title": "Performance",
+            "icon": "",
+            "description": "Fast loading times and a better experience on mobile and desktop.",
+            "price": ""
           }
-        ]
+        ],
+        "intro": "The most important things for a better website."
       }
     },
     {
@@ -118,5 +125,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-27T08:22:08.796Z"
+  "updatedAt": "2026-09-27T09:11:37.774Z"
 }

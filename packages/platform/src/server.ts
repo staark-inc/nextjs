@@ -3,7 +3,17 @@
 // lives in this package so client deployments depend on one platform boundary.
 export {
   createStaarkContent,
+  createStorage,
+  getStorage,
+  setStorage,
+  readStorageJson,
+  writeStorageJson,
+  normalizeStoragePath,
+  StorageError,
   type StaarkContent,
+  type StaarkStorage,
+  type StorageEntry,
+  type S3StorageOptions,
 } from "@staark/core/server";
 
 export { createFormsRoute, type FormsRouteOptions } from "./next/forms";

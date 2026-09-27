@@ -29,6 +29,8 @@ WORKDIR /app
 RUN useradd -m -u 1001 staark
 
 # Standalone server (traced deps included), static assets, public folder and seed content.
+# The packaged content is a read-only seed; fixture mode copies it through the
+# storage driver on first boot when persistent storage is still empty.
 COPY --from=build /repo/apps/starter/.next/standalone ./
 COPY --from=build /repo/apps/starter/.next/static ./apps/starter/.next/static
 COPY --from=build /repo/apps/starter/public ./apps/starter/public

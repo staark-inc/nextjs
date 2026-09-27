@@ -29,6 +29,12 @@ STAARK_FORM_SECRET=<random>
 The app listens on `:3000`. Content the admin edits, backups, revisions, media
 and form submissions all persist to the `staark-data` volume (`/data`).
 
+In fixture mode the volume starts empty on a fresh deployment. Before the first
+content read, Staark copies the packaged seed for `STAARK_CONTENT_DIR` through
+the configured storage driver. Existing storage content is never overwritten.
+This gives Docker a deterministic first boot while keeping `/data` as the
+runtime source of truth.
+
 ### S3 / serverless instead of a disk
 
 ```env
