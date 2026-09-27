@@ -56,7 +56,7 @@ export function uploadsStoragePath(...parts: string[]): string {
 
 async function directoryExists(target: string): Promise<boolean> {
   try {
-    return (await stat(target)).isDirectory();
+    return (await stat(/* turbopackIgnore: true */ target)).isDirectory();
   } catch {
     return false;
   }
@@ -71,14 +71,14 @@ async function findPackagedSeedRoot(
   // Local dev: cwd is normally apps/starter.
   // Standalone Docker: cwd is /app and starter files live in /app/apps/starter.
   const candidates = [
-    path.resolve(cwd, nativeRelative),
-    path.resolve(cwd, "apps", "starter", nativeRelative),
+    path.resolve(/* turbopackIgnore: true */ cwd, nativeRelative),
+    path.resolve(/* turbopackIgnore: true */ cwd, "apps", "starter", nativeRelative),
   ];
 
   for (const candidate of candidates) {
     if (
       await directoryExists(candidate) &&
-      await stat(path.join(candidate, "site.json"))
+      await stat(/* turbopackIgnore: true */ path.join(/* turbopackIgnore: true */ candidate, "site.json"))
         .then((entry) => entry.isFile())
         .catch(() => false)
     ) {
@@ -94,12 +94,12 @@ async function collectSeedFiles(
   relative = "",
   out: Array<{ absolute: string; relative: string }> = [],
 ): Promise<Array<{ absolute: string; relative: string }>> {
-  const dir = relative ? path.join(root, relative) : root;
-  const entries = await readdir(dir, { withFileTypes: true });
+  const dir = relative ? path.join(/* turbopackIgnore: true */ root, relative) : root;
+  const entries = await readdir(/* turbopackIgnore: true */ dir, { withFileTypes: true });
 
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
     const nextRelative = relative
-      ? path.join(relative, entry.name)
+      ? path.join(/* turbopackIgnore: true */ relative, entry.name)
       : entry.name;
 
     if (entry.isDirectory()) {
@@ -109,7 +109,7 @@ async function collectSeedFiles(
 
     if (entry.isFile()) {
       out.push({
-        absolute: path.join(root, nextRelative),
+        absolute: path.join(/* turbopackIgnore: true */ root, nextRelative),
         relative: nextRelative.split(path.sep).join("/"),
       });
     }
@@ -149,7 +149,7 @@ async function bootstrapLocalContent(
     const key = storagePath(contentPrefix, file.relative);
     if (await storage.exists(key)) continue;
 
-    await storage.write(key, await readFile(file.absolute));
+    await storage.write(key, await readFile(/* turbopackIgnore: true */ file.absolute));
     copied += 1;
   }
 

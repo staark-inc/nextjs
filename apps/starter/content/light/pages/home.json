@@ -2,17 +2,34 @@
   "path": "/",
   "title": "Startsida",
   "seo": {
-    "title": "Staark Demo – digital byrå i Stockholm",
+    "title": "Staark Inc. Webbyrå – digital byrå i Stockholm",
     "description": "Vi bygger webbplatser och varumärken som konverterar.",
     "ogImage": "/uploads/screenshot-2026-09-26-22-18-07.png",
     "noindex": false
   },
   "blocks": [
     {
+      "id": "freeform-1790504997838",
+      "type": "freeform",
+      "props": {
+        "eyebrow": "Modern Next.js websites",
+        "imagePosition": "background",
+        "alignment": "left",
+        "width": "wide",
+        "background": "default",
+        "image": {
+          "src": "https://wp.staarkinc.com/wp-content/themes/staark-bygg/assets/images/hero-768.webp?ver=1790448099",
+          "alt": "Welcome"
+        },
+        "heading": "Websites that look expensive and get customers to reach out.",
+        "text": "We build fast, attractive, and high-converting websites for small and medium-sized businesses in Sweden—featuring clear structure, a solid SEO foundation, and personalized support."
+      }
+    },
+    {
       "id": "hero",
       "type": "hero",
       "props": {
-        "eyebrow": "Web Design & Web Development",
+        "eyebrow": "Staark Inc. Webbyrå",
         "intro": "We design and develop modern, fast, and SEO-friendly websites for companies that want to increase their visibility and gain more customers.",
         "primaryCta": {
           "label": "Get a free quote",
@@ -23,7 +40,7 @@
           "href": "/projects"
         },
         "image": {
-          "src": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=70",
+          "src": "/uploads/screenshot-2026-09-26-19-48-04.png",
           "alt": "Webbyrå arbetsplats"
         },
         "points": [
@@ -45,12 +62,13 @@
         "items": [
           {
             "title": "Webbdesign",
-            "icon": "🖥️",
+            "icon": "🛡️",
             "description": "Modern and mobile-friendly design created for your business and your customers."
           },
           {
             "title": "Web Development",
-            "description": "Fast and modern websites built with technology that can grow with the company."
+            "description": "Fast and modern websites built with technology that can grow with the company.",
+            "icon": "🎯"
           },
           {
             "title": "SEO & Visibility",
@@ -59,7 +77,7 @@
           },
           {
             "title": "Performance",
-            "icon": "",
+            "icon": "✨",
             "description": "Fast loading times and a better experience on mobile and desktop.",
             "price": ""
           }
@@ -125,5 +143,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-27T09:48:03.894Z"
+  "updatedAt": "2026-09-27T10:52:23.787Z"
 }

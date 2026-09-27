@@ -1,6 +1,6 @@
 {
-  "name": "Staark Demo",
-  "tagline": "Digital byrå i Stockholm",
+  "name": "Staark Inc. Webbyrå",
+  "tagline": "Digital Webbyrå i Jönköping, Varnamo",
   "locale": "sv-SE",
   "url": "https://demo.staarkinc.com",
   "theme": {
@@ -82,26 +82,30 @@
     ],
     "footer": [
       {
-        "label": "Tjänster",
-        "href": "/#tjanster"
+        "label": "Services",
+        "href": "/tjanster"
       },
       {
-        "label": "Kontakt",
+        "label": "Contact us",
         "href": "/kontakt"
       },
       {
         "label": "Process",
         "href": "/#process"
+      },
+      {
+        "label": "Projects",
+        "href": "/project"
       }
     ],
     "cta": {
-      "label": "Kontakta oss",
+      "label": "Contact us",
       "href": "/kontakt"
     }
   },
   "seo": {
-    "titleTemplate": "%s | Staark Demo",
-    "defaultDescription": "Staark Demo — en digital byrå i Stockholm som bygger webbplatser och varumärken.",
+    "titleTemplate": "%s | Staark Inc. Webbyrå",
+    "defaultDescription": "Staark Inc. Webbyrå  — en digital byrå i Stockholm, Jönköping, Varnamo  som bygger webbplatser och varumärken.",
     "ogImage": "/uploads/banner.png",
     "businessType": "ProfessionalService"
   }

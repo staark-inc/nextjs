@@ -11,6 +11,21 @@ type BlockTemplate = {
 
 const BASE_BLOCKS: BlockTemplate[] = [
   {
+    type: "freeform",
+    label: "Freeform",
+    description: "Flexible text, image and buttons for sections that do not fit a fixed block.",
+    icon: "pen-tool",
+    template: {
+      eyebrow: "Custom section",
+      heading: "Add your heading",
+      text: "Write the content for this section.",
+      imagePosition: "right",
+      alignment: "left",
+      width: "normal",
+      background: "default",
+    },
+  },
+  {
     type: "hero",
     label: "Hero",
     description: "Full-width hero section with heading, intro text, CTAs and optional image.",

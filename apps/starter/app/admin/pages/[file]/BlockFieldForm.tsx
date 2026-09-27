@@ -16,6 +16,17 @@ type Obj = Record<string, unknown>;
 
 const PickerCtx = createContext<(cb: (url: string) => void) => void>(() => {});
 
+const ICON_SYMBOLS = ["✓", "★", "→", "↗", "◆", "●", "＋", "⚡", "∞", "§", "✦", "✚"];
+const ICON_EMOJIS = [
+  "🎯", "🚀", "📊", "💡", "✨", "🔥", "💻", "🛡️",
+  "📍", "☎️", "✉️", "🛠️", "🧰", "🏠", "🚗", "🐾",
+  "☕", "🍽️", "🛏️", "🧴", "✂️", "🌿", "❤️", "⭐",
+];
+
+function isIconImage(value: string): boolean {
+  return /^(?:https?:\/\/|\/)/i.test(value);
+}
+
 function setKey(obj: Obj, key: string, value: unknown): Obj {
   const next = { ...obj };
   if (value === "" || value === undefined) delete next[key];
@@ -75,6 +86,7 @@ function labelFor(field: Field, item: unknown, index: number): string {
 
 function FieldInput({ field, value, onChange, error }: { field: Field; value: unknown; onChange: (v: unknown) => void; error?: string }) {
   const openPicker = useContext(PickerCtx);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const id = `bf-${field.name}-${Math.random().toString(36).slice(2, 7)}`;
   const errorNode = error ? <div className="sa-field-error">{error}</div> : null;
 
@@ -144,6 +156,58 @@ function FieldInput({ field, value, onChange, error }: { field: Field; value: un
             <FieldInput key={sub.name} field={sub} value={obj[sub.name]} onChange={(v) => onChange(setKey(obj, sub.name, v))} />
           ))}
         </div>
+        {errorNode}
+      </div>
+    );
+  }
+
+  if (field.type === "icon") {
+    const current = String(value ?? "");
+    return (
+      <div className="sa-field">
+        <label htmlFor={id}>{field.label}</label>
+        <div className="sa-icon-field">
+          <span className="sa-icon-field__preview" aria-hidden>
+            {current ? (
+              isIconImage(current) ? <img src={current} alt="" /> : current
+            ) : "◇"}
+          </span>
+          <input
+            id={id}
+            value={current}
+            placeholder="Emoji, symbol or /uploads/icon.svg"
+            onChange={(e) => onChange(e.target.value)}
+          />
+          <button type="button" className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => setIconPickerOpen((open) => !open)}>
+            {iconPickerOpen ? "Close" : "Choose icon"}
+          </button>
+          <button type="button" className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => openPicker(onChange)}>
+            Media
+          </button>
+          {current ? <button type="button" className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => onChange("")}>Clear</button> : null}
+        </div>
+        {iconPickerOpen ? (
+          <div className="sa-icon-picker">
+            <div>
+              <strong>Symbols</strong>
+              <div className="sa-icon-picker__grid">
+                {ICON_SYMBOLS.map((icon) => (
+                  <button type="button" key={icon} onClick={() => { onChange(icon); setIconPickerOpen(false); }}>{icon}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <strong>Emoji</strong>
+              <div className="sa-icon-picker__grid">
+                {ICON_EMOJIS.map((icon) => (
+                  <button type="button" key={icon} onClick={() => { onChange(icon); setIconPickerOpen(false); }}>{icon}</button>
+                ))}
+              </div>
+            </div>
+            <small>For SVG, PNG or WebP choose <b>Media</b>. You can also paste a URL directly.</small>
+          </div>
+        ) : null}
+        {field.help ? <div className="sa-field-hint">{field.help}</div> : null}
         {errorNode}
       </div>
     );

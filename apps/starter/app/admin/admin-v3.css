@@ -1959,3 +1959,84 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   background: transparent;
   color: var(--sa-primary);
 }
+
+/* =========================================================
+   EDITOR / ICON PICKER
+   ========================================================= */
+.sa-icon-field {
+  display: grid;
+  grid-template-columns: 42px minmax(180px, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.sa-icon-field__preview {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--sa-line);
+  border-radius: 9px;
+  background: #fff;
+  font-size: 22px;
+}
+
+.sa-icon-field__preview img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.sa-icon-picker {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  background: var(--sa-surface, #f8fafc);
+}
+
+.sa-icon-picker strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.sa-icon-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 6px;
+}
+
+.sa-main--v2 .sa-icon-picker__grid button {
+  min-height: 38px;
+  padding: 4px;
+  border: 1px solid var(--sa-line);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 19px;
+}
+
+.sa-main--v2 .sa-icon-picker__grid button:hover {
+  border-color: var(--sa-primary);
+  background: var(--sa-primary-soft);
+}
+
+.sa-icon-picker small {
+  color: var(--sa-muted);
+}
+
+@media (max-width: 760px) {
+  .sa-icon-field {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .sa-icon-field .sa-btn {
+    grid-column: 2;
+    width: 100%;
+  }
+}

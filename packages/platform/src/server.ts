@@ -4,6 +4,9 @@
 export {
   createStaarkContent,
   createStorage,
+  verifySignature,
+  checkForPlatformUpdate,
+  UPDATE_HUB_PATHS,
   getStorage,
   setStorage,
   readStorageJson,
@@ -12,6 +15,10 @@ export {
   StorageError,
   type StaarkContent,
   type StaarkStorage,
+  type UpdateArtifact,
+  type UpdateManifest,
+  type UpdateCheckRequest,
+  type UpdateCheckResponse,
   type StorageEntry,
   type S3StorageOptions,
 } from "@staark/core/server";
@@ -32,3 +39,8 @@ export {
   StaarkConfigurationError,
   type AdminAuthConfig,
 } from "./admin/auth-config";
+
+export {
+  resolveDeploymentIdentity,
+  type ResolveDeploymentIdentityOptions,
+} from "./deployment/identity";

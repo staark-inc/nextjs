@@ -413,7 +413,7 @@ function iconForType(icon: string): string {
   const map: Record<string, string> = {
     layout: "🏠", grid: "📦", "list-ordered": "📋", "message-circle": "💬",
     megaphone: "📣", mail: "✉️", receipt: "🧾", image: "🖼️",
-    bed: "🛏️", sparkles: "✨",
+    bed: "🛏️", sparkles: "✨", "pen-tool": "✎",
   };
   return map[icon] ?? "📄";
 }

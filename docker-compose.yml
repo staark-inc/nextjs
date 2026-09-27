@@ -17,6 +17,13 @@ services:
       STAARK_CONTENT_DIR: ${STAARK_CONTENT_DIR:-content/webb}
       STAARK_CONTENT_SOURCE: ${STAARK_CONTENT_SOURCE:-fixtures}
 
+      # Stable deployment identity + release metadata used by the Hub update channel.
+      # Leave STAARK_DEPLOYMENT_ID empty to generate/persist one under /data.
+      STAARK_DEPLOYMENT_ID: ${STAARK_DEPLOYMENT_ID:-}
+      STAARK_UPDATE_CHANNEL: ${STAARK_UPDATE_CHANNEL:-stable}
+      STAARK_RELEASE_VERSION: ${STAARK_RELEASE_VERSION:-0.1.0}
+      STAARK_RELEASE_ID: ${STAARK_RELEASE_ID:-local}
+
       # Storage: fs (default, uses the /data volume) or s3 for serverless/portable.
       STAARK_STORAGE: ${STAARK_STORAGE:-fs}
       STAARK_STORAGE_DIR: /data

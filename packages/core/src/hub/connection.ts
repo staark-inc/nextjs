@@ -1,3 +1,4 @@
+import { STAARK_PLATFORM_VERSION } from "../deployment";
 import { signRequest } from "./sign";
 
 /** Resolved connection settings, read from env by `readStaarkEnv()`. */
@@ -44,8 +45,14 @@ export function readStaarkEnv(env: NodeJS.ProcessEnv = process.env): HubConnecti
         "Staark Hub API must use HTTPS. Plain HTTP is allowed only with STAARK_HUB_ALLOW_HTTP=1 for a local/development Hub.",
       );
     }
-  } else if (env.NODE_ENV === "production" && env.STAARK_ALLOW_FIXTURES_IN_PRODUCTION !== "1") {
-    console.warn("[staark] Serving local fixture content in production. Pair the site in Staark Hub and set STAARK_SITE_ID / STAARK_SITE_SECRET.");
+  } else if (
+    explicit !== "fixtures" &&
+    env.NODE_ENV === "production" &&
+    env.STAARK_ALLOW_FIXTURES_IN_PRODUCTION !== "1"
+  ) {
+    console.warn(
+      "[staark] Falling back to local fixture content in production because the deployment is not paired with Staark Hub.",
+    );
   }
 
   return {
@@ -69,7 +76,7 @@ export class HubError extends Error {
   }
 }
 
-export const CLIENT_VERSION = "0.1.0";
+export const CLIENT_VERSION = STAARK_PLATFORM_VERSION;
 
 /**
  * Signed JSON request to Staark Hub. Same envelope as the WordPress connector:

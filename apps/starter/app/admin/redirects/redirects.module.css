@@ -143,3 +143,21 @@
   .actions { grid-column: 2; grid-row: auto; flex-wrap: wrap; }
   .listHeader { align-items: flex-start; flex-direction: column; }
 }
+
+/* Redirect toggle geometry fix */
+.statusCell .toggle {
+  width: 34px;
+  min-width: 34px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+}
+
+.statusCell .toggle span {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.statusCell .toggleOn span {
+  transform: translate(14px, -50%);
+}

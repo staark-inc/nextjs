@@ -72,6 +72,7 @@ const CHECK_LABELS: Record<HealthCategory, string> = {
 
 const BASE_BLOCK_TYPES = new Set([
   "hero",
+  "freeform",
   "services",
   "process",
   "testimonials",

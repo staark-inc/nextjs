@@ -7,7 +7,7 @@
  * so adding a new block is never blocked on writing one of these.
  */
 
-export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "image" | "imageUrl" | "link" | "array" | "object";
+export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "image" | "imageUrl" | "icon" | "link" | "array" | "object";
 
 export interface Field {
   name: string;
@@ -38,6 +38,18 @@ export const BLOCK_FIELDS: Record<string, Field[]> = {
     { name: "image", label: "Image", type: "image" },
     { name: "points", label: "Bullet points", type: "array", itemLabel: "{value}", fields: [{ name: "value", label: "Point", type: "text" }] },
   ],
+  freeform: [
+    EYEBROW,
+    { name: "heading", label: "Heading", type: "text" },
+    { name: "text", label: "Text", type: "textarea", help: "Plain text. Line breaks are preserved." },
+    { name: "image", label: "Image", type: "image" },
+    { name: "imagePosition", label: "Image position", type: "select", options: ["left", "right", "top", "background"] },
+    { name: "primaryCta", label: "Primary button", type: "link" },
+    { name: "secondaryCta", label: "Secondary button", type: "link" },
+    { name: "alignment", label: "Text alignment", type: "select", options: ["left", "center", "right"] },
+    { name: "width", label: "Content width", type: "select", options: ["narrow", "normal", "wide"] },
+    { name: "background", label: "Background", type: "select", options: ["default", "surface", "accent", "dark"] },
+  ],
   services: [
     EYEBROW,
     { name: "heading", label: "Heading", type: "text" },
@@ -50,7 +62,7 @@ export const BLOCK_FIELDS: Record<string, Field[]> = {
       itemLabel: "{title}",
       fields: [
         { name: "title", label: "Title", type: "text" },
-        { name: "icon", label: "Icon", type: "text", help: "An emoji or short symbol." },
+        { name: "icon", label: "Icon", type: "icon", help: "Choose a symbol or select an SVG/image from Media." },
         { name: "description", label: "Description", type: "textarea" },
         { name: "price", label: "Price", type: "text" },
       ],
@@ -269,6 +281,7 @@ export function isScalarWrapper(fields?: Field[]): boolean {
 /** Required top-level fields per block type — the minimum a block needs to render well. */
 export const REQUIRED_FIELDS: Record<string, string[]> = {
   hero: ["heading"],
+  freeform: [],
   services: ["heading"],
   process: ["heading"],
   cta: ["heading"],

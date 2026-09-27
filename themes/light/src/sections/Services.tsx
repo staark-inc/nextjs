@@ -19,6 +19,10 @@ const schema = z.object({
   columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).default(3),
 });
 
+function iconIsImage(value: string): boolean {
+  return /^(?:https?:\/\/|\/)/i.test(value);
+}
+
 export const Services: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) => {
   const p = schema.parse(props);
   const cards = ctx.components.cards ?? "soft";
@@ -33,7 +37,11 @@ export const Services: SectionComponent<z.infer<typeof schema>> = ({ props, ctx 
         <div className={`sk-grid sk-grid--${p.columns}`}>
           {p.items.map((item) => (
             <article key={item.title} className={`sk-card sk-card--${cards}`}>
-              {item.icon ? <div className="sk-card__icon" aria-hidden>{item.icon}</div> : null}
+              {item.icon ? (
+                <div className="sk-card__icon" aria-hidden>
+                  {iconIsImage(item.icon) ? <img src={item.icon} alt="" /> : item.icon}
+                </div>
+              ) : null}
               <h3>{item.title}</h3>
               {item.description ? <p>{item.description}</p> : null}
               {item.price ? <p className="sk-card__price">{item.price}</p> : null}

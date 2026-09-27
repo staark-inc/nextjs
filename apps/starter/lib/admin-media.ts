@@ -27,15 +27,15 @@ let mediaSeedPromise: Promise<void> | undefined;
 function packagedUploadsCandidates(): string[] {
   const cwd = /* turbopackIgnore: true */ process.cwd();
   return [
-    path.resolve(cwd, "public", "uploads"),
-    path.resolve(cwd, "apps", "starter", "public", "uploads"),
+    path.resolve(/* turbopackIgnore: true */ cwd, "public", "uploads"),
+    path.resolve(/* turbopackIgnore: true */ cwd, "apps", "starter", "public", "uploads"),
   ];
 }
 
 async function packagedUploadsDir(): Promise<string | null> {
   for (const candidate of packagedUploadsCandidates()) {
     try {
-      if ((await stat(candidate)).isDirectory()) return candidate;
+      if ((await stat(/* turbopackIgnore: true */ candidate)).isDirectory()) return candidate;
     } catch {
       // Try the next standalone/local-dev location.
     }
@@ -49,13 +49,13 @@ async function seedPackagedMedia(): Promise<void> {
   const source = await packagedUploadsDir();
   if (source) {
     const storage = getStorage();
-    const entries = await readdir(source, { withFileTypes: true });
+    const entries = await readdir(/* turbopackIgnore: true */ source, { withFileTypes: true });
 
     for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
       if (!entry.isFile() || !IMAGE_EXTENSION.test(entry.name)) continue;
       const key = uploadsStoragePath(entry.name);
       if (await storage.exists(key)) continue;
-      await storage.write(key, await readFile(path.join(source, entry.name)));
+      await storage.write(key, await readFile(/* turbopackIgnore: true */ path.join(/* turbopackIgnore: true */ source, entry.name)));
     }
   }
 
