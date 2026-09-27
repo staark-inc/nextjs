@@ -17,8 +17,10 @@ FROM node:22-slim AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
 WORKDIR /repo
-COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/apps/starter/node_modules ./apps/starter/node_modules
+# Copy the installed workspace, not only root/starter node_modules.
+# pnpm creates package-local node_modules symlinks for workspace dependencies
+# (for example @staark/platform -> @staark/core and themes -> theme-light).
+COPY --from=deps /repo ./
 COPY . .
 RUN pnpm --filter @staark/starter build
 
