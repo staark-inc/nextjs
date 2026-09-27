@@ -3,6 +3,8 @@ import scandinavian from "../presets/scandinavian.json" with { type: "json" };
 import localBusiness from "../presets/local-business.json" with { type: "json" };
 import { Hero } from "./sections/Hero";
 import { Cards } from "./sections/Cards";
+import { LinkColumns } from "./sections/LinkColumns";
+import { ProjectsShowcase } from "./sections/ProjectsShowcase";
 import { Freeform } from "./sections/Freeform";
 import { Services } from "./sections/Services";
 import { Process } from "./sections/Process";
@@ -25,6 +27,8 @@ export const lightTheme: ThemeDefinition = {
   sections: {
     hero: Hero,
     cards: Cards,
+    linkColumns: LinkColumns,
+    projectsShowcase: ProjectsShowcase,
     freeform: Freeform,
     services: Services,
     process: Process,
@@ -36,5 +40,5 @@ export const lightTheme: ThemeDefinition = {
 
 export { SiteHeader, SiteFooter } from "./components/chrome";
 export { Container, Button, Eyebrow, siteCta } from "./components/primitives";
-export { Hero, Cards, Freeform, Services, Process, Testimonials, Cta, Contact };
+export { Hero, Cards, LinkColumns, ProjectsShowcase, Freeform, Services, Process, Testimonials, Cta, Contact };
 export default lightTheme;

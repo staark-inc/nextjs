@@ -17,7 +17,7 @@ const schema = z.object({
   secondaryCta: optionalLinkSchema,
   alignment: z.enum(["left", "center", "right"]).default("left"),
   width: z.enum(["narrow", "normal", "wide"]).default("normal"),
-  background: z.enum(["default", "surface", "accent", "dark"]).default("default"),
+  background: z.enum(["default", "surface", "accent", "dark", "gradient"]).default("default"),
 });
 
 export const Freeform: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) => {

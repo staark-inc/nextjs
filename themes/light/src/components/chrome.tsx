@@ -27,6 +27,9 @@ export function SiteHeader({ site, variant }: { site: SiteSettings; variant: str
 
 export function SiteFooter({ site, variant }: { site: SiteSettings; variant: string }) {
   const year = new Date().getFullYear();
+  const footerColumns = site.navigation.footerColumns ?? [];
+  const hasFooterColumns = footerColumns.length > 0;
+
   return (
     <footer className={`sk-footer sk-footer--${variant}`}>
       <div className="sk-container sk-container--wide sk-footer__inner">
@@ -37,13 +40,31 @@ export function SiteFooter({ site, variant }: { site: SiteSettings; variant: str
             <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
           </p>
         </div>
-        <nav className="sk-footer__nav" aria-label="Sidfot">
-          {site.navigation.footer.map((link, i) => (
-            <a key={`${link.href}-${i}`} href={link.href}>
-              {link.label}
-            </a>
-          ))}
-        </nav>
+
+        {hasFooterColumns ? (
+          <div className="sk-footer__columns">
+            {footerColumns.map((column, columnIndex) => (
+              <div className="sk-footer__column" key={`${column.title}-${columnIndex}`}>
+                <h2 className="sk-footer__column-title">{column.title}</h2>
+                <nav className="sk-footer__column-nav" aria-label={`Sidfot – ${column.title}`}>
+                  {column.links.map((link, linkIndex) => (
+                    <a key={`${link.href}-${linkIndex}`} href={link.href}>
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <nav className="sk-footer__nav" aria-label="Sidfot">
+            {site.navigation.footer.map((link, i) => (
+              <a key={`${link.href}-${i}`} href={link.href}>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        )}
       </div>
       <div className="sk-footer__legal">
         <div className="sk-container sk-container--wide">

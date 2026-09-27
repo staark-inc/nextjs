@@ -9,7 +9,13 @@ import {
 import { requireAuth } from "../guard";
 
 type Link = { label: string; href: string };
-type Navigation = { primary: Link[]; footer: Link[]; cta?: Link };
+type FooterColumn = { title: string; links: Link[] };
+type Navigation = {
+  primary: Link[];
+  footer: Link[];
+  footerColumns: FooterColumn[];
+  cta?: Link;
+};
 
 function normalizeHref(value: unknown): string {
   if (typeof value !== "string") throw new Error("Link URL must be text.");
@@ -38,6 +44,23 @@ function normalizeList(input: unknown, name: string): Link[] {
   return input.map(normalizeLink);
 }
 
+function normalizeFooterColumns(input: unknown): FooterColumn[] {
+  if (!Array.isArray(input)) throw new Error("Footer columns must be a list.");
+  if (input.length > 4) throw new Error("Footer supports up to 4 columns.");
+
+  return input.map((column, index) => {
+    if (!column || typeof column !== "object" || Array.isArray(column)) {
+      throw new Error(`Footer column ${index + 1} is invalid.`);
+    }
+    const raw = column as Record<string, unknown>;
+    const title = typeof raw.title === "string" ? raw.title.trim().slice(0, 80) : "";
+    if (!title) throw new Error(`Footer column ${index + 1} needs a title.`);
+    const links = normalizeList(raw.links ?? [], `Footer column ${index + 1}`);
+    if (links.length > 20) throw new Error(`Footer column ${index + 1} supports up to 20 links.`);
+    return { title, links };
+  });
+}
+
 function normalizeNavigation(input: unknown): Navigation {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new Error("Invalid navigation payload.");
@@ -45,8 +68,9 @@ function normalizeNavigation(input: unknown): Navigation {
   const raw = input as Record<string, unknown>;
   const primary = normalizeList(raw.primary ?? [], "Primary");
   const footer = normalizeList(raw.footer ?? [], "Footer");
+  const footerColumns = normalizeFooterColumns(raw.footerColumns ?? []);
   const cta = raw.cta ? normalizeLink(raw.cta) : undefined;
-  return { primary, footer, ...(cta ? { cta } : {}) };
+  return { primary, footer, footerColumns, ...(cta ? { cta } : {}) };
 }
 
 async function pageFiles(): Promise<string[]> {
@@ -87,7 +111,7 @@ function warnings(navigation: Navigation, pages: Array<{ path: string }>): strin
   const known = new Set(["/", ...pages.map((page) => page.path)]);
   const out: string[] = [];
 
-  for (const [name, links] of [["Header", navigation.primary], ["Footer", navigation.footer]] as const) {
+  function inspectLinks(name: string, links: Link[]) {
     const seen = new Set<string>();
     for (const link of links) {
       if (seen.has(link.href)) out.push(`${name}: duplicate link to ${link.href}`);
@@ -96,6 +120,10 @@ function warnings(navigation: Navigation, pages: Array<{ path: string }>): strin
       if (target && !known.has(target)) out.push(`${name}: ${link.label} points to missing page ${target}`);
     }
   }
+
+  inspectLinks("Header", navigation.primary);
+  inspectLinks("Footer", navigation.footer);
+  navigation.footerColumns.forEach((column) => inspectLinks(`Footer / ${column.title}`, column.links));
 
   if (navigation.cta) {
     const target = internalPath(navigation.cta.href);

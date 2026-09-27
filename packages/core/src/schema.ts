@@ -83,6 +83,15 @@ export const SiteSettingsSchema = z.object({
     .object({
       primary: z.array(LinkSchema).default([]),
       footer: z.array(LinkSchema).default([]),
+      footerColumns: z
+        .array(
+          z.object({
+            title: z.string().min(1).max(80),
+            links: z.array(LinkSchema).max(20).default([]),
+          }),
+        )
+        .max(4)
+        .default([]),
       cta: LinkSchema.optional(),
     })
     .prefault({}),

@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./navigation.module.css";
 
 type Link = { label: string; href: string };
-type Navigation = { primary: Link[]; footer: Link[]; cta?: Link };
+type FooterColumn = { title: string; links: Link[] };
+type Navigation = { primary: Link[]; footer: Link[]; footerColumns: FooterColumn[]; cta?: Link };
 type PageOption = { path: string; title: string };
 type Kind = "primary" | "footer";
 
-const emptyNavigation: Navigation = { primary: [], footer: [] };
+const emptyNavigation: Navigation = { primary: [], footer: [], footerColumns: [] };
 
 export default function NavigationPage() {
   const [navigation, setNavigation] = useState<Navigation>(emptyNavigation);
@@ -100,6 +101,83 @@ export default function NavigationPage() {
     setNavigation((current) => ({
       ...current,
       [kind]: [...current[kind], { label: page.title, href: page.path }],
+    }));
+  }
+
+  function addFooterColumn() {
+    setNavigation((current) => {
+      if (current.footerColumns.length >= 4) return current;
+      return {
+        ...current,
+        footerColumns: [
+          ...current.footerColumns,
+          { title: `Column ${current.footerColumns.length + 1}`, links: [] },
+        ],
+      };
+    });
+  }
+
+  function updateFooterColumn(index: number, patch: Partial<FooterColumn>) {
+    setNavigation((current) => ({
+      ...current,
+      footerColumns: current.footerColumns.map((column, position) =>
+        position === index ? { ...column, ...patch } : column,
+      ),
+    }));
+  }
+
+  function moveFooterColumn(index: number, delta: -1 | 1) {
+    setNavigation((current) => {
+      const columns = [...current.footerColumns];
+      const target = index + delta;
+      if (target < 0 || target >= columns.length) return current;
+      [columns[index], columns[target]] = [columns[target]!, columns[index]!];
+      return { ...current, footerColumns: columns };
+    });
+  }
+
+  function removeFooterColumn(index: number) {
+    setNavigation((current) => ({
+      ...current,
+      footerColumns: current.footerColumns.filter((_, position) => position !== index),
+    }));
+  }
+
+  function addFooterColumnLink(columnIndex: number) {
+    setNavigation((current) => ({
+      ...current,
+      footerColumns: current.footerColumns.map((column, position) =>
+        position === columnIndex && column.links.length < 20
+          ? { ...column, links: [...column.links, { label: "New link", href: "/" }] }
+          : column,
+      ),
+    }));
+  }
+
+  function updateFooterColumnLink(columnIndex: number, linkIndex: number, patch: Partial<Link>) {
+    setNavigation((current) => ({
+      ...current,
+      footerColumns: current.footerColumns.map((column, position) =>
+        position === columnIndex
+          ? {
+              ...column,
+              links: column.links.map((link, itemPosition) =>
+                itemPosition === linkIndex ? { ...link, ...patch } : link,
+              ),
+            }
+          : column,
+      ),
+    }));
+  }
+
+  function removeFooterColumnLink(columnIndex: number, linkIndex: number) {
+    setNavigation((current) => ({
+      ...current,
+      footerColumns: current.footerColumns.map((column, position) =>
+        position === columnIndex
+          ? { ...column, links: column.links.filter((_, itemPosition) => itemPosition !== linkIndex) }
+          : column,
+      ),
     }));
   }
 
@@ -199,6 +277,17 @@ export default function NavigationPage() {
         />
       </div>
 
+      <FooterColumnsEditor
+        columns={navigation.footerColumns}
+        onAdd={addFooterColumn}
+        onUpdate={updateFooterColumn}
+        onMove={moveFooterColumn}
+        onRemove={removeFooterColumn}
+        onAddLink={addFooterColumnLink}
+        onUpdateLink={updateFooterColumnLink}
+        onRemoveLink={removeFooterColumnLink}
+      />
+
       <section className={`sa-card ${styles.cta}`}>
         <div className={styles.sectionHead}>
           <div><span className="sa-card__eyebrow">Primary CTA</span><h2>Header action</h2></div>
@@ -218,6 +307,101 @@ export default function NavigationPage() {
 
       {toast ? <div className={`sa-toast ${toast.ok ? "sa-toast--success" : "sa-toast--error"}`}>{toast.msg}</div> : null}
     </>
+  );
+}
+
+function FooterColumnsEditor({
+  columns,
+  onAdd,
+  onUpdate,
+  onMove,
+  onRemove,
+  onAddLink,
+  onUpdateLink,
+  onRemoveLink,
+}: {
+  columns: FooterColumn[];
+  onAdd: () => void;
+  onUpdate: (index: number, patch: Partial<FooterColumn>) => void;
+  onMove: (index: number, delta: -1 | 1) => void;
+  onRemove: (index: number) => void;
+  onAddLink: (columnIndex: number) => void;
+  onUpdateLink: (columnIndex: number, linkIndex: number, patch: Partial<Link>) => void;
+  onRemoveLink: (columnIndex: number, linkIndex: number) => void;
+}) {
+  return (
+    <section className={`sa-card ${styles.footerColumns}`}>
+      <div className={styles.sectionHead}>
+        <div>
+          <span className="sa-card__eyebrow">Global footer</span>
+          <h2>Footer columns</h2>
+        </div>
+        <button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={onAdd} disabled={columns.length >= 4}>
+          + Add column
+        </button>
+      </div>
+
+      <p className={styles.footerColumnsIntro}>
+        These columns are shown inside the real footer on every page. The legacy Footer navigation above is used as fallback when no columns exist.
+      </p>
+
+      {columns.length ? (
+        <div className={styles.footerColumnsGrid}>
+          {columns.map((column, columnIndex) => (
+            <article className={styles.footerColumn} key={`footer-column-${columnIndex}`}>
+              <div className={styles.footerColumnHead}>
+                <input
+                  className={styles.footerColumnTitle}
+                  value={column.title}
+                  onChange={(event) => onUpdate(columnIndex, { title: event.target.value })}
+                  aria-label={`Footer column ${columnIndex + 1} title`}
+                />
+                <div className={styles.footerColumnActions}>
+                  <button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => onMove(columnIndex, -1)} disabled={columnIndex === 0}>↑</button>
+                  <button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => onMove(columnIndex, 1)} disabled={columnIndex === columns.length - 1}>↓</button>
+                  <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => onRemove(columnIndex)}>Remove</button>
+                </div>
+              </div>
+
+              <div className={styles.footerColumnLinks}>
+                {column.links.map((link, linkIndex) => (
+                  <div className={styles.footerColumnLink} key={`footer-column-${columnIndex}-link-${linkIndex}`}>
+                    <input
+                      value={link.label}
+                      onChange={(event) => onUpdateLink(columnIndex, linkIndex, { label: event.target.value })}
+                      placeholder="Label"
+                      aria-label="Footer link label"
+                    />
+                    <input
+                      value={link.href}
+                      onChange={(event) => onUpdateLink(columnIndex, linkIndex, { href: event.target.value })}
+                      placeholder="/page"
+                      aria-label="Footer link URL"
+                    />
+                    <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => onRemoveLink(columnIndex, linkIndex)}>
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                className={`sa-btn sa-btn--ghost sa-btn--sm ${styles.addFooterLink}`}
+                onClick={() => onAddLink(columnIndex)}
+                disabled={column.links.length >= 20}
+              >
+                + Add link
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="sa-empty">
+          <div className="sa-empty__title">No footer columns yet</div>
+          <div className="sa-empty__desc">Add columns for groups such as Services, Company and Social media.</div>
+        </div>
+      )}
+    </section>
   );
 }
 

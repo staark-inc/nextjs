@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { SectionComponent } from "@staark/theme-kit";
-import { Container, Eyebrow } from "../components/primitives";
+import { Container, Eyebrow, optionalLinkSchema } from "../components/primitives";
 
 const schema = z.object({
   eyebrow: z.string().optional(),
@@ -13,6 +13,8 @@ const schema = z.object({
         description: z.string().optional(),
         icon: z.string().optional(),
         price: z.string().optional(),
+        features: z.array(z.string()).default([]),
+        cta: optionalLinkSchema,
       }),
     )
     .default([]),
@@ -35,16 +37,28 @@ export const Services: SectionComponent<z.infer<typeof schema>> = ({ props, ctx 
           {p.intro ? <p className="sk-section__intro">{p.intro}</p> : null}
         </header>
         <div className={`sk-grid sk-grid--${p.columns}`}>
-          {p.items.map((item) => (
-            <article key={item.title} className={`sk-card sk-card--${cards}`}>
+          {p.items.map((item, index) => (
+            <article key={`${item.title}-${index}`} className={`sk-card sk-card--${cards} sk-service-card`}>
               {item.icon ? (
                 <div className="sk-card__icon" aria-hidden>
                   {iconIsImage(item.icon) ? <img src={item.icon} alt="" /> : item.icon}
                 </div>
               ) : null}
               <h3>{item.title}</h3>
-              {item.description ? <p>{item.description}</p> : null}
+              {item.description ? <p className="sk-service-card__description">{item.description}</p> : null}
               {item.price ? <p className="sk-card__price">{item.price}</p> : null}
+              {item.features.length ? (
+                <ul className="sk-service-card__features">
+                  {item.features.map((feature, featureIndex) => (
+                    <li key={`${feature}-${featureIndex}`}>{feature}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {item.cta?.label && item.cta.href ? (
+                <a className="sk-service-card__link" href={item.cta.href}>
+                  {item.cta.label} <span aria-hidden>→</span>
+                </a>
+              ) : null}
             </article>
           ))}
         </div>

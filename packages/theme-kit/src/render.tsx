@@ -29,6 +29,45 @@ export type BlockRendererProps = {
   image?: ThemeImageComponent;
 };
 
+type SectionAppearance = {
+  background: "default" | "surface" | "accent" | "dark" | "gradient";
+  classNames: string[];
+};
+
+const APPEARANCE_BACKGROUNDS = new Set<SectionAppearance["background"]>([
+  "default",
+  "surface",
+  "accent",
+  "dark",
+  "gradient",
+]);
+
+function readSectionAppearance(props: Record<string, unknown>): SectionAppearance | null {
+  const raw = props._appearance;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+  const appearance = raw as Record<string, unknown>;
+  const requestedBackground =
+    typeof appearance.background === "string" ? appearance.background : "default";
+  const background = APPEARANCE_BACKGROUNDS.has(
+    requestedBackground as SectionAppearance["background"],
+  )
+    ? (requestedBackground as SectionAppearance["background"])
+    : "default";
+
+  const classNames =
+    typeof appearance.className === "string"
+      ? appearance.className
+          .split(/\s+/)
+          .map((name) => name.trim())
+          .filter((name) => /^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(name))
+          .slice(0, 4)
+      : [];
+
+  if (background === "default" && classNames.length === 0) return null;
+  return { background, classNames };
+}
+
 export function BlockRenderer({ blocks, site, theme, registry, image }: BlockRendererProps) {
   const chain = resolveThemes(theme, registry);
   const preset = resolvePreset(theme, site.theme.preset);
@@ -56,6 +95,31 @@ export function BlockRenderer({ blocks, site, theme, registry, image }: BlockRen
       }
       return null;
     }
-    return <Section key={block.id} props={block.props} ctx={ctx} />;
+    const appearance = readSectionAppearance(block.props);
+    if (!appearance) {
+      return <Section key={block.id} props={block.props} ctx={ctx} />;
+    }
+
+    const appearanceClasses = [
+      "sk-block-appearance",
+      appearance.background !== "default"
+        ? `sk-block-appearance--${appearance.background}`
+        : "",
+      ...appearance.classNames,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return (
+      <div
+        key={block.id}
+        className={appearanceClasses}
+        data-staark-appearance={
+          appearance.background !== "default" ? appearance.background : undefined
+        }
+      >
+        <Section props={block.props} ctx={ctx} />
+      </div>
+    );
   });
 }

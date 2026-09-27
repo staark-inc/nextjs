@@ -23,6 +23,34 @@ const ICON_EMOJIS = [
   "☕", "🍽️", "🛏️", "🧴", "✂️", "🌿", "❤️", "⭐",
 ];
 
+const SECTION_APPEARANCE_FIELD: Field = {
+  name: "_appearance",
+  label: "Section appearance",
+  type: "object",
+  help: "Optional full-width section styling. Existing blocks stay unchanged until you choose a value.",
+  fields: [
+    {
+      name: "background",
+      label: "Background",
+      type: "select",
+      options: [
+        { label: "Default", value: "default" },
+        { label: "Surface", value: "surface" },
+        { label: "Accent", value: "accent" },
+        { label: "Dark", value: "dark" },
+        { label: "Gradient", value: "gradient" },
+      ],
+    },
+    {
+      name: "className",
+      label: "CSS class",
+      type: "text",
+      placeholder: "section-premium",
+      help: "Optional class name(s), separated by spaces. Raw CSS is not accepted.",
+    },
+  ],
+};
+
 function isIconImage(value: string): boolean {
   return /^(?:https?:\/\/|\/)/i.test(value);
 }
@@ -32,6 +60,13 @@ function setKey(obj: Obj, key: string, value: unknown): Obj {
   if (value === "" || value === undefined) delete next[key];
   else next[key] = value;
   return next;
+}
+
+function blankValueForField(field: Field): unknown {
+  if (field.type === "boolean") return false;
+  if (field.type === "array") return [];
+  if (field.type === "object" || field.type === "image" || field.type === "link") return undefined;
+  return "";
 }
 
 export function BlockFieldForm({
@@ -63,6 +98,11 @@ export function BlockFieldForm({
             onChange={(v) => onChange(setKey(value ?? {}, field.name, v))}
           />
         ))}
+        <FieldInput
+          field={SECTION_APPEARANCE_FIELD}
+          value={value?._appearance}
+          onChange={(v) => onChange(setKey(value ?? {}, "_appearance", v))}
+        />
       </div>
       {pickerCb ? (
         <MediaPicker
@@ -100,7 +140,13 @@ function FieldInput({ field, value, onChange, error }: { field: Field; value: un
       [copy[i], copy[t]] = [copy[t], copy[i]];
       onChange(copy);
     };
-    const blank = scalar ? "" : Object.fromEntries((field.fields ?? []).map((f) => [f.name, f.type === "boolean" ? false : ""]));
+    const blank = scalar
+      ? ""
+      : Object.fromEntries(
+          (field.fields ?? [])
+            .map((f) => [f.name, blankValueForField(f)] as const)
+            .filter(([, fieldValue]) => fieldValue !== undefined),
+        );
     return (
       <div className="sa-field">
         <label>{field.label}</label>
@@ -147,7 +193,7 @@ function FieldInput({ field, value, onChange, error }: { field: Field; value: un
         : field.type === "link"
           ? [{ name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" }]
           : field.fields ?? [];
-    const obj = (value as Obj) ?? {};
+    const obj: Obj = value && typeof value === "object" && !Array.isArray(value) ? (value as Obj) : {};
     const updateNested = (key: string, nextValue: unknown) => {
       const next = setKey(obj, key, nextValue);
       // Empty nested values should disappear instead of persisting as {}.
@@ -156,6 +202,7 @@ function FieldInput({ field, value, onChange, error }: { field: Field; value: un
     return (
       <div className="sa-field">
         <label>{field.label}</label>
+        {field.help ? <div className="sa-field-hint">{field.help}</div> : null}
         <div className="sa-bf-group">
           {subFields.map((sub) => (
             <FieldInput key={sub.name} field={sub} value={obj[sub.name]} onChange={(v) => updateNested(sub.name, v)} />

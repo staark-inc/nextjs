@@ -61,6 +61,78 @@ const BASE_BLOCKS: BlockTemplate[] = [
     },
   },
   {
+    type: "linkColumns",
+    label: "Link columns",
+    description: "Footer-style groups of links for services, company pages, social channels or resources.",
+    icon: "link",
+    template: {
+      columns: 3,
+      items: [
+        {
+          title: "Services",
+          links: [
+            { label: "Service one", href: "#" },
+            { label: "Service two", href: "#" },
+            { label: "Service three", href: "#" },
+          ],
+        },
+        {
+          title: "Company",
+          links: [
+            { label: "About us", href: "/om-oss" },
+            { label: "Contact", href: "/kontakt" },
+            { label: "Pricing", href: "/priser" },
+          ],
+        },
+        {
+          title: "Social",
+          links: [
+            { label: "LinkedIn", href: "#" },
+            { label: "Facebook", href: "#" },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    type: "projectsShowcase",
+    label: "Projects showcase",
+    description: "Showcase multiple projects with images, client names, results, tags and links.",
+    icon: "briefcase",
+    template: {
+      eyebrow: "Selected work",
+      heading: "Projects we're proud of",
+      intro: "A selection of recent work, results and collaborations.",
+      columns: 2,
+      items: [
+        {
+          client: "Client one",
+          title: "A project that made a difference",
+          description: "Explain the challenge, what you delivered and the value created for the client.",
+          image: {
+            src: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=78",
+            alt: "Project preview",
+          },
+          result: "+42% conversion",
+          tags: ["Webbdesign", "Development", "SEO"],
+          cta: { label: "View project", href: "#" },
+        },
+        {
+          client: "Client two",
+          title: "A fast, modern digital experience",
+          description: "Use the card for a second case, launch, redesign or customer success story.",
+          image: {
+            src: "https://images.unsplash.com/photo-1559028012-481c04fa702d?w=1200&q=78",
+            alt: "Project preview",
+          },
+          result: "98 Lighthouse",
+          tags: ["UX", "Performance", "Next.js"],
+          cta: { label: "View project", href: "#" },
+        },
+      ],
+    },
+  },
+  {
     type: "hero",
     label: "Hero",
     description: "Full-width hero section with heading, intro text, CTAs and optional image.",
@@ -78,16 +150,34 @@ const BASE_BLOCKS: BlockTemplate[] = [
   {
     type: "services",
     label: "Services",
-    description: "Card grid showing your services or features with icons.",
+    description: "Service cards with icons, descriptions, bullet points, prices and links.",
     icon: "grid",
     template: {
       eyebrow: "Services",
       heading: "What we do",
       columns: 3,
       items: [
-        { title: "Service one", icon: "🎯", description: "Describe this service in one or two sentences." },
-        { title: "Service two", icon: "🚀", description: "Describe this service in one or two sentences." },
-        { title: "Service three", icon: "📊", description: "Describe this service in one or two sentences." },
+        {
+          title: "Service one",
+          icon: "🎯",
+          description: "Describe this service in one or two sentences.",
+          features: ["First benefit", "Second benefit", "Third benefit"],
+          cta: { label: "Learn more", href: "#" },
+        },
+        {
+          title: "Service two",
+          icon: "🚀",
+          description: "Describe this service in one or two sentences.",
+          features: ["First benefit", "Second benefit", "Third benefit"],
+          cta: { label: "Learn more", href: "#" },
+        },
+        {
+          title: "Service three",
+          icon: "📊",
+          description: "Describe this service in one or two sentences.",
+          features: ["First benefit", "Second benefit", "Third benefit"],
+          cta: { label: "Learn more", href: "#" },
+        },
       ],
     },
   },
