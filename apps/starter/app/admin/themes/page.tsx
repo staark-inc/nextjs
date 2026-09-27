@@ -2,12 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+type ThemeCompatibility = {
+  compatible: boolean;
+  incompatible: Array<{ type: string; count: number; pages: string[] }>;
+};
+
 type ThemeInfo = {
   id: string;
   name: string;
   description: string;
   presets: string[];
   active: boolean;
+  compatibility?: ThemeCompatibility;
 };
 
 type TokenGroup = "colors" | "typography" | "radius" | "layout";
@@ -211,7 +217,16 @@ export default function ThemesPage() {
                 <h3>{theme.name}</h3>
                 <span className="sa-path">{theme.id}</span>
               </div>
-              {theme.active ? <span className="sa-badge sa-badge--success">Active</span> : null}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                {theme.active ? <span className="sa-badge sa-badge--success">Active</span> : null}
+                {theme.compatibility?.compatible ? (
+                  <span className="sa-badge sa-badge--success">Compatible</span>
+                ) : theme.compatibility ? (
+                  <span className="sa-badge sa-badge--muted">
+                    Blocked · {theme.compatibility.incompatible.length} incompatible
+                  </span>
+                ) : null}
+              </div>
             </div>
             <p className="sa-theme-card__desc">{theme.description}</p>
             <div className="sa-theme-card__presets">
@@ -220,11 +235,21 @@ export default function ThemesPage() {
                 <span key={item} className="sa-badge sa-badge--muted">{item}</span>
               ))}
             </div>
+            {theme.compatibility && !theme.compatibility.compatible ? (
+              <p className="sa-field-hint" style={{ margin: "10px 0 12px" }}>
+                Unsupported blocks: {theme.compatibility.incompatible.map((item) => item.type).join(", ")}
+              </p>
+            ) : null}
             {!theme.active ? (
               <button
                 className="sa-btn sa-btn--primary sa-btn--sm"
                 onClick={() => void activate(theme.id, theme.presets[0])}
-                disabled={switching}
+                disabled={switching || theme.compatibility?.compatible === false}
+                title={
+                  theme.compatibility?.compatible === false
+                    ? "Replace incompatible blocks before activating this theme."
+                    : undefined
+                }
               >
                 {switching ? "Activating…" : "Activate theme"}
               </button>

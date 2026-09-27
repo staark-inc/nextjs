@@ -22,6 +22,9 @@ const CONTENT_TYPES: Record<string, string> = {
 };
 
 async function serve(ctx: Ctx, head: boolean): Promise<Response> {
+  // Source uploads stay revalidatable because Media Replace deliberately keeps
+  // the public URL stable. Browser-facing optimized variants are cached by
+  // next/image for 30 days (see next.config.ts).
   const requested = decodeURIComponent((await ctx.params).name);
   const name = safeMediaName(requested);
 
@@ -39,7 +42,7 @@ async function serve(ctx: Ctx, head: boolean): Promise<Response> {
     headers: {
       "Content-Type": contentType,
       "Content-Length": String(bytes.byteLength),
-      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
     },
   });
 }

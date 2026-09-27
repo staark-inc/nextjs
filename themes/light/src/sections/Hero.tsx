@@ -1,13 +1,13 @@
 import { z } from "zod";
 import type { SectionComponent } from "@staark/theme-kit";
-import { Button, Container, Eyebrow, siteCta } from "../components/primitives";
+import { Button, Container, Eyebrow, optionalLinkSchema, siteCta } from "../components/primitives";
 
 const schema = z.object({
   eyebrow: z.string().optional(),
   heading: z.string(),
   intro: z.string().optional(),
-  primaryCta: z.object({ label: z.string(), href: z.string() }).optional(),
-  secondaryCta: z.object({ label: z.string(), href: z.string() }).optional(),
+  primaryCta: optionalLinkSchema,
+  secondaryCta: optionalLinkSchema,
   image: z.object({ src: z.string(), alt: z.string().default("") }).optional(),
   points: z.array(z.string()).default([]),
 });
@@ -16,6 +16,10 @@ export const Hero: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) =
   const p = schema.parse(props);
   const primary = p.primaryCta ?? siteCta(ctx.site);
   const variant = ctx.components.hero ?? "split";
+  const HostImage = ctx.image;
+  const blockIndex = ctx.blockIndex ?? Number.POSITIVE_INFINITY;
+  const priority = blockIndex === 0;
+  const eager = blockIndex <= 1;
 
   return (
     <section className={`sk-hero sk-hero--${variant}`}>
@@ -44,9 +48,28 @@ export const Hero: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) =
             ) : null}
           </div>
           {p.image && variant === "split" ? (
-            <div className="sk-hero__media">
-              {/* Plain <img>: Hub images are already sized/optimized; keeps the theme host-agnostic. */}
-              <img src={p.image.src} alt={p.image.alt} loading="eager" />
+            <div
+              className="sk-hero__media"
+              style={{ position: "relative", aspectRatio: "4 / 3", overflow: "hidden" }}
+            >
+              {HostImage ? (
+                <HostImage
+                  src={p.image.src}
+                  alt={p.image.alt}
+                  fill
+                  sizes="(max-width: 860px) calc(100vw - 48px), 46vw"
+                  priority={priority}
+                  eager={eager}
+                />
+              ) : (
+                <img
+                  src={p.image.src}
+                  alt={p.image.alt}
+                  loading={eager ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : undefined}
+                  decoding="async"
+                />
+              )}
             </div>
           ) : null}
         </div>

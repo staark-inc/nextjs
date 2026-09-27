@@ -108,7 +108,10 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Grid + cards */
 .sk-grid { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-.sk-grid--2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.sk-grid--1 { grid-template-columns: minmax(0, 1fr); }
+.sk-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sk-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sk-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .sk-card { padding: 28px; border-radius: var(--sk-radius-md, 16px); background: var(--sk-color-white, #fff); }
 .sk-card--soft { box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 12px 30px -18px rgba(16, 24, 40, 0.35); }
 .sk-card--outlined { border: 1px solid var(--sk-color-line, #e4e7ec); box-shadow: none; }
@@ -117,6 +120,40 @@ img { max-width: 100%; height: auto; display: block; }
 .sk-card p { color: var(--sk-color-muted, #667085); margin: 0; }
 .sk-card h3 { margin-bottom: 8px; }
 .sk-card__price { font-weight: 700; color: var(--sk-color-ink, #101828) !important; margin-top: 12px !important; }
+
+/* Generic Cards block.
+   Keep the composition explicit so legacy card presentation overrides cannot
+   turn a content card into a horizontal/flex-wrapped layout. */
+article.sk-card.sk-content-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  height: 100%;
+}
+
+.sk-content-card__image {
+  width: calc(100% + 56px);
+  max-width: none;
+  height: 220px;
+  margin: -28px -28px 24px;
+  object-fit: cover;
+  border-radius: var(--sk-radius-md, 16px) var(--sk-radius-md, 16px) 0 0;
+}
+
+.sk-content-card__description { margin-bottom: 18px !important; }
+.sk-content-card__features {
+  list-style: none;
+  padding: 18px 0 0;
+  margin: 0 0 22px;
+  border-top: 1px solid var(--sk-color-line, #e4e7ec);
+  display: grid;
+  gap: 10px;
+}
+.sk-content-card__features li::before { content: "✓"; color: var(--sk-color-primary, #2457f5); margin-right: 10px; }
+.sk-content-card__link { margin-top: auto; padding-top: 8px; font-weight: 650; text-decoration: none; }
+.sk-content-card__link:hover { text-decoration: underline; }
 
 /* Freeform */
 .sk-freeform {
@@ -241,10 +278,15 @@ img { max-width: 100%; height: auto; display: block; }
   .sk-freeform--image-left .sk-freeform__media,
   .sk-freeform--image-right .sk-freeform__media { order: -1; }
   .sk-hero__media { order: -1; }
+  .sk-grid--3,
+  .sk-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
   .sk-form { grid-template-columns: 1fr; }
   .sk-header__nav { display: none; }
+  .sk-grid--2,
+  .sk-grid--3,
+  .sk-grid--4 { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -50,6 +50,32 @@ export const BLOCK_FIELDS: Record<string, Field[]> = {
     { name: "width", label: "Content width", type: "select", options: ["narrow", "normal", "wide"] },
     { name: "background", label: "Background", type: "select", options: ["default", "surface", "accent", "dark"] },
   ],
+  cards: [
+    EYEBROW,
+    { name: "heading", label: "Heading", type: "text" },
+    { name: "intro", label: "Intro", type: "textarea" },
+    { name: "columns", label: "Columns", type: "select", options: [1, 2, 3, 4] },
+    {
+      name: "items",
+      label: "Cards",
+      type: "array",
+      itemLabel: "{title}",
+      fields: [
+        { name: "title", label: "Title", type: "text" },
+        { name: "icon", label: "Icon", type: "icon", help: "Choose a symbol or select an SVG/image from Media." },
+        { name: "image", label: "Image", type: "image" },
+        { name: "description", label: "Description", type: "textarea" },
+        {
+          name: "features",
+          label: "Bullet points",
+          type: "array",
+          itemLabel: "{value}",
+          fields: [{ name: "value", label: "Point", type: "text" }],
+        },
+        { name: "cta", label: "Link", type: "link" },
+      ],
+    },
+  ],
   services: [
     EYEBROW,
     { name: "heading", label: "Heading", type: "text" },
@@ -282,6 +308,7 @@ export function isScalarWrapper(fields?: Field[]): boolean {
 export const REQUIRED_FIELDS: Record<string, string[]> = {
   hero: ["heading"],
   freeform: [],
+  cards: [],
   services: ["heading"],
   process: ["heading"],
   cta: ["heading"],

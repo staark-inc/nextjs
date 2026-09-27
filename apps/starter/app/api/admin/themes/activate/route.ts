@@ -1,67 +1,71 @@
 import { NextResponse } from "next/server";
-import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { readSite, readThemePresets, themeContentRoot, writeSite } from "@/lib/admin-theme";
+import { revalidatePath } from "next/cache";
+import { readSite, readSiteTheme, writeSite } from "@/lib/admin-theme";
+import { getThemeRuntime, resolveThemeRuntime } from "@/lib/theme-runtime";
+import { evaluateThemeCompatibility, scanThemeBlockUsage } from "@/lib/theme-compatibility";
 import { requireAuth } from "../../guard";
-
-function envPath(): string {
-  return path.resolve(process.cwd(), ".env.local");
-}
-
-function setEnvVar(env: string, key: string, value: string): string {
-  const re = new RegExp(`^${key}=.*`, "m");
-  if (re.test(env)) {
-    return env.replace(re, `${key}=${value}`);
-  }
-  return env.trimEnd() + `\n${key}=${value}\n`;
-}
 
 export async function POST(req: Request) {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
   const { theme, preset } = (await req.json()) as { theme: string; preset?: string };
-  if (!theme || !/^[a-z0-9-]+$/.test(theme)) {
+  const runtime =
+    theme && /^[a-z0-9-]+$/.test(theme)
+      ? getThemeRuntime(theme)
+      : undefined;
+  if (!runtime) {
     return NextResponse.json({ error: "Invalid theme id." }, { status: 400 });
   }
 
-  const presets = await readThemePresets(theme);
-  const selectedPreset = preset || presets[0]?.id;
-  if (selectedPreset && !presets.some((item) => item.id === selectedPreset)) {
+  const presetIds = Object.keys(runtime.theme.presets);
+  const selectedPreset = preset || runtime.theme.defaultPreset;
+  if (!presetIds.includes(selectedPreset)) {
     return NextResponse.json({ error: "Unknown preset for this theme." }, { status: 400 });
   }
 
-  const { root: targetContentRoot, relative: contentDir } = await themeContentRoot(theme);
-
-  const file = envPath();
-  let env: string;
-  try {
-    env = await readFile(file, "utf8");
-  } catch {
-    env = "";
+  const compatibility = evaluateThemeCompatibility(
+    runtime.id,
+    await scanThemeBlockUsage(),
+  );
+  if (!compatibility.compatible) {
+    const types = compatibility.incompatible.map((item) => item.type).join(", ");
+    return NextResponse.json(
+      {
+        error: `Theme "${runtime.id}" is incompatible with current content: ${types}. Replace those blocks before activating it.`,
+        compatibility,
+      },
+      { status: 409 },
+    );
   }
 
-  env = setEnvVar(env, "STAARK_THEME", theme);
-  env = setEnvVar(env, "STAARK_CONTENT_DIR", contentDir);
+  const site = await readSite();
+  const current = readSiteTheme(site);
+  const currentFamily = resolveThemeRuntime(current.family).id;
+  const nextTheme =
+    site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
+      ? { ...(site.theme as Record<string, unknown>) }
+      : {};
 
-  if (selectedPreset) {
-    try {
-      const site = await readSite(targetContentRoot);
-      const previousTheme =
-        site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
-          ? (site.theme as Record<string, unknown>)
-          : {};
-      site.theme = { ...previousTheme, preset: selectedPreset };
-      await writeSite(site, targetContentRoot);
-    } catch (error) {
-      return NextResponse.json(
-        { error: `Could not update the selected preset: ${(error as Error).message}` },
-        { status: 500 },
-      );
-    }
+  // Overrides and Theme Studio provenance belong to the family they were
+  // authored against. Never carry them across a family switch.
+  if (currentFamily !== runtime.id) {
+    delete nextTheme.overrides;
+    delete nextTheme.components;
+    delete nextTheme.studio;
   }
 
-  await writeFile(file, env, "utf8");
+  nextTheme.family = runtime.id;
+  nextTheme.preset = selectedPreset;
+  site.theme = nextTheme;
+  await writeSite(site);
+  revalidatePath("/", "layout");
 
-  return NextResponse.json({ ok: true, theme, preset: selectedPreset, contentDir });
+  return NextResponse.json({
+    ok: true,
+    theme: runtime.id,
+    preset: selectedPreset,
+    contentDir: process.env.STAARK_CONTENT_DIR?.trim() || "content",
+    restartRequired: false,
+  });
 }

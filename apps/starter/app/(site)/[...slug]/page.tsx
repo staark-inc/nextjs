@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { buildMetadata } from "@staark/platform/server";
 import { BlockRenderer } from "@staark/theme-kit";
 import { content } from "@/lib/staark";
-import { theme, themeRegistry } from "@/staark.config";
+import { resolveThemeRuntime } from "@/staark.config";
 
 type Params = { slug: string[] };
 
@@ -26,5 +26,6 @@ export default async function StaarkPage({ params }: { params: Promise<Params> }
   const [site, page] = await Promise.all([content.getSite(), content.getPage(slug)]);
   if (!page) notFound();
 
-  return <BlockRenderer blocks={page.blocks} site={site} theme={theme} registry={themeRegistry} />;
+  const runtime = resolveThemeRuntime(site.theme.family);
+  return <BlockRenderer blocks={page.blocks} site={site} theme={runtime.theme} registry={runtime.registry} />;
 }

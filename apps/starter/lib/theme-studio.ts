@@ -5,6 +5,7 @@ import {
   type AdminThemePreset,
   type ThemeOverrides,
 } from "@/lib/admin-theme";
+import { resolveThemeRuntime } from "@/lib/theme-runtime";
 import {
   deleteState,
   listState,
@@ -18,7 +19,7 @@ import {
 
 export const THEME_STUDIO_SCHEMA = "staark-theme/v1" as const;
 export const THEME_STUDIO_VERSION = 1 as const;
-export const BUILT_IN_THEME_IDS = ["light", "salong", "gastfrihet"] as const;
+export const BUILT_IN_THEME_IDS = ["light", "salong", "gastfrihet", "byra", "webb"] as const;
 
 export type BuiltInThemeId = (typeof BUILT_IN_THEME_IDS)[number];
 
@@ -305,19 +306,21 @@ export async function applyStudioTheme(id: string): Promise<{
 }> {
   const theme = await readStudioTheme(id);
   const contentDir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  const activeBaseTheme = process.env.STAARK_THEME?.trim() || "salong";
-  const activePresets = await readThemePresets(activeBaseTheme);
-
-  if (!activePresets.length) {
-    throw new Error(`Active theme family "${activeBaseTheme}" has no readable presets.`);
-  }
-
   const site = await readContentJson<Record<string, unknown>>("site.json");
   if (!site) throw new Error("Site settings not found.");
   const previousTheme =
     site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
       ? (site.theme as Record<string, unknown>)
       : {};
+  const activeBaseTheme = resolveThemeRuntime(
+    typeof previousTheme.family === "string" ? previousTheme.family : undefined,
+  ).id as BuiltInThemeId;
+  const activePresets = await readThemePresets(activeBaseTheme);
+
+  if (!activePresets.length) {
+    throw new Error(`Active theme family "${activeBaseTheme}" has no readable presets.`);
+  }
+
   const previousPreset = typeof previousTheme.preset === "string" ? previousTheme.preset : "";
   const sameFamily = theme.baseTheme === activeBaseTheme;
   const appliedPreset =
@@ -333,6 +336,7 @@ export async function applyStudioTheme(id: string): Promise<{
   const appliedAt = new Date().toISOString();
   site.theme = {
     ...previousTheme,
+    family: activeBaseTheme,
     preset: appliedPreset,
     overrides: theme.tokens,
     components: theme.components,

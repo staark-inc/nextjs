@@ -42,6 +42,8 @@ export const SiteSettingsSchema = z.object({
   url: z.string().url(),
   theme: z
     .object({
+      /** Runtime theme family. Falls back to STAARK_THEME when omitted. */
+      family: z.string().regex(/^[a-z0-9-]+$/).optional(),
       /** Preset id inside the installed theme (e.g. "salong"). */
       preset: z.string().optional(),
       overrides: TokenOverridesSchema.optional(),

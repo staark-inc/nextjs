@@ -148,12 +148,17 @@ function FieldInput({ field, value, onChange, error }: { field: Field; value: un
           ? [{ name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" }]
           : field.fields ?? [];
     const obj = (value as Obj) ?? {};
+    const updateNested = (key: string, nextValue: unknown) => {
+      const next = setKey(obj, key, nextValue);
+      // Empty nested values should disappear instead of persisting as {}.
+      onChange(Object.keys(next).length ? next : undefined);
+    };
     return (
       <div className="sa-field">
         <label>{field.label}</label>
         <div className="sa-bf-group">
           {subFields.map((sub) => (
-            <FieldInput key={sub.name} field={sub} value={obj[sub.name]} onChange={(v) => onChange(setKey(obj, sub.name, v))} />
+            <FieldInput key={sub.name} field={sub} value={obj[sub.name]} onChange={(v) => updateNested(sub.name, v)} />
           ))}
         </div>
         {errorNode}

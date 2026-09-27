@@ -7,10 +7,12 @@ import {
   readContentJson,
   writeContentJson,
 } from "@/lib/storage";
+import { resolveThemeRuntime } from "@/lib/theme-runtime";
 import { requireAuth } from "../guard";
 
 type NavigationLink = { label: string; href: string };
 type SiteFile = {
+  theme?: { family?: string };
   navigation?: {
     primary?: NavigationLink[];
     footer?: NavigationLink[];
@@ -147,7 +149,7 @@ export async function GET() {
       };
     }),
   );
-  const theme = process.env.STAARK_THEME?.trim() || "light";
+  const theme = resolveThemeRuntime(site.theme?.family).id;
   return NextResponse.json({ pages, theme, templates: templatesFor(theme) });
 }
 
@@ -171,7 +173,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "A page with this path already exists." }, { status: 409 });
   }
 
-  const theme = process.env.STAARK_THEME?.trim() || "light";
+  const site = await readSite();
+  const theme = resolveThemeRuntime(site.theme?.family).id;
   const allowedTemplates = templatesFor(theme);
   const requestedTemplate = typeof body.templateId === "string" ? body.templateId : "blank";
   const templateId = allowedTemplates.some((template) => template.id === requestedTemplate) ? requestedTemplate : "blank";

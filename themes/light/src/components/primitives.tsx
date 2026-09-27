@@ -21,6 +21,17 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
 }
 
 export const linkSchema = z.object({ label: z.string(), href: z.string() });
+export const optionalLinkSchema = z.preprocess(
+  (value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+    const candidate = value as Record<string, unknown>;
+    const label = typeof candidate.label === "string" ? candidate.label.trim() : "";
+    const href = typeof candidate.href === "string" ? candidate.href.trim() : "";
+    if (!label || !href) return undefined;
+    return { label, href };
+  },
+  linkSchema.optional(),
+);
 
 /** Resolve the site's primary CTA, used by hero and CTA sections when none is given. */
 export function siteCta(site: SiteSettings) {

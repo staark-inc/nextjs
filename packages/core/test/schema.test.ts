@@ -7,6 +7,7 @@ test("SiteSettingsSchema preserves Theme Studio provenance", () => {
     name: "Staark Demo",
     url: "https://example.com",
     theme: {
+      family: "webb",
       preset: "default",
       studio: {
         id: "brand-v2",
@@ -20,6 +21,7 @@ test("SiteSettingsSchema preserves Theme Studio provenance", () => {
     },
   });
 
+  assert.equal(parsed.theme.family, "webb");
   assert.deepEqual(parsed.theme.studio, {
     id: "brand-v2",
     name: "Brand V2",

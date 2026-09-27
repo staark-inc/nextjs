@@ -1,5 +1,5 @@
 import { PageSchema, SiteSettingsSchema } from "@staark/core";
-import { themeRegistry } from "@/staark.config";
+import { resolveThemeRuntime } from "./theme-runtime";
 import { listMediaFiles } from "./admin-media";
 import { buildMediaUsageIndex } from "./admin-media-usage";
 import { listRedirects, type RedirectRule } from "./admin-redirects";
@@ -237,9 +237,25 @@ function addPagePathIssues(pages: PageRecord[], issues: HealthIssue[]): void {
   }
 }
 
-function addBlockIssues(pages: PageRecord[], issues: HealthIssue[]): void {
+function activeBlockTypes(site: JsonObject): Set<string> {
   const allowed = new Set(BASE_BLOCK_TYPES);
-  for (const key of Object.keys(themeRegistry ?? {})) allowed.add(key);
+  const rawTheme =
+    site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
+      ? site.theme as JsonObject
+      : {};
+  const family = typeof rawTheme.family === "string" ? rawTheme.family : undefined;
+  const runtime = resolveThemeRuntime(family);
+
+  for (const key of Object.keys(runtime.theme.sections)) allowed.add(key);
+  for (const definition of Object.values(runtime.registry ?? {})) {
+    for (const key of Object.keys(definition.sections)) allowed.add(key);
+  }
+
+  return allowed;
+}
+
+function addBlockIssues(site: JsonObject, pages: PageRecord[], issues: HealthIssue[]): void {
+  const allowed = activeBlockTypes(site);
 
   for (const page of pages) {
     const blocks = Array.isArray(page.data.blocks) ? page.data.blocks : [];
@@ -615,6 +631,18 @@ async function addMediaIssues(issues: HealthIssue[]): Promise<void> {
   }
 
   for (const file of media) {
+    if (file.size > 1024 * 1024) {
+      issues.push({
+        id: issueId("media", file.name, "large-source"),
+        category: "media",
+        severity: "warning",
+        title: "Large source image",
+        detail: `${file.name} is ${(file.size / 1024 / 1024).toFixed(1)} MB. Keep originals lean even though the public site serves responsive optimized variants.`,
+        source: file.name,
+        href: "/admin/media",
+      });
+    }
+
     if (file.alt.trim()) continue;
     issues.push({
       id: issueId("media", file.name, "missing-alt"),
@@ -681,7 +709,7 @@ export async function runSiteHealth(): Promise<SiteHealthReport> {
 
   const pages = await readPages(issues);
   addPagePathIssues(pages, issues);
-  addBlockIssues(pages, issues);
+  addBlockIssues(site, pages, issues);
 
   const knownPaths = new Set(
     pages

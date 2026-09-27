@@ -1,11 +1,11 @@
 import { z } from "zod";
 import type { SectionComponent } from "@staark/theme-kit";
-import { Button, Container, siteCta } from "../components/primitives";
+import { Button, Container, optionalLinkSchema, siteCta } from "../components/primitives";
 
 const schema = z.object({
   heading: z.string(),
   intro: z.string().optional(),
-  cta: z.object({ label: z.string(), href: z.string() }).optional(),
+  cta: optionalLinkSchema,
 });
 
 export const Cta: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) => {

@@ -2,6 +2,7 @@ import type { ThemeDefinition } from "@staark/theme-kit";
 import scandinavian from "../presets/scandinavian.json" with { type: "json" };
 import localBusiness from "../presets/local-business.json" with { type: "json" };
 import { Hero } from "./sections/Hero";
+import { Cards } from "./sections/Cards";
 import { Freeform } from "./sections/Freeform";
 import { Services } from "./sections/Services";
 import { Process } from "./sections/Process";
@@ -23,6 +24,7 @@ export const lightTheme: ThemeDefinition = {
   defaultPreset: "scandinavian",
   sections: {
     hero: Hero,
+    cards: Cards,
     freeform: Freeform,
     services: Services,
     process: Process,
@@ -34,5 +36,5 @@ export const lightTheme: ThemeDefinition = {
 
 export { SiteHeader, SiteFooter } from "./components/chrome";
 export { Container, Button, Eyebrow, siteCta } from "./components/primitives";
-export { Hero, Freeform, Services, Process, Testimonials, Cta, Contact };
+export { Hero, Cards, Freeform, Services, Process, Testimonials, Cta, Contact };
 export default lightTheme;

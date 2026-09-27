@@ -1,5 +1,5 @@
-import { access, readdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { getThemeRuntime } from "@/lib/theme-runtime";
+import { readContentJson, writeContentJson } from "@/lib/storage";
 
 export type ThemeTokens = {
   colors?: Record<string, string>;
@@ -19,30 +19,20 @@ export type AdminThemePreset = {
 };
 
 export type SiteThemeConfig = {
+  family?: string;
   preset?: string;
   overrides?: ThemeOverrides;
   components?: Record<string, string>;
 };
 
-export function themesRoot(): string {
-  return path.resolve(process.cwd(), "../../themes");
+export async function readSite(): Promise<Record<string, unknown>> {
+  const site = await readContentJson<Record<string, unknown>>("site.json");
+  if (!site) throw new Error("Site settings not found.");
+  return site;
 }
 
-export function contentRoot(): string {
-  const dir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  return path.isAbsolute(dir) ? dir : path.join(/* turbopackIgnore: true */ process.cwd(), dir);
-}
-
-export function siteFile(root = contentRoot()): string {
-  return path.join(root, "site.json");
-}
-
-export async function readSite(root = contentRoot()): Promise<Record<string, unknown>> {
-  return JSON.parse(await readFile(siteFile(root), "utf8")) as Record<string, unknown>;
-}
-
-export async function writeSite(site: Record<string, unknown>, root = contentRoot()): Promise<void> {
-  await writeFile(siteFile(root), JSON.stringify(site, null, 2) + "\n", "utf8");
+export async function writeSite(site: Record<string, unknown>): Promise<void> {
+  await writeContentJson("site.json", site);
 }
 
 function asStringRecord(value: unknown): Record<string, string> {
@@ -70,6 +60,7 @@ export function readSiteTheme(site: Record<string, unknown>): SiteThemeConfig {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const theme = raw as Record<string, unknown>;
   return {
+    family: typeof theme.family === "string" ? theme.family : undefined,
     preset: typeof theme.preset === "string" ? theme.preset : undefined,
     overrides: asTokens(theme.overrides),
     components: asStringRecord(theme.components),
@@ -78,42 +69,18 @@ export function readSiteTheme(site: Record<string, unknown>): SiteThemeConfig {
 
 export async function readThemePresets(themeId: string): Promise<AdminThemePreset[]> {
   if (!/^[a-z0-9-]+$/.test(themeId)) return [];
-  const dir = path.join(themesRoot(), themeId, "presets");
-  let files: string[];
-  try {
-    files = (await readdir(dir)).filter((file) => file.endsWith(".json")).sort();
-  } catch {
-    return [];
-  }
+  const runtime = getThemeRuntime(themeId);
+  if (!runtime) return [];
 
-  const presets: AdminThemePreset[] = [];
-  for (const file of files) {
-    try {
-      const raw = JSON.parse(await readFile(path.join(dir, file), "utf8")) as Record<string, unknown>;
-      const id = typeof raw.id === "string" && raw.id ? raw.id : file.replace(/\.json$/, "");
-      presets.push({
-        id,
-        name: typeof raw.name === "string" && raw.name ? raw.name : id,
-        description: typeof raw.description === "string" ? raw.description : "",
-        tokens: asTokens(raw.tokens),
-        components: asStringRecord(raw.components),
-      });
-    } catch {
-      // Skip invalid preset files; the theme package remains loadable with its valid presets.
-    }
-  }
-  return presets;
-}
-
-export async function themeContentRoot(themeId: string): Promise<{ root: string; relative: string }> {
-  const relative = `content/${themeId}`;
-  const candidate = path.resolve(process.cwd(), relative);
-  try {
-    await access(candidate);
-    return { root: candidate, relative };
-  } catch {
-    return { root: path.resolve(process.cwd(), "content"), relative: "content" };
-  }
+  return Object.values(runtime.theme.presets)
+    .map((preset) => ({
+      id: preset.id,
+      name: preset.name || preset.id,
+      description: preset.description ?? "",
+      tokens: asTokens(preset.tokens),
+      components: asStringRecord(preset.components),
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
 
 function cleanRecord(input: unknown, maxLength = 300): Record<string, string> {

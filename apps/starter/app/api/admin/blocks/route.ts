@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { readSite, readSiteTheme } from "@/lib/admin-theme";
+import { resolveThemeRuntime } from "@/lib/theme-runtime";
 import { requireAuth } from "../guard";
 
 type BlockTemplate = {
@@ -23,6 +25,39 @@ const BASE_BLOCKS: BlockTemplate[] = [
       alignment: "left",
       width: "normal",
       background: "default",
+    },
+  },
+  {
+    type: "cards",
+    label: "Cards",
+    description: "Reusable card grid with optional icons, images, bullet points and links.",
+    icon: "grid",
+    template: {
+      eyebrow: "Highlights",
+      heading: "Choose what matters most",
+      intro: "Use cards for benefits, features, packages, categories or other repeatable content.",
+      columns: 3,
+      items: [
+        {
+          title: "Card one",
+          icon: "✦",
+          description: "A short description for this card.",
+          features: ["First point", "Second point"],
+          cta: { label: "Learn more", href: "#" },
+        },
+        {
+          title: "Card two",
+          icon: "→",
+          description: "A short description for this card.",
+          features: ["First point", "Second point"],
+        },
+        {
+          title: "Card three",
+          icon: "✓",
+          description: "A short description for this card.",
+          features: ["First point", "Second point"],
+        },
+      ],
     },
   },
   {
@@ -198,7 +233,8 @@ export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
-  const activeTheme = process.env.STAARK_THEME ?? "light";
+  const site = await readSite();
+  const activeTheme = resolveThemeRuntime(readSiteTheme(site).family).id;
   const blocks = [...BASE_BLOCKS, ...(THEME_BLOCKS[activeTheme] ?? [])];
 
   return NextResponse.json({ blocks, theme: activeTheme });

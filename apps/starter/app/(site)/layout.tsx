@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { buildRootMetadata, localBusinessJsonLd, jsonLdString } from "@staark/platform/server";
 import { presetToCssVars, cssVarsToString, resolvePreset } from "@staark/theme-kit";
 import { content } from "@/lib/staark";
-import { theme, SiteHeader, SiteFooter } from "@/staark.config";
+import { resolveThemeRuntime, SiteHeader, SiteFooter } from "@/staark.config";
 import "@staark/theme-light/styles.css";
 import "@staark/theme-salong/styles.css";
 import "@staark/theme-gastfrihet/styles.css";
@@ -16,7 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const site = await content.getSite();
-  const preset = resolvePreset(theme, site.theme.preset);
+  const runtime = resolveThemeRuntime(site.theme.family);
+  const preset = resolvePreset(runtime.theme, site.theme.preset);
   const vars = presetToCssVars(preset, site.theme.overrides);
   const components = { ...preset.components, ...site.theme.components };
 

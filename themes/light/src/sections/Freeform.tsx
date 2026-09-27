@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { SectionComponent } from "@staark/theme-kit";
-import { Button, Container, Eyebrow, linkSchema } from "../components/primitives";
+import { Button, Container, Eyebrow, optionalLinkSchema } from "../components/primitives";
 
 const imageSchema = z.object({
   src: z.string().min(1),
@@ -13,8 +13,8 @@ const schema = z.object({
   text: z.string().optional(),
   image: imageSchema.optional(),
   imagePosition: z.enum(["left", "right", "top", "background"]).default("right"),
-  primaryCta: linkSchema.optional(),
-  secondaryCta: linkSchema.optional(),
+  primaryCta: optionalLinkSchema,
+  secondaryCta: optionalLinkSchema,
   alignment: z.enum(["left", "center", "right"]).default("left"),
   width: z.enum(["narrow", "normal", "wide"]).default("normal"),
   background: z.enum(["default", "surface", "accent", "dark"]).default("default"),
@@ -24,6 +24,10 @@ export const Freeform: SectionComponent<z.infer<typeof schema>> = ({ props, ctx 
   const p = schema.parse(props);
   const hasImage = Boolean(p.image?.src);
   const backgroundImage = hasImage && p.imagePosition === "background";
+  const HostImage = ctx.image;
+  const blockIndex = ctx.blockIndex ?? Number.POSITIVE_INFINITY;
+  const priority = blockIndex === 0;
+  const eager = blockIndex <= 1;
   const classes = [
     "sk-freeform",
     `sk-freeform--align-${p.alignment}`,
@@ -35,13 +39,39 @@ export const Freeform: SectionComponent<z.infer<typeof schema>> = ({ props, ctx 
   return (
     <section className={classes}>
       {backgroundImage && p.image ? (
-        <img className="sk-freeform__background" src={p.image.src} alt="" aria-hidden />
+        HostImage ? (
+          <HostImage
+            className="sk-freeform__background"
+            src={p.image.src}
+            alt=""
+            fill
+            sizes="100vw"
+            priority={priority}
+            eager={eager}
+          />
+        ) : (
+          <img
+            className="sk-freeform__background"
+            src={p.image.src}
+            alt=""
+            aria-hidden
+            loading={eager ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : undefined}
+            decoding="async"
+          />
+        )
       ) : null}
       <Container wide={p.width === "wide"}>
         <div className="sk-freeform__inner">
           {hasImage && !backgroundImage && p.image ? (
             <div className="sk-freeform__media">
-              <img src={p.image.src} alt={p.image.alt} />
+              <img
+                src={p.image.src}
+                alt={p.image.alt}
+                loading={eager ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : undefined}
+                decoding="async"
+              />
             </div>
           ) : null}
 
