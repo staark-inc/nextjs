@@ -1278,3 +1278,14 @@ body :where(a, button, input, select, textarea):focus-visible {
   .sa-settings-savebar { position: static; }
   .sa-settings-savebar .sa-btn { width: 100%; justify-content: center; }
 }
+
+/* Block field forms (schema-driven editor) */
+.sa-bf { display: grid; gap: 14px; }
+.sa-bf-group { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--sa-border, #e5e7eb); border-radius: 8px; background: var(--sa-bg-subtle, #fafafa); }
+.sa-bf-list { display: grid; gap: 8px; margin-bottom: 8px; }
+.sa-bf-item { border: 1px solid var(--sa-border, #e5e7eb); border-radius: 8px; background: #fff; padding: 8px 10px; }
+.sa-bf-item__summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; list-style: none; }
+.sa-bf-item__summary::-webkit-details-marker { display: none; }
+.sa-bf-item__body { display: grid; gap: 10px; padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--sa-border, #eee); }
+.sa-bf-toggle { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
+.sa-bf-toggle input { width: 16px; height: 16px; }

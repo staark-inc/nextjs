@@ -3,9 +3,10 @@
   "title": "Startsida",
   "seo": {
     "title": "Staark Demo – digital byrå i Stockholm",
-    "description": "Vi bygger webbplatser och varumärken som konverterar."
+    "description": "Vi bygger webbplatser och varumärken som konverterar.",
+    "ogImage": "/uploads/screenshot-2026-09-26-22-18-07.png",
+    "noindex": false
   },
-  "updatedAt": "2026-09-26T10:00:00Z",
   "blocks": [
     {
       "id": "hero",
@@ -116,5 +117,6 @@
         }
       }
     }
-  ]
+  ],
+  "updatedAt": "2026-09-27T07:54:24.407Z"
 }

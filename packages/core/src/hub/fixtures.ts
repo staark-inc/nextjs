@@ -1,56 +1,56 @@
-import { readFile, readdir, mkdir, appendFile } from "node:fs/promises";
-import path from "node:path";
 import { PageSchema, SiteSettingsSchema, type FormSubmission, type Page, type PageSummary, type SiteSettings } from "../schema";
+import { getStorage, readJson, type StaarkStorage } from "../storage";
 
 /**
  * Local content used when no Hub pairing is configured: `content/site.json`
- * plus one JSON file per page in `content/pages/`. Same shapes as the Hub API,
- * so a site can be built and themed before it is paired.
+ * plus one JSON file per page in `content/pages/`. Same shapes as the Hub API.
+ *
+ * Reads go through the storage driver (fs by default, s3 on serverless), so the
+ * public site works the same on a VPS/Docker disk and on object storage.
  */
 
-function resolveDir(contentDir: string): string {
-  // turbopackIgnore keeps the fixtures reader (dev/preview only) from tracing the whole project.
-  return path.isAbsolute(contentDir) ? contentDir : path.join(/* turbopackIgnore: true */ process.cwd(), contentDir);
+function join(dir: string, ...rest: string[]): string {
+  const base = dir.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  return [base, ...rest].filter(Boolean).join("/");
 }
 
-async function readJson(file: string): Promise<unknown> {
-  return JSON.parse(await readFile(file, "utf8"));
+export async function fixtureSite(contentDir: string, storage: StaarkStorage = getStorage()): Promise<SiteSettings> {
+  const data = await readJson<unknown>(storage, join(contentDir, "site.json"));
+  if (data === null) throw new Error(`[staark] Missing content: ${join(contentDir, "site.json")}`);
+  return SiteSettingsSchema.parse(data);
 }
 
-export async function fixtureSite(contentDir: string): Promise<SiteSettings> {
-  return SiteSettingsSchema.parse(await readJson(path.join(resolveDir(contentDir), "site.json")));
-}
-
-async function allPages(contentDir: string): Promise<Page[]> {
-  const dir = path.join(resolveDir(contentDir), "pages");
-  const files = (await readdir(dir)).filter((f) => f.endsWith(".json")).sort();
+async function allPages(contentDir: string, storage: StaarkStorage): Promise<Page[]> {
+  const entries = await storage.list(join(contentDir, "pages"));
+  const jsonFiles = entries.filter((e) => e.path.endsWith(".json")).sort((a, b) => a.path.localeCompare(b.path));
   return Promise.all(
-    files.map(async (file) => {
-      const result = PageSchema.safeParse(await readJson(path.join(dir, file)));
+    jsonFiles.map(async (entry) => {
+      const raw = await readJson<unknown>(storage, entry.path);
+      const result = PageSchema.safeParse(raw);
       if (!result.success) {
-        throw new Error(`[staark] Invalid fixture page ${file}: ${result.error.message}`);
+        throw new Error(`[staark] Invalid fixture page ${entry.path}: ${result.error.message}`);
       }
       return result.data;
     }),
   );
 }
 
-export async function fixturePages(contentDir: string): Promise<PageSummary[]> {
-  return (await allPages(contentDir)).map((p) => ({ path: p.path, updatedAt: p.updatedAt, noindex: p.seo.noindex }));
+export async function fixturePages(contentDir: string, storage: StaarkStorage = getStorage()): Promise<PageSummary[]> {
+  return (await allPages(contentDir, storage)).map((p) => ({ path: p.path, updatedAt: p.updatedAt, noindex: p.seo.noindex }));
 }
 
-export async function fixturePage(contentDir: string, pagePath: string): Promise<Page | null> {
-  return (await allPages(contentDir)).find((p) => p.path === pagePath) ?? null;
+export async function fixturePage(contentDir: string, pagePath: string, storage: StaarkStorage = getStorage()): Promise<Page | null> {
+  return (await allPages(contentDir, storage)).find((p) => p.path === pagePath) ?? null;
 }
 
-/** Dev stand-in for S-Hub Inbox: appends submissions to .staark/submissions.jsonl. */
-export async function fixtureSubmit(submission: Omit<FormSubmission, "token" | "website">): Promise<void> {
-  const dir = path.join(process.cwd(), ".staark");
-  await mkdir(dir, { recursive: true });
-  await appendFile(
-    path.join(dir, "submissions.jsonl"),
-    JSON.stringify({ ...submission, receivedAt: new Date().toISOString() }) + "\n",
-    "utf8",
-  );
-  console.info(`[staark] Form "${submission.formId}" stored locally in .staark/submissions.jsonl (fixtures mode).`);
+/**
+ * Dev/self-host stand-in for S-Hub Inbox. Appends one JSON line to
+ * `.staark/submissions.jsonl` — the exact file and format the admin Inbox reads —
+ * but through the storage driver so it also works on the S3 backend.
+ */
+export async function fixtureSubmit(submission: Omit<FormSubmission, "token" | "website">, storage: StaarkStorage = getStorage()): Promise<void> {
+  const line = JSON.stringify({ ...submission, receivedAt: new Date().toISOString() }) + "\n";
+  const existing = (await storage.readText(".staark/submissions.jsonl")) ?? "";
+  await storage.write(".staark/submissions.jsonl", existing + line);
+  console.info(`[staark] Form "${submission.formId}" stored in .staark/submissions.jsonl via storage driver.`);
 }

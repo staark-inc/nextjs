@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createPageRevision } from "@/lib/admin-revisions";
+import { upsertRedirect } from "@/lib/admin-redirects";
 import { requireAuth } from "../../guard";
 
 function contentRoot(): string {
@@ -63,6 +64,13 @@ export async function PUT(req: Request, ctx: Ctx) {
     const current = JSON.parse(await readFile(filePath, "utf8")) as Record<string, unknown>;
     const incoming = body as Record<string, unknown>;
 
+    const currentPath = typeof current.path === "string" ? current.path : "";
+    const incomingPath = typeof incoming.path === "string" ? incoming.path : "";
+
+    if (currentPath && incomingPath && currentPath !== incomingPath) {
+      await upsertRedirect(currentPath, incomingPath, 301, "page-path-change");
+    }
+
     const currentComparable = { ...current };
     const incomingComparable = { ...incoming };
     delete currentComparable.updatedAt;
@@ -73,7 +81,7 @@ export async function PUT(req: Request, ctx: Ctx) {
 
     const saved = { ...incoming, updatedAt: new Date().toISOString() };
     await writeFile(filePath, JSON.stringify(saved, null, 2) + "\n", "utf8");
-    return NextResponse.json({ ok: true, page: saved });
+    return NextResponse.json({ ok: true, page: saved, redirectCreated: currentPath && incomingPath && currentPath !== incomingPath });
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || "Could not save page." },

@@ -43,6 +43,12 @@ const navItems: NavItem[] = [
     icon: "M10 13a5 5 0 0 0 7.54.54l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15 M14 11a5 5 0 0 0-7.54-.54l-2 2a5 5 0 0 0 7.07 7.07l1.15-1.15",
   },
   {
+    href: "/admin/redirects",
+    label: "Redirects",
+    description: "URL forwarding",
+    icon: "M5 7h10a4 4 0 0 1 4 4v1 M15 9l4-4 4 4 M19 17H9a4 4 0 0 1-4-4v-1 M9 15l-4 4-4-4",
+  },
+  {
     href: "/admin/forms",
     label: "Inbox",
     description: "Form submissions",

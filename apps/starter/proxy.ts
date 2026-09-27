@@ -1,20 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import type { SessionData } from "@/lib/auth";
+import { findMatchingRedirect } from "@/lib/admin-redirects";
 import { resolveAdminAuthConfig } from "@staark/platform/server";
 
+function isAdminRequest(pathname: string): boolean {
+  return pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname.startsWith("/api/admin/");
+}
+
+function canRedirectPublicRequest(req: NextRequest): boolean {
+  if (req.method !== "GET" && req.method !== "HEAD") return false;
+
+  const { pathname } = req.nextUrl;
+  return !(
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/uploads/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml"
+  );
+}
+
 /**
- * Admin gate.
+ * Public redirects + admin gate.
  *
- * The admin configuration is resolved lazily INSIDE the handler, never at module
- * scope. `resolveAdminAuthConfig()` throws in production when ADMIN_* is missing;
- * if that ran at import time it would crash middleware instantiation and take the
- * whole site — including public pages — down with a 500. Resolving it here means a
- * missing/invalid admin config only affects /admin, and the matcher keeps this
- * handler off public routes entirely.
+ * Redirects are file-backed and resolved per request so changes from the local
+ * ACP become effective immediately without rebuilding the deployment.
+ *
+ * Admin configuration is still resolved lazily and only for admin requests.
+ * Missing ADMIN_* must never take down public pages.
  */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const adminRequest = isAdminRequest(pathname);
+
+  if (!adminRequest && canRedirectPublicRequest(req)) {
+    try {
+      const rule = await findMatchingRedirect(pathname);
+      if (rule) {
+        const destination = new URL(rule.to, req.url);
+        if (!destination.search && req.nextUrl.search) {
+          destination.search = req.nextUrl.search;
+        }
+        return NextResponse.redirect(destination, rule.status);
+      }
+    } catch (error) {
+      // Redirect storage must never make the public site unavailable.
+      console.error("[staark] Redirect lookup failed:", (error as Error).message);
+    }
+  }
+
+  if (!adminRequest) return NextResponse.next();
 
   // Login page and auth endpoints must stay reachable without a session.
   if (pathname === "/admin/login" || pathname.startsWith("/api/admin/auth/")) {
@@ -25,10 +64,11 @@ export async function proxy(req: NextRequest) {
   try {
     sessionSecret = resolveAdminAuthConfig().sessionSecret;
   } catch (error) {
-    // Admin isn't configured (e.g. missing ADMIN_* in production). Fail this
-    // request clearly instead of crashing the app for every visitor.
     console.error("[staark] Admin is not configured:", (error as Error).message);
-    return NextResponse.json({ ok: false, error: "Admin is not configured on this deployment." }, { status: 503 });
+    return NextResponse.json(
+      { ok: false, error: "Admin is not configured on this deployment." },
+      { status: 503 },
+    );
   }
 
   const res = NextResponse.next();
@@ -50,5 +90,9 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/((?!api/|admin/|_next/|uploads/|favicon.ico|robots.txt|sitemap.xml).*)",
+  ],
 };

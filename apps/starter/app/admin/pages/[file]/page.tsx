@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { BlockFieldForm, hasFieldForm } from "./BlockFieldForm";
 
 type Block = { id: string; type: string; props: Record<string, unknown> };
 type SeoData = { title?: string; description?: string; ogImage?: string; canonical?: string };
@@ -19,6 +20,24 @@ export default function PageEditor() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [templates, setTemplates] = useState<BlockTemplate[]>([]);
   const [showPicker, setShowPicker] = useState(false);
+  const [jsonBlocks, setJsonBlocks] = useState<Set<string>>(new Set());
+
+  function toggleJsonBlock(id: string) {
+    setJsonBlocks((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function setBlockProps(blockId: string, props: Record<string, unknown>) {
+    setPage((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, blocks: prev.blocks.map((b) => (b.id === blockId ? { ...b, props } : b)) };
+      setJson(JSON.stringify(updated, null, 2));
+      return updated;
+    });
+  }
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
@@ -219,16 +238,45 @@ export default function PageEditor() {
                           )}
                         </select>
                       </div>
-                      <div className="sa-field">
-                        <label>Props (JSON)</label>
-                        <textarea
-                          className="sa-json-editor"
-                          defaultValue={JSON.stringify(block.props, null, 2)}
-                          onBlur={(e) => updateBlockProps(block.id, e.target.value)}
-                          rows={14}
-                          spellCheck={false}
-                        />
-                      </div>
+                      {hasFieldForm(block.type) && !jsonBlocks.has(block.id) ? (
+                        <>
+                          <BlockFieldForm
+                            type={block.type}
+                            value={block.props}
+                            onChange={(props) => setBlockProps(block.id, props)}
+                          />
+                          <button
+                            type="button"
+                            className="sa-btn sa-btn--ghost sa-btn--sm"
+                            style={{ marginTop: 12 }}
+                            onClick={() => toggleJsonBlock(block.id)}
+                          >
+                            Advanced (JSON)
+                          </button>
+                        </>
+                      ) : (
+                        <div className="sa-field">
+                          <label>Props (JSON)</label>
+                          <textarea
+                            key={`${block.id}-${jsonBlocks.has(block.id)}`}
+                            className="sa-json-editor"
+                            defaultValue={JSON.stringify(block.props, null, 2)}
+                            onBlur={(e) => updateBlockProps(block.id, e.target.value)}
+                            rows={14}
+                            spellCheck={false}
+                          />
+                          {hasFieldForm(block.type) ? (
+                            <button
+                              type="button"
+                              className="sa-btn sa-btn--ghost sa-btn--sm"
+                              style={{ marginTop: 8 }}
+                              onClick={() => toggleJsonBlock(block.id)}
+                            >
+                              &larr; Back to form
+                            </button>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   )}
                 </li>
