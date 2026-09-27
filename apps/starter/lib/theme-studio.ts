@@ -330,11 +330,18 @@ export async function applyStudioTheme(id: string): Promise<{
   // Theme Studio documents are design layers, not executable theme packages.
   // Applying one never swaps the deployment's React/theme family; it overlays
   // tokens and component variants on the currently installed family.
+  const appliedAt = new Date().toISOString();
   site.theme = {
     ...previousTheme,
     preset: appliedPreset,
     overrides: theme.tokens,
     components: theme.components,
+    studio: {
+      id: theme.id,
+      name: theme.name,
+      sourceUpdatedAt: theme.updatedAt,
+      appliedAt,
+    },
   };
   await writeSite(site, root);
 

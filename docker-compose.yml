@@ -1,0 +1,52 @@
+# Staark Next — production stack for a client deployment on a VPS/Docker host.
+#
+#   docker compose up -d --build
+#
+# Put a reverse proxy (Caddy/Traefik/nginx) in front for the domain + TLS,
+# or add the Caddy service below.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/starter/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Which theme this client deployment ships.
+      STAARK_THEME: ${STAARK_THEME:-webb}
+      STAARK_CONTENT_DIR: ${STAARK_CONTENT_DIR:-content/webb}
+      STAARK_CONTENT_SOURCE: ${STAARK_CONTENT_SOURCE:-fixtures}
+
+      # Storage: fs (default, uses the /data volume) or s3 for serverless/portable.
+      STAARK_STORAGE: ${STAARK_STORAGE:-fs}
+      STAARK_STORAGE_DIR: /data
+      # For S3/R2 instead, set STAARK_STORAGE=s3 and:
+      # STAARK_S3_BUCKET, STAARK_S3_ENDPOINT, STAARK_S3_ACCESS_KEY_ID, STAARK_S3_SECRET_ACCESS_KEY
+
+      # Local /admin — REQUIRED in production (the app refuses to start admin without them).
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?set ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set a 32+ char secret}
+
+      # Public form time-trap secret.
+      STAARK_FORM_SECRET: ${STAARK_FORM_SECRET:?set STAARK_FORM_SECRET}
+    volumes:
+      - staark-data:/data
+    ports:
+      - "3000:3000"
+
+  # Uncomment for automatic HTTPS on your domain (edit Caddyfile with your domain).
+  # caddy:
+  #   image: caddy:2
+  #   restart: unless-stopped
+  #   depends_on: [web]
+  #   ports: ["80:80", "443:443"]
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile
+  #     - caddy-data:/data
+  #     - caddy-config:/config
+
+volumes:
+  staark-data:
+  # caddy-data:
+  # caddy-config:

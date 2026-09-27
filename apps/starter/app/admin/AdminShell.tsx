@@ -55,6 +55,12 @@ const navItems: NavItem[] = [
     icon: "M12 3 4 6v5c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6l-8-3Z M9 12l2 2 4-5",
   },
   {
+    href: "/admin/backups",
+    label: "Backups",
+    description: "Restore & recovery",
+    icon: "M12 3a9 9 0 1 1-8.49 6 M3 4v5h5 M12 7v5l3 2",
+  },
+  {
     href: "/admin/forms",
     label: "Inbox",
     description: "Form submissions",

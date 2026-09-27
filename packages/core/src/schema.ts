@@ -46,6 +46,14 @@ export const SiteSettingsSchema = z.object({
       preset: z.string().optional(),
       overrides: TokenOverridesSchema.optional(),
       components: z.record(z.string(), z.string()).optional(),
+      studio: z
+        .object({
+          id: z.string().regex(/^[a-z0-9-]+$/),
+          name: z.string().min(1),
+          sourceUpdatedAt: z.string(),
+          appliedAt: z.string(),
+        })
+        .optional(),
     })
     .prefault({}),
   brand: z

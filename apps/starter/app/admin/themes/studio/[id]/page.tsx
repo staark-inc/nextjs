@@ -132,8 +132,8 @@ export default function ThemeStudioEditorPage() {
     });
   }
 
-  async function save() {
-    if (!theme) return;
+  async function save(): Promise<boolean> {
+    if (!theme) return false;
     setSaving(true);
     const res = await fetch(`/api/admin/themes/studio/${theme.id}`, {
       method: "PUT",
@@ -152,18 +152,19 @@ export default function ThemeStudioEditorPage() {
 
     if (!res.ok) {
       showToast((data as { error?: string }).error ?? "Could not save theme.", false);
-      return;
+      return false;
     }
 
     const saved = (data as { theme: StudioTheme }).theme;
     setTheme(saved);
     setInitial(JSON.stringify(saved));
     showToast("Theme draft saved.", true);
+    return true;
   }
 
   async function apply() {
     if (!theme) return;
-    if (dirty) await save();
+    if (dirty && !(await save())) return;
     setApplying(true);
     const res = await fetch(`/api/admin/themes/studio/${theme.id}/apply`, { method: "POST" });
     const data = await res.json().catch(() => ({}));
@@ -281,7 +282,7 @@ export default function ThemeStudioEditorPage() {
           <button className="sa-btn sa-btn--ghost" onClick={() => void save()} disabled={saving || !dirty}>
             {saving ? "Saving…" : "Save draft"}
           </button>
-          <button className="sa-btn sa-btn--primary" onClick={() => void apply()} disabled={applying}>
+          <button className="sa-btn sa-btn--primary" onClick={() => void apply()} disabled={applying || saving}>
             {applying ? "Applying…" : "Apply to site"}
           </button>
         </div>

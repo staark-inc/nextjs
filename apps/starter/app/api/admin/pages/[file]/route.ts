@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { PageSchema } from "@staark/core";
 import { createPageRevision } from "@/lib/admin-revisions";
 import { upsertRedirect } from "@/lib/admin-redirects";
 import { validateBlocks } from "@/lib/block-fields";
@@ -60,8 +61,21 @@ export async function PUT(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Page must be a JSON object." }, { status: 422 });
   }
 
-  // Required-field validation (authoritative; the editor validates too).
-  const blocks = (body as { blocks?: { id: string; type: string; props: Record<string, unknown> }[] }).blocks ?? [];
+  // Validate the platform page contract before touching revisions, redirects or disk.
+  // We intentionally keep writing the original object after validation so future
+  // deployment-owned extension fields are preserved instead of stripped by Zod.
+  const parsedPage = PageSchema.safeParse(body);
+  if (!parsedPage.success) {
+    const issue = parsedPage.error.issues[0];
+    const field = issue?.path.length ? issue.path.join(".") : "page";
+    return NextResponse.json(
+      { error: `${field}: ${issue?.message ?? "Invalid page."}` },
+      { status: 422 },
+    );
+  }
+
+  // Required-field validation for the active block editors.
+  const blocks = parsedPage.data.blocks;
   const fieldErrors = validateBlocks(blocks);
   if (Object.keys(fieldErrors).length > 0) {
     return NextResponse.json({ error: "Some blocks are missing required fields.", fieldErrors }, { status: 422 });
