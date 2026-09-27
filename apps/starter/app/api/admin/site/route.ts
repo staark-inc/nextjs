@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { SiteSettingsSchema } from "@staark/core";
 import { readContentJson, writeContentJson } from "@/lib/storage";
 import { requireAuth } from "../guard";
@@ -33,5 +34,6 @@ export async function PUT(req: Request) {
   }
 
   await writeContentJson("site.json", parsed.data);
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, site: parsed.data });
 }

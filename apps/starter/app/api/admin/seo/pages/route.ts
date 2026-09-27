@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import path from "node:path";
 import { PageSchema } from "@staark/core";
 import {
@@ -109,6 +110,7 @@ export async function PUT(req: Request) {
     }
 
     await writeContentJson(`pages/${safe}`, parsed.data);
+    revalidatePath("/", "layout");
     return NextResponse.json({
       ok: true,
       page: {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   contentExists,
   contentStoragePath,
@@ -192,6 +193,8 @@ export async function POST(req: Request) {
       : title;
     await updateNavigation(pathname, navigationLabel, addToPrimary, addToFooter);
   }
+
+  revalidatePath("/", "layout");
 
   return NextResponse.json({ ok: true, file, path: pathname });
 }

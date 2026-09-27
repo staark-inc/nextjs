@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import path from "node:path";
 import { PageSchema } from "@staark/core";
 import { createPageRevision } from "@/lib/admin-revisions";
@@ -98,6 +99,7 @@ export async function PUT(req: Request, ctx: Ctx) {
 
     const saved = { ...incoming, updatedAt: new Date().toISOString() };
     await writeContentJson(`pages/${file}`, saved);
+    revalidatePath("/", "layout");
     return NextResponse.json({ ok: true, page: saved, redirectCreated: currentPath && incomingPath && currentPath !== incomingPath });
   } catch (error) {
     return NextResponse.json(
@@ -122,6 +124,7 @@ export async function DELETE(_req: Request, ctx: Ctx) {
 
     await createPageRevision(file, page as Record<string, unknown>, "before-delete");
     await deleteContent(`pages/${file}`);
+    revalidatePath("/", "layout");
 
     if (page.path) {
       try {
