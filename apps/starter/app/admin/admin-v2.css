@@ -1289,3 +1289,21 @@ body :where(a, button, input, select, textarea):focus-visible {
 .sa-bf-item__body { display: grid; gap: 10px; padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--sa-border, #eee); }
 .sa-bf-toggle { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
 .sa-bf-toggle input { width: 16px; height: 16px; }
+
+/* Field validation + image picker + media modal */
+.sa-field-error { color: #dc2626; font-size: 0.82rem; margin-top: 4px; font-weight: 500; }
+.sa-badge--danger { background: #fee2e2; color: #b91c1c; }
+.sa-bf-image { display: flex; align-items: center; gap: 8px; }
+.sa-bf-image__thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid var(--sa-border, #e5e7eb); background: #f4f4f5; }
+.sa-bf-image__thumb--empty { display: grid; place-items: center; font-size: 18px; opacity: 0.5; }
+.sa-mp-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: grid; place-items: center; z-index: 100; padding: 20px; }
+.sa-mp { width: min(760px, 96vw); max-height: 80vh; background: #fff; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 60px -20px rgba(0,0,0,.4); }
+.sa-mp__header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--sa-border, #e5e7eb); }
+.sa-mp__header strong { margin-right: auto; }
+.sa-mp__search { padding: 6px 10px; border: 1px solid var(--sa-border, #e5e7eb); border-radius: 6px; }
+.sa-mp__body { overflow: auto; padding: 16px; }
+.sa-mp__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+.sa-mp__item { border: 1px solid var(--sa-border, #e5e7eb); border-radius: 8px; overflow: hidden; background: #fff; cursor: pointer; padding: 0; display: flex; flex-direction: column; text-align: left; }
+.sa-mp__item:hover { border-color: var(--sa-primary, #2457f5); }
+.sa-mp__item img { width: 100%; height: 100px; object-fit: cover; background: #f4f4f5; }
+.sa-mp__name { font-size: 0.75rem; padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { BLOCK_FIELDS, isScalarWrapper, type Field } from "@/lib/block-fields";
+import { createContext, useContext, useState } from "react";
+import { BLOCK_FIELDS, isScalarWrapper, validateBlock, type Field, type FieldError } from "@/lib/block-fields";
+import { MediaPicker } from "./MediaPicker";
+
+export { validateBlock };
+export type { FieldError };
 
 /** True if a block type has a generated form (otherwise the editor uses JSON). */
 export function hasFieldForm(type: string): boolean {
@@ -9,6 +13,8 @@ export function hasFieldForm(type: string): boolean {
 }
 
 type Obj = Record<string, unknown>;
+
+const PickerCtx = createContext<(cb: (url: string) => void) => void>(() => {});
 
 function setKey(obj: Obj, key: string, value: unknown): Obj {
   const next = { ...obj };
@@ -21,24 +27,39 @@ export function BlockFieldForm({
   type,
   value,
   onChange,
+  errors,
 }: {
   type: string;
   value: Obj;
   onChange: (next: Obj) => void;
+  errors?: FieldError[];
 }) {
   const fields = BLOCK_FIELDS[type];
+  const [pickerCb, setPickerCb] = useState<((url: string) => void) | null>(null);
   if (!fields) return null;
+
+  const errorFor = (name: string) => errors?.find((e) => e.field === name)?.message;
+
   return (
-    <div className="sa-bf">
-      {fields.map((field) => (
-        <FieldInput
-          key={field.name}
-          field={field}
-          value={value?.[field.name]}
-          onChange={(v) => onChange(setKey(value ?? {}, field.name, v))}
+    <PickerCtx.Provider value={(cb) => setPickerCb(() => cb)}>
+      <div className="sa-bf">
+        {fields.map((field) => (
+          <FieldInput
+            key={field.name}
+            field={field}
+            value={value?.[field.name]}
+            error={errorFor(field.name)}
+            onChange={(v) => onChange(setKey(value ?? {}, field.name, v))}
+          />
+        ))}
+      </div>
+      {pickerCb ? (
+        <MediaPicker
+          onPick={(url) => pickerCb(url)}
+          onClose={() => setPickerCb(null)}
         />
-      ))}
-    </div>
+      ) : null}
+    </PickerCtx.Provider>
   );
 }
 
@@ -52,8 +73,10 @@ function labelFor(field: Field, item: unknown, index: number): string {
   return `Item ${index + 1}`;
 }
 
-function FieldInput({ field, value, onChange }: { field: Field; value: unknown; onChange: (v: unknown) => void }) {
+function FieldInput({ field, value, onChange, error }: { field: Field; value: unknown; onChange: (v: unknown) => void; error?: string }) {
+  const openPicker = useContext(PickerCtx);
   const id = `bf-${field.name}-${Math.random().toString(36).slice(2, 7)}`;
+  const errorNode = error ? <div className="sa-field-error">{error}</div> : null;
 
   if (field.type === "array") {
     const arr: unknown[] = Array.isArray(value) ? value : [];
@@ -100,6 +123,7 @@ function FieldInput({ field, value, onChange }: { field: Field; value: unknown; 
         <button type="button" className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => onChange([...arr, structuredClone(blank)])}>
           + Add {field.label.replace(/s$/, "").toLowerCase()}
         </button>
+        {errorNode}
       </div>
     );
   }
@@ -107,7 +131,7 @@ function FieldInput({ field, value, onChange }: { field: Field; value: unknown; 
   if (field.type === "object" || field.type === "image" || field.type === "link") {
     const subFields: Field[] =
       field.type === "image"
-        ? [{ name: "src", label: "Image URL", type: "text" }, { name: "alt", label: "Alt text", type: "text" }]
+        ? [{ name: "src", label: "Image URL", type: "imageUrl" }, { name: "alt", label: "Alt text", type: "text" }]
         : field.type === "link"
           ? [{ name: "label", label: "Label", type: "text" }, { name: "href", label: "Link", type: "text" }]
           : field.fields ?? [];
@@ -120,6 +144,24 @@ function FieldInput({ field, value, onChange }: { field: Field; value: unknown; 
             <FieldInput key={sub.name} field={sub} value={obj[sub.name]} onChange={(v) => onChange(setKey(obj, sub.name, v))} />
           ))}
         </div>
+        {errorNode}
+      </div>
+    );
+  }
+
+  if (field.type === "imageUrl") {
+    const url = String(value ?? "");
+    return (
+      <div className="sa-field">
+        <label htmlFor={id}>{field.label}</label>
+        <div className="sa-bf-image">
+          {url ? <img className="sa-bf-image__thumb" src={url} alt="" /> : <div className="sa-bf-image__thumb sa-bf-image__thumb--empty">🖼</div>}
+          <input id={id} value={url} placeholder="/uploads/… or https://…" onChange={(e) => onChange(e.target.value)} style={{ flex: 1 }} />
+          <button type="button" className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => openPicker(onChange)}>Choose</button>
+          {url ? <button type="button" className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => onChange("")}>Clear</button> : null}
+        </div>
+        {field.help ? <div className="sa-field-hint">{field.help}</div> : null}
+        {errorNode}
       </div>
     );
   }
@@ -155,6 +197,7 @@ function FieldInput({ field, value, onChange }: { field: Field; value: unknown; 
             return <option key={String(val)} value={String(val)}>{lab}</option>;
           })}
         </select>
+        {errorNode}
       </div>
     );
   }
@@ -165,6 +208,7 @@ function FieldInput({ field, value, onChange }: { field: Field; value: unknown; 
         <label htmlFor={id}>{field.label}</label>
         <input id={id} type="number" min={field.min} max={field.max} value={value === undefined || value === null ? "" : String(value)} onChange={(e) => onChange(e.target.value === "" ? undefined : Number(e.target.value))} />
         {field.help ? <div className="sa-field-hint">{field.help}</div> : null}
+        {errorNode}
       </div>
     );
   }
@@ -179,6 +223,7 @@ function FieldInput({ field, value, onChange }: { field: Field; value: unknown; 
         <input id={id} value={String(value ?? "")} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
       )}
       {field.help ? <div className="sa-field-hint">{field.help}</div> : null}
+      {errorNode}
     </div>
   );
 }

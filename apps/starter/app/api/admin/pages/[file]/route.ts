@@ -3,6 +3,7 @@ import { readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createPageRevision } from "@/lib/admin-revisions";
 import { upsertRedirect } from "@/lib/admin-redirects";
+import { validateBlocks } from "@/lib/block-fields";
 import { requireAuth } from "../../guard";
 
 function contentRoot(): string {
@@ -57,6 +58,13 @@ export async function PUT(req: Request, ctx: Ctx) {
   }
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return NextResponse.json({ error: "Page must be a JSON object." }, { status: 422 });
+  }
+
+  // Required-field validation (authoritative; the editor validates too).
+  const blocks = (body as { blocks?: { id: string; type: string; props: Record<string, unknown> }[] }).blocks ?? [];
+  const fieldErrors = validateBlocks(blocks);
+  if (Object.keys(fieldErrors).length > 0) {
+    return NextResponse.json({ error: "Some blocks are missing required fields.", fieldErrors }, { status: 422 });
   }
 
   const filePath = path.join(pagesDir(), file);

@@ -1,0 +1,222 @@
+.scanError {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fff1f2;
+  color: var(--sa-danger);
+  font-size: 11px;
+}
+.scanError strong { font-size: 12px; }
+
+.checkedAt {
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.checkGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.checkCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--sa-line);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.checkCard > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.checkCard strong { font-size: 11.5px; }
+.checkCard span:not(.checkState) {
+  color: var(--sa-muted);
+  font-size: 9.5px;
+}
+
+.checkState {
+  display: grid;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+}
+.checkOk {
+  background: var(--sa-success-soft);
+  color: var(--sa-success);
+}
+.checkWarning {
+  background: var(--sa-warning-soft);
+  color: var(--sa-warning);
+}
+.checkError {
+  background: #fff1f2;
+  color: var(--sa-danger);
+}
+
+.findingsCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.findingsHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--sa-line);
+}
+.findingsHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.filters {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--sa-line);
+  border-radius: 8px;
+  background: var(--sa-surface-soft);
+}
+.filters button {
+  min-height: 29px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sa-muted);
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.filters button.filterActive {
+  background: #fff;
+  color: var(--sa-ink);
+  box-shadow: 0 0 0 1px var(--sa-line);
+}
+
+.findings { display: grid; }
+
+.finding {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--sa-line);
+}
+.finding:last-child { border-bottom: 0; }
+
+.severity {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.severityError {
+  background: #fff1f2;
+  color: var(--sa-danger);
+}
+.severityWarning {
+  background: var(--sa-warning-soft);
+  color: var(--sa-warning);
+}
+
+.findingBody {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.findingBody > strong { font-size: 11.5px; }
+.findingBody p {
+  margin: 0;
+  color: var(--sa-muted);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.findingMeta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.findingMeta span {
+  color: var(--sa-primary);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.findingMeta code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--sa-muted);
+  font-size: 8.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.allClear {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 20px;
+}
+.allClear > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sa-success-soft);
+  color: var(--sa-success);
+  font-weight: 800;
+}
+.allClear strong { font-size: 13px; }
+.allClear p {
+  margin: 4px 0 0;
+  color: var(--sa-muted);
+  font-size: 10.5px;
+}
+
+@media (max-width: 900px) {
+  .checkGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .finding { grid-template-columns: 68px minmax(0, 1fr); }
+  .finding > a { grid-column: 2; width: fit-content; }
+}
+
+@media (max-width: 620px) {
+  .checkGrid { grid-template-columns: 1fr; }
+  .findingsHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .filters { width: fit-content; max-width: 100%; overflow-x: auto; }
+  .finding {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .finding > a { grid-column: 1; }
+}

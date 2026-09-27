@@ -40,7 +40,7 @@
       "props": {
         "eyebrow": "Tjänster",
         "heading": "Det vi gör",
-        "columns": 3,
+        "columns": 2,
         "items": [
           {
             "title": "Webbplatser",
@@ -118,5 +118,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-27T07:54:24.407Z"
+  "updatedAt": "2026-09-27T08:22:08.796Z"
 }

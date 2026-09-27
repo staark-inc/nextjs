@@ -49,6 +49,12 @@ const navItems: NavItem[] = [
     icon: "M5 7h10a4 4 0 0 1 4 4v1 M15 9l4-4 4 4 M19 17H9a4 4 0 0 1-4-4v-1 M9 15l-4 4-4-4",
   },
   {
+    href: "/admin/health",
+    label: "Site Health",
+    description: "Diagnostics",
+    icon: "M12 3 4 6v5c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6l-8-3Z M9 12l2 2 4-5",
+  },
+  {
     href: "/admin/forms",
     label: "Inbox",
     description: "Form submissions",

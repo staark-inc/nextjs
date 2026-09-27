@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { BlockFieldForm, hasFieldForm } from "./BlockFieldForm";
+import { validateBlocks, type FieldError } from "@/lib/block-fields";
 
 type Block = { id: string; type: string; props: Record<string, unknown> };
 type SeoData = { title?: string; description?: string; ogImage?: string; canonical?: string };
@@ -18,6 +19,7 @@ export default function PageEditor() {
   const [mode, setMode] = useState<"visual" | "seo" | "json">("visual");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [blockErrors, setBlockErrors] = useState<Record<string, FieldError[]>>({});
   const [templates, setTemplates] = useState<BlockTemplate[]>([]);
   const [showPicker, setShowPicker] = useState(false);
   const [jsonBlocks, setJsonBlocks] = useState<Set<string>>(new Set());
@@ -124,6 +126,20 @@ export default function PageEditor() {
     } else {
       body = page;
     }
+
+    // Validate required fields before saving; show errors inline instead of a generic failure.
+    const bodyBlocks = (body as { blocks?: { id: string; type: string; props: Record<string, unknown> }[] }).blocks ?? [];
+    const errors = validateBlocks(bodyBlocks);
+    setBlockErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      const first = Object.keys(errors)[0]!;
+      setMode("visual");
+      setOpenBlock(first);
+      const count = Object.values(errors).reduce((n, e) => n + e.length, 0);
+      showToast(`Fix ${count} required field${count === 1 ? "" : "s"} before saving.`, false);
+      return;
+    }
+
     setSaving(true);
     const res = await fetch(`/api/admin/pages/${file}`, {
       method: "PUT",
@@ -131,7 +147,18 @@ export default function PageEditor() {
       body: JSON.stringify(body),
     });
     setSaving(false);
-    showToast(res.ok ? "Page saved!" : "Failed to save.", res.ok);
+    if (res.ok) {
+      showToast("Page saved!", true);
+      return;
+    }
+    // Server-side validation (defense in depth) returns field errors too.
+    const data: { fieldErrors?: Record<string, FieldError[]>; error?: string } = await res.json().catch(() => ({}));
+    if (data.fieldErrors) {
+      setBlockErrors(data.fieldErrors);
+      setMode("visual");
+      setOpenBlock(Object.keys(data.fieldErrors)[0] ?? null);
+    }
+    showToast(data.error ?? "Failed to save.", false);
   }
 
   if (!page) return <p style={{ padding: 40 }}>Loading...</p>;
@@ -214,6 +241,7 @@ export default function PageEditor() {
                       <span className="sa-block__num">{idx + 1}</span>
                       <span className="sa-block__id">{block.id}</span>
                       <span className="sa-block__type">{block.type}</span>
+                      {blockErrors[block.id]?.length ? <span className="sa-badge sa-badge--danger">{blockErrors[block.id]!.length} ⚠</span> : null}
                     </div>
                     <div style={{ display: "flex", gap: 4 }}>
                       <button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={(e) => { e.stopPropagation(); moveBlock(idx, -1); }} disabled={idx === 0}>&uarr;</button>
@@ -243,6 +271,7 @@ export default function PageEditor() {
                           <BlockFieldForm
                             type={block.type}
                             value={block.props}
+                            errors={blockErrors[block.id]}
                             onChange={(props) => setBlockProps(block.id, props)}
                           />
                           <button
