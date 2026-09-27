@@ -119,7 +119,10 @@ export async function createPageRevision(
   return summary(revision);
 }
 
-export async function listPageRevisions(file: string): Promise<PageRevisionSummary[]> {
+export async function listPageRevisions(
+  file: string,
+  options: { limit?: number } = {},
+): Promise<PageRevisionSummary[]> {
   const relativePrefix = revisionPrefix(file);
   const absolutePrefix = `${stateStoragePath(relativePrefix)}/`;
   const names = (await listState(relativePrefix))
@@ -130,7 +133,9 @@ export async function listPageRevisions(file: string): Promise<PageRevisionSumma
     )
     .filter((name) => Boolean(name) && !name.includes("/") && name.endsWith(".json"))
     .sort()
-    .reverse();
+    .reverse()
+    // Newest first; only read as many revision files as the caller needs.
+    .slice(0, options.limit ?? Number.POSITIVE_INFINITY);
 
   const revisions: PageRevisionSummary[] = [];
   for (const name of names) {

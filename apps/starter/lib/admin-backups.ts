@@ -349,6 +349,30 @@ export async function listBackups(): Promise<BackupSummary[]> {
   return backups;
 }
 
+/**
+ * Backup ids and times without reading the packages, which can be large.
+ * Ids start with the UTC creation stamp (YYYYMMDDHHMMSS). Newest first.
+ */
+export async function listBackupTimes(limit = 5): Promise<Array<{ id: string; createdAt: string }>> {
+  const prefix = `${BACKUP_PREFIX}/`;
+  const entries = (await getStorage().list(BACKUP_PREFIX))
+    .map((entry) => ({ entry, name: entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "" }))
+    .filter(({ name }) => /^[a-z0-9-]+\.json$/i.test(name))
+    .sort((a, b) => b.name.localeCompare(a.name))
+    .slice(0, limit);
+
+  return entries.map(({ entry, name }) => {
+    const id = name.replace(/\.json$/i, "");
+    const stamp = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(id);
+    const createdAt = stamp
+      ? `${stamp[1]}-${stamp[2]}-${stamp[3]}T${stamp[4]}:${stamp[5]}:${stamp[6]}Z`
+      : entry.mtime > 0
+        ? new Date(entry.mtime).toISOString()
+        : "";
+    return { id, createdAt };
+  });
+}
+
 export async function readBackup(id: string): Promise<BackupPackage> {
   const raw = await getStorage().readText(backupStoragePath(id));
   if (raw === null) throw new Error("Backup not found.");

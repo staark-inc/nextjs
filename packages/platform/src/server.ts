@@ -41,6 +41,22 @@ export {
 } from "./admin/auth-config";
 
 export {
+  ADMIN_SESSION_TTL_SECONDS,
+  ADMIN_LOGIN_PATH,
+  ADMIN_HOME_PATH,
+  isAdminSessionActive,
+  safeAdminNext,
+  secureEqual,
+  adminCredentialsMatch,
+  clientAddress,
+  createLoginRateLimiter,
+  type AdminSessionLike,
+  type LoginGate,
+  type LoginRateLimiter,
+  type LoginRateLimitOptions,
+} from "./admin/login-guard";
+
+export {
   resolveDeploymentIdentity,
   type ResolveDeploymentIdentityOptions,
 } from "./deployment/identity";

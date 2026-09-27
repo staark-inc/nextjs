@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { getSession } from "@/lib/auth";
+import { ADMIN_SESSION_TTL_SECONDS } from "@staark/platform/server";
+import { getSession, isSessionActive } from "@/lib/auth";
+import { peekAdminShellStatus } from "@/lib/admin-shell-status";
 import AdminShell from "./AdminShell";
 import "./admin.css";
-import "./admin-v2.css";
-import "./overview-control-center.css";
-import "./admin-v3.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Staark Hub · NextJS Platform", robots: "noindex" };
@@ -20,7 +19,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     return children;
   }
 
-  if (!session.isLoggedIn) return children;
+  if (!isSessionActive(session)) return children;
 
-  return <AdminShell username={session.username ?? "Admin"}>{children}</AdminShell>;
+  const status = await peekAdminShellStatus();
+  const sessionExpiresAt = (session.loginAt ?? Date.now()) + ADMIN_SESSION_TTL_SECONDS * 1000;
+
+  return (
+    <AdminShell
+      username={session.username ?? "Admin"}
+      sessionExpiresAt={sessionExpiresAt}
+      initialStatus={status}
+      development={process.env.NODE_ENV !== "production"}
+    >
+      {children}
+    </AdminShell>
+  );
 }

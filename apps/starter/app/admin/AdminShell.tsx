@@ -1,140 +1,183 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AdminShellStatus } from "@/lib/admin-shell-status";
 import LogoutLink from "./LogoutLink";
 import BrandMark from "./BrandMark";
+import CommandPalette from "./CommandPalette";
+import AdminIcon from "./AdminIcon";
+import { ADMIN_STATUS_CHANGED_EVENT } from "./admin-events";
+import { adminNavGroups, adminNavItems, isNavActive, SEARCH_ICON, type AdminNavItem } from "./admin-nav";
+import styles from "./AdminShell.module.css";
 
-type NavItem = {
-  href: string;
-  label: string;
-  description: string;
-  icon: string;
-  group: "Overview" | "Website" | "Growth" | "System";
+type AdminShellProps = {
+  children: React.ReactNode;
+  username: string;
+  sessionExpiresAt: number;
+  initialStatus: AdminShellStatus;
+  development: boolean;
 };
 
-const navItems: NavItem[] = [
-  {
-    href: "/admin",
-    label: "Dashboard",
-    description: "Overview",
-    icon: "M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z",
-    group: "Overview",
-  },
-  {
-    href: "/admin/pages",
-    label: "Pages",
-    description: "Content",
-    icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 1v5h5 M8 13h8 M8 17h6",
-    group: "Website",
-  },
-  {
-    href: "/admin/navigation",
-    label: "Navigation",
-    description: "Menus & links",
-    icon: "M4 6h16 M4 12h10 M4 18h16 M18 10l2 2-2 2",
-    group: "Website",
-  },
-  {
-    href: "/admin/media",
-    label: "Media",
-    description: "Images & assets",
-    icon: "M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm0 12 4.5-4.5 3 3 2-2 6.5 6.5 M15.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z",
-    group: "Website",
-  },
-  {
-    href: "/admin/seo",
-    label: "SEO",
-    description: "Search visibility",
-    icon: "M10 13a5 5 0 0 0 7.54.54l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15 M14 11a5 5 0 0 0-7.54-.54l-2 2a5 5 0 0 0 7.07 7.07l1.15-1.15",
-    group: "Growth",
-  },
-  {
-    href: "/admin/redirects",
-    label: "Redirects",
-    description: "URL forwarding",
-    icon: "M5 7h10a4 4 0 0 1 4 4v1 M15 9l4-4 4 4 M19 17H9a4 4 0 0 1-4-4v-1 M9 15l-4 4-4-4",
-    group: "Growth",
-  },
-  {
-    href: "/admin/health",
-    label: "Site Health",
-    description: "Diagnostics",
-    icon: "M12 3 4 6v5c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6l-8-3Z M9 12l2 2 4-5",
-    group: "System",
-  },
-  {
-    href: "/admin/backups",
-    label: "Backups",
-    description: "Restore & recovery",
-    icon: "M12 3a9 9 0 1 1-8.49 6 M3 4v5h5 M12 7v5l3 2",
-    group: "System",
-  },
-  {
-    href: "/admin/forms",
-    label: "Inbox",
-    description: "Form submissions",
-    icon: "M4 4h16v16H4V4Zm0 3 8 6 8-6",
-    group: "Growth",
-  },
-  {
-    href: "/admin/themes",
-    label: "Themes",
-    description: "Look & presets",
-    icon: "M12 2 3 7l9 5 9-5-9-5ZM3 12l9 5 9-5 M3 17l9 5 9-5",
-    group: "Website",
-  },
-  {
-    href: "/admin/site",
-    label: "Settings",
-    description: "Business details",
-    icon: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2 3.46-.09-.03a1.65 1.65 0 0 0-1.82.33l-.24.14a1.65 1.65 0 0 0-.8 1.63V22h-4v-.09a1.65 1.65 0 0 0-.8-1.63l-.24-.14a1.65 1.65 0 0 0-1.82-.33l-.09.03-2-3.46.06-.06A1.65 1.65 0 0 0 6.6 15v-.28a1.65 1.65 0 0 0-.93-1.49l-.08-.04v-4l.08-.04a1.65 1.65 0 0 0 .93-1.49V7.4a1.65 1.65 0 0 0-.33-1.82l-.06-.06 2-3.46.09.03a1.65 1.65 0 0 0 1.82-.33l.24-.14a1.65 1.65 0 0 0 .8-1.63V0h4v.09a1.65 1.65 0 0 0 .8 1.63l.24.14a1.65 1.65 0 0 0 1.82.33l.09-.03 2 3.46-.06.06a1.65 1.65 0 0 0-.33 1.82v.28c0 .64.36 1.22.93 1.49l.08.04v4l-.08.04a1.65 1.65 0 0 0-.93 1.49V15Z",
-    group: "System",
-  },
-];
+const STATUS_REFRESH_MS = 60_000;
+const SESSION_WARNING_MS = 15 * 60_000;
 
-const navGroups: NavItem["group"][] = ["Overview", "Website", "Growth", "System"];
+function currentSection(pathname: string) {
+  return adminNavItems.find((item) => isNavActive(pathname, item.href))?.label ?? "Admin";
+}
 
-function Icon({ d, size = 18 }: { d: string; size?: number }) {
+function loginUrlForExpiredSession(): string {
+  const here = `${window.location.pathname}${window.location.search}`;
+  const params = new URLSearchParams({ reason: "expired" });
+  if (here !== "/admin") params.set("next", here);
+  return `/admin/login?${params.toString()}`;
+}
+
+function formatRemaining(ms: number): string {
+  const minutes = Math.max(0, Math.ceil(ms / 60_000));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
+
+function healthLabel(health: AdminShellStatus["health"]): string {
+  if (health.status === "error") return `${health.errors} site error${health.errors === 1 ? "" : "s"}`;
+  if (health.status === "warning") return `${health.warnings} warning${health.warnings === 1 ? "" : "s"}`;
+  if (health.status === "ok") return "Site healthy";
+  return "Site status";
+}
+
+function NavBadges({ item, status }: { item: AdminNavItem; status: AdminShellStatus }) {
+  if (item.badge !== "inbox") return null;
+  const { unread, pendingBookings } = status.inbox;
+  if (!unread && !pendingBookings) return null;
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={d} />
-    </svg>
+    <span className={styles.badges}>
+      {pendingBookings ? (
+        <span className={`${styles.badge} ${styles.badgeWarning}`} title={`${pendingBookings} pending booking${pendingBookings === 1 ? "" : "s"}`}>
+          {pendingBookings}
+          <span className={styles.srOnly}> pending bookings</span>
+        </span>
+      ) : null}
+      {unread ? (
+        <span className={styles.badge} title={`${unread} new message${unread === 1 ? "" : "s"}`}>
+          {unread}
+          <span className={styles.srOnly}> new messages</span>
+        </span>
+      ) : null}
+    </span>
   );
 }
 
-function isActive(pathname: string, href: string) {
-  if (href === "/admin") return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function currentSection(pathname: string) {
-  return navItems.find((item) => isActive(pathname, item.href))?.label ?? "Admin";
-}
-
-export default function AdminShell({ children, username }: { children: React.ReactNode; username: string }) {
+export default function AdminShell({ children, username, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [status, setStatus] = useState<AdminShellStatus>(initialStatus);
+  const [now, setNow] = useState(() => Date.now());
+  const redirecting = useRef(false);
 
+  const goToLogin = useCallback(() => {
+    if (redirecting.current) return;
+    redirecting.current = true;
+    window.location.assign(loginUrlForExpiredSession());
+  }, []);
+
+  const refreshStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/shell/status", { cache: "no-store" });
+      if (res.ok) setStatus((await res.json()) as AdminShellStatus);
+    } catch {
+      // Keep the last known counts; the next refresh tries again.
+    }
+  }, []);
+
+  // Close the mobile menu and refresh badge counts on every navigation.
   useEffect(() => {
     setOpen(false);
-  }, [pathname]);
+    void refreshStatus();
+  }, [pathname, refreshStatus]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => void refreshStatus(), STATUS_REFRESH_MS);
+    const onFocus = () => void refreshStatus();
+    window.addEventListener("focus", onFocus);
+    window.addEventListener(ADMIN_STATUS_CHANGED_EVENT, onFocus);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(ADMIN_STATUS_CHANGED_EVENT, onFocus);
+    };
+  }, [refreshStatus]);
+
+  // Any admin API call that comes back 401 means the session is gone:
+  // send the user to sign in and bring them back to this page afterwards.
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (input, init) => {
+      const res = await originalFetch(input, init);
+      if (res.status === 401) {
+        try {
+          const raw = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+          const url = new URL(raw, window.location.origin);
+          if (
+            url.origin === window.location.origin &&
+            url.pathname.startsWith("/api/admin/") &&
+            !url.pathname.startsWith("/api/admin/auth/")
+          ) {
+            goToLogin();
+          }
+        } catch {
+          // Not a URL we can reason about; leave the response alone.
+        }
+      }
+      return res;
+    };
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [goToLogin]);
+
+  // Session countdown in the sidebar; sign in again once it runs out.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const remainingMs = sessionExpiresAt - now;
+  useEffect(() => {
+    if (remainingMs <= 0) goToLogin();
+  }, [remainingMs, goToLogin]);
+  const sessionEndingSoon = remainingMs > 0 && remainingMs <= SESSION_WARNING_MS;
+
+  // ⌘K / Ctrl+K opens the command palette from anywhere in the admin.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((value) => !value);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const health = status.health;
+  const healthTone =
+    health.status === "error"
+      ? styles.healthError
+      : health.status === "warning"
+        ? styles.healthWarning
+        : health.status === "ok"
+          ? styles.healthOk
+          : styles.healthUnknown;
 
   return (
     <div className="sa-shell sa-shell--v2">
       <aside className={`sa-sidebar sa-sidebar--v2${open ? " sa-sidebar--open" : ""}`} aria-label="Admin navigation">
         <div className="sa-sidebar__brand sa-sidebar__brand--v2">
-          <a className="sa-brand" href="/admin" aria-label="Staark admin dashboard">
+          <Link className="sa-brand" href="/admin" aria-label="Staark admin dashboard">
             <span className="sa-logo sa-logo--v2 sa-logo--brand" aria-hidden="true">
               <BrandMark className="sa-logo__mark" />
             </span>
@@ -142,28 +185,39 @@ export default function AdminShell({ children, username }: { children: React.Rea
               <strong>Staark Hub</strong>
               <small>NextJS Platform</small>
             </span>
-          </a>
+          </Link>
           <button className="sa-sidebar__close" type="button" onClick={() => setOpen(false)} aria-label="Close navigation">
             ×
           </button>
         </div>
 
+        <button className={styles.searchButton} type="button" onClick={() => setPaletteOpen(true)}>
+          <AdminIcon d={SEARCH_ICON} size={15} />
+          <span>Search or jump to…</span>
+          <kbd className={styles.kbd}>⌘K</kbd>
+        </button>
+
         <div className="sa-sidebar__nav-groups">
-          {navGroups.map((group) => (
+          {adminNavGroups.map((group) => (
             <section className="sa-sidebar__nav-group" key={group} aria-label={group}>
               <div className="sa-sidebar__section-label">{group}</div>
               <ul className="sa-nav sa-nav--v2">
-                {navItems.filter((item) => item.group === group).map((item) => {
-                  const active = isActive(pathname, item.href);
+                {adminNavItems.filter((item) => item.group === group).map((item) => {
+                  const active = isNavActive(pathname, item.href);
                   return (
                     <li key={item.href}>
-                      <a className={`sa-nav__link${active ? " sa-nav__link--active" : ""}`} href={item.href} aria-current={active ? "page" : undefined}>
-                        <span className="sa-nav__icon"><Icon d={item.icon} /></span>
+                      <Link
+                        className={`sa-nav__link ${styles.navLink}${active ? " sa-nav__link--active" : ""}`}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        <span className="sa-nav__icon"><AdminIcon d={item.icon} /></span>
                         <span className="sa-nav__copy">
                           <strong>{item.label}</strong>
                           <small>{item.description}</small>
                         </span>
-                      </a>
+                        <NavBadges item={item} status={status} />
+                      </Link>
                     </li>
                   );
                 })}
@@ -178,13 +232,15 @@ export default function AdminShell({ children, username }: { children: React.Rea
           <div className="sa-sidebar__avatar">{username[0]?.toUpperCase() ?? "A"}</div>
           <div className="sa-sidebar__user-copy">
             <strong>{username}</strong>
-            <span>Administrator</span>
+            <span className={sessionEndingSoon ? styles.sessionWarning : undefined}>
+              {sessionEndingSoon ? `Session ends in ${formatRemaining(remainingMs)}` : `Signed in · ${formatRemaining(remainingMs)} left`}
+            </span>
           </div>
         </div>
 
         <div className="sa-sidebar__footer sa-sidebar__footer--v2">
           <LogoutLink>
-            <Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" size={16} />
+            <AdminIcon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" size={16} />
             Log out
           </LogoutLink>
         </div>
@@ -204,11 +260,14 @@ export default function AdminShell({ children, username }: { children: React.Rea
             <strong>{currentSection(pathname)}</strong>
           </div>
           <div className="sa-topbar__actions">
-            <a className="sa-topbar__health" href="/admin/health" aria-label="Open Site Health">
+            <button className={styles.topSearch} type="button" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to">
+              <AdminIcon d={SEARCH_ICON} size={16} />
+            </button>
+            <Link className={`sa-topbar__health ${healthTone}`} href="/admin/health" aria-label={`Site Health: ${healthLabel(health)}`}>
               <span className="sa-topbar__health-dot" aria-hidden="true" />
-              Site status
-            </a>
-            <span className="sa-topbar__pill">Local admin</span>
+              {healthLabel(health)}
+            </Link>
+            {development ? <span className="sa-topbar__pill">Development</span> : null}
             <a className="sa-topbar__site-link" href="/" target="_blank" rel="noopener noreferrer">
               View site
               <span aria-hidden="true">↗</span>
@@ -220,6 +279,8 @@ export default function AdminShell({ children, username }: { children: React.Rea
           <div className="sa-main__inner">{children}</div>
         </main>
       </div>
+
+      {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} /> : null}
     </div>
   );
 }

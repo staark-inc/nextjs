@@ -1,76 +1,119 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { safeAdminNext } from "@staark/platform/server";
+import { readContentJson } from "@/lib/storage";
 import BrandMark from "../BrandMark";
+import LoginForm from "./LoginForm";
+import styles from "./login.module.css";
 
-export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+type SitePreview = {
+  name?: string;
+  tagline?: string;
+  url?: string;
+  navigation?: {
+    primary?: Array<{ label?: string }>;
+    cta?: { label?: string };
+  };
+  theme?: {
+    preset?: string;
+    overrides?: { colors?: { primary?: string; surface?: string; ink?: string } };
+  };
+};
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+type LoginPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-    const res = await fetch("/api/admin/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
-    setLoading(false);
-
-    if (res.ok) {
-      router.push("/admin");
-      router.refresh();
-    } else {
-      setError("Invalid username or password.");
-      setPassword("");
-    }
+async function loadSitePreview(): Promise<SitePreview | null> {
+  // The login page must render even when content storage is unavailable.
+  try {
+    return await readContentJson<SitePreview>("site.json");
+  } catch {
+    return null;
   }
+}
+
+function hostOf(url: string | undefined): string {
+  if (!url) return "";
+  try {
+    return new URL(url).host;
+  } catch {
+    return "";
+  }
+}
+
+function color(value: string | undefined, fallback: string): string {
+  return value && HEX_COLOR.test(value) ? value : fallback;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const next = safeAdminNext(typeof params.next === "string" ? params.next : null);
+  const expired = params.reason === "expired";
+
+  const site = await loadSitePreview();
+  const siteName = site?.name?.trim() || "";
+  const host = hostOf(site?.url);
+  const navLabels = (site?.navigation?.primary ?? [])
+    .map((item) => item.label?.trim())
+    .filter((label): label is string => Boolean(label))
+    .slice(0, 4);
+  const ctaLabel = site?.navigation?.cta?.label?.trim();
+  const colors = site?.theme?.overrides?.colors;
+  const previewStyle = {
+    "--preview-hero": color(colors?.ink, "#17212e"),
+    "--preview-accent": color(colors?.primary, "#8fd3ff"),
+  } as React.CSSProperties;
 
   return (
-    <div className="sa-login">
-      <form className="sa-login__card" onSubmit={handleSubmit}>
-        <div className="sa-login__logo sa-login__logo--brand"><BrandMark className="sa-login__mark" /></div>
-        <h1 className="sa-login__title">Staark Hub</h1>
-        <p className="sa-login__subtitle">NextJS Platform · Local administration</p>
-
-        {error && <div className="sa-login__error">{error}</div>}
-
-        <div className="sa-field">
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="admin"
-            autoFocus
-            autoComplete="username"
-          />
+    <div className={styles.page}>
+      <section className={styles.formSide}>
+        <div className={styles.brand}>
+          <BrandMark className={styles.brandMark} />
+          <div>
+            <strong>Staark Hub</strong>
+            <small>Website admin</small>
+          </div>
         </div>
 
-        <div className="sa-field">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
-            autoComplete="current-password"
-          />
-        </div>
+        <LoginForm next={next} expired={expired} siteName={siteName} host={host} />
 
-        <button className="sa-btn sa-btn--primary sa-btn--full" type="submit" disabled={loading || !username || !password}>
-          {loading ? "Signing in..." : "Sign in"}
-        </button>
-      </form>
+        <p className={styles.footnote}>Lost access? Contact the Staark developer who manages this website.</p>
+      </section>
+
+      {siteName ? (
+        <aside className={styles.previewSide} aria-label="Your website">
+          <p className={styles.previewLabel}>Your website</p>
+          <div className={styles.preview} style={previewStyle} aria-hidden="true">
+            <div className={styles.previewChrome}>
+              <i />
+              <i />
+              <i />
+              {host ? <span>{host}</span> : null}
+            </div>
+            <div className={styles.previewNav}>
+              <b>{siteName}</b>
+              {navLabels.length ? (
+                <div>
+                  {navLabels.map((label) => (
+                    <span key={label}>{label}</span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className={styles.previewHero}>
+              {site?.tagline ? <small>{site.tagline}</small> : null}
+              <strong>{siteName}</strong>
+              {ctaLabel ? <span>{ctaLabel}</span> : null}
+            </div>
+          </div>
+          {site?.theme?.preset ? (
+            <p className={styles.previewMeta}>
+              Theme <b>{site.theme.preset}</b>
+            </p>
+          ) : null}
+        </aside>
+      ) : null}
     </div>
   );
 }

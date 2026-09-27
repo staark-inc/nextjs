@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
-import type { SessionData } from "@/lib/auth";
+import { adminSessionOptions, type SessionData } from "@/lib/auth";
 import { findMatchingRedirect } from "@/lib/admin-redirects";
-import { resolveAdminAuthConfig } from "@staark/platform/server";
+import {
+  ADMIN_LOGIN_PATH,
+  isAdminSessionActive,
+  resolveAdminAuthConfig,
+  safeAdminNext,
+} from "@staark/platform/server";
 
 function isAdminRequest(pathname: string): boolean {
   return pathname === "/admin" ||
@@ -68,15 +73,18 @@ export async function proxy(req: NextRequest) {
 
   if (!adminRequest) return NextResponse.next();
 
-  // Login page and auth endpoints must stay reachable without a session.
-  if (pathname === "/admin/login" || pathname.startsWith("/api/admin/auth/")) {
-    return NextResponse.next();
-  }
+  // Auth endpoints enforce their own checks (config, rate limit, credentials).
+  if (pathname.startsWith("/api/admin/auth/")) return NextResponse.next();
+
+  const isLoginPage = pathname === ADMIN_LOGIN_PATH;
+  const isApi = pathname.startsWith("/api/admin/");
 
   let sessionSecret: string;
   try {
     sessionSecret = resolveAdminAuthConfig().sessionSecret;
   } catch (error) {
+    // The login page stays reachable so it can explain the problem on submit.
+    if (isLoginPage) return NextResponse.next();
     console.error("[staark] Admin is not configured:", (error as Error).message);
     return NextResponse.json(
       { ok: false, error: "Admin is not configured on this deployment." },
@@ -85,21 +93,27 @@ export async function proxy(req: NextRequest) {
   }
 
   const res = NextResponse.next();
-  const session = await getIronSession<SessionData>(req, res, {
-    password: sessionSecret,
-    cookieName: "staark-admin",
-    cookieOptions: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: "lax" as const,
-    },
-  });
+  const session = await getIronSession<SessionData>(req, res, adminSessionOptions(sessionSecret));
+  const active = isAdminSessionActive(session);
 
-  if (!session.isLoggedIn) {
-    return NextResponse.redirect(new URL("/admin/login", req.url));
+  if (isLoginPage) {
+    // Already signed in: skip the form and continue where the user was heading.
+    if (active) return NextResponse.redirect(new URL(safeAdminNext(req.nextUrl.searchParams.get("next")), req.url));
+    return res;
   }
 
-  return res;
+  if (active) return res;
+
+  if (isApi) {
+    return NextResponse.json({ ok: false, error: "Not authenticated." }, { status: 401 });
+  }
+
+  const login = new URL(ADMIN_LOGIN_PATH, req.url);
+  const next = safeAdminNext(`${pathname}${req.nextUrl.search}`);
+  if (next !== "/admin") login.searchParams.set("next", next);
+  // A cookie that decrypts but is past its TTL means the session ran out.
+  if (session.isLoggedIn) login.searchParams.set("reason", "expired");
+  return NextResponse.redirect(login);
 }
 
 export const config = {
