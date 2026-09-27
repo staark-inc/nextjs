@@ -25,6 +25,12 @@ const navItems: NavItem[] = [
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 1v5h5 M8 13h8 M8 17h6",
   },
   {
+    href: "/admin/navigation",
+    label: "Navigation",
+    description: "Menus & links",
+    icon: "M4 6h16 M4 12h10 M4 18h16 M18 10l2 2-2 2",
+  },
+  {
     href: "/admin/media",
     label: "Media",
     description: "Images & assets",

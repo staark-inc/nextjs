@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createPageRevision } from "@/lib/admin-revisions";
 import { requireAuth } from "../../guard";
 
 function contentRoot(): string {
@@ -16,12 +17,20 @@ function sitePath(): string {
   return path.join(contentRoot(), "site.json");
 }
 
+function safeFile(file: string): string | null {
+  if (!file || path.basename(file) !== file || !file.endsWith(".json")) return null;
+  return file;
+}
+
 type Ctx = { params: Promise<{ file: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
   const blocked = await requireAuth();
   if (blocked) return blocked;
-  const { file } = await ctx.params;
+  const requested = (await ctx.params).file;
+  const file = safeFile(requested);
+  if (!file) return NextResponse.json({ error: "Invalid page file." }, { status: 400 });
+
   const filePath = path.join(pagesDir(), file);
   try {
     const raw = await readFile(filePath, "utf8");
@@ -34,20 +43,57 @@ export async function GET(_req: Request, ctx: Ctx) {
 export async function PUT(req: Request, ctx: Ctx) {
   const blocked = await requireAuth();
   if (blocked) return blocked;
-  const { file } = await ctx.params;
-  const body = await req.json();
-  await writeFile(path.join(pagesDir(), file), JSON.stringify(body, null, 2) + "\n", "utf8");
-  return NextResponse.json({ ok: true });
+
+  const requested = (await ctx.params).file;
+  const file = safeFile(requested);
+  if (!file) return NextResponse.json({ error: "Invalid page file." }, { status: 400 });
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON request." }, { status: 400 });
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Page must be a JSON object." }, { status: 422 });
+  }
+
+  const filePath = path.join(pagesDir(), file);
+  try {
+    const current = JSON.parse(await readFile(filePath, "utf8")) as Record<string, unknown>;
+    const incoming = body as Record<string, unknown>;
+
+    const currentComparable = { ...current };
+    const incomingComparable = { ...incoming };
+    delete currentComparable.updatedAt;
+    delete incomingComparable.updatedAt;
+    if (JSON.stringify(currentComparable) !== JSON.stringify(incomingComparable)) {
+      await createPageRevision(file, current, "before-save");
+    }
+
+    const saved = { ...incoming, updatedAt: new Date().toISOString() };
+    await writeFile(filePath, JSON.stringify(saved, null, 2) + "\n", "utf8");
+    return NextResponse.json({ ok: true, page: saved });
+  } catch (error) {
+    return NextResponse.json(
+      { error: (error as Error).message || "Could not save page." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function DELETE(_req: Request, ctx: Ctx) {
   const blocked = await requireAuth();
   if (blocked) return blocked;
-  const { file } = await ctx.params;
+  const requested = (await ctx.params).file;
+  const file = safeFile(requested);
+  if (!file) return NextResponse.json({ error: "Invalid page file." }, { status: 400 });
+
   const filePath = path.join(pagesDir(), file);
 
   try {
     const page = JSON.parse(await readFile(filePath, "utf8")) as { path?: string };
+    await createPageRevision(file, page as Record<string, unknown>, "before-delete");
     await unlink(filePath);
 
     if (page.path) {

@@ -140,6 +140,7 @@ export default function PageEditor() {
           <button className={`sa-tab${mode === "json" ? " sa-tab--active" : ""}`} onClick={() => setMode("json")}>JSON</button>
         </div>
         <span className="sa-toolbar--right" />
+        <a href={`/admin/pages/${file}/revisions`} className="sa-btn sa-btn--ghost sa-btn--sm">History</a>
         <a href={page.path} target="_blank" rel="noopener" className="sa-btn sa-btn--ghost sa-btn--sm">Preview &rarr;</a>
         <button className="sa-btn sa-btn--primary" onClick={save} disabled={saving}>
           {saving ? "Saving..." : "Save"}
