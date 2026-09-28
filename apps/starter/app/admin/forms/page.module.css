@@ -1,0 +1,88 @@
+.leadFilters {
+  margin-top: -4px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.stageBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.stage_new {
+  color: var(--sa-primary);
+  background: var(--sa-primary-soft);
+  border-color: var(--sa-primary-line);
+}
+
+.stage_contacted {
+  color: var(--sa-ink-soft);
+  background: var(--sa-surface-blue);
+  border-color: var(--sa-line);
+}
+
+.stage_qualified {
+  color: var(--sa-success);
+  background: var(--sa-success-soft);
+  border-color: var(--sa-success-line);
+}
+
+.stage_offer_sent {
+  color: var(--sa-warning);
+  background: var(--sa-warning-soft);
+  border-color: var(--sa-warning-line);
+}
+
+.stage_won {
+  color: var(--sa-success);
+  background: var(--sa-success-soft);
+  border-color: var(--sa-success-line);
+}
+
+.stage_lost {
+  color: var(--sa-danger);
+  background: var(--sa-danger-soft);
+  border-color: var(--sa-danger-line);
+}
+
+.followUpDate {
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.followUpUpcoming {
+  color: var(--sa-ink);
+}
+
+.followUpToday {
+  color: var(--sa-warning);
+}
+
+.followUpOverdue {
+  color: var(--sa-danger);
+}
+
+.followUpFlag {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sa-danger);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 768px) {
+  .leadFilters {
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-bottom: 4px;
+  }
+}
