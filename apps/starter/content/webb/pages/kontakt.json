@@ -8,7 +8,7 @@
   "blocks": [
     {
       "id": "contact",
-      "type": "contact",
+      "type": "leadForm",
       "props": {
         "eyebrow": "Kostnadsfri offert",
         "heading": "Berätta om ditt projekt",
@@ -38,7 +38,7 @@
             "label": "Företag"
           },
           {
-            "name": "booking_type",
+            "name": "package",
             "label": "Vilket paket?"
           },
           {

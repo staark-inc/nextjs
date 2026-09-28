@@ -22,6 +22,11 @@ const COMMON_FIELDS: FieldDefinition[] = [
   { key: "name", label: "Name" },
   { key: "email", label: "Email" },
   { key: "phone", label: "Phone" },
+  { key: "company", label: "Company" },
+];
+
+const LEAD_FIELDS: FieldDefinition[] = [
+  { key: "package", label: "Package" },
 ];
 
 const BOOKING_FIELDS: FieldDefinition[] = [
@@ -53,6 +58,7 @@ function subjectFor(kind: SubmissionKind, siteName: string): string {
 export function renderSubmissionNotification(input: SubmissionNotificationInput) {
   const definitions = [
     ...COMMON_FIELDS,
+    ...(input.kind === "lead" ? LEAD_FIELDS : []),
     ...(input.kind === "booking" ? BOOKING_FIELDS : []),
   ];
 

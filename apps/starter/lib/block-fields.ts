@@ -415,6 +415,8 @@ export const REQUIRED_FIELDS: Record<string, string[]> = {
   process: ["heading"],
   cta: ["heading"],
   contact: ["heading", "formId"],
+  leadForm: ["heading", "formId"],
+  bookingForm: ["heading", "formId"],
   priceList: ["heading"],
   gallery: [],
   rooms: ["heading"],

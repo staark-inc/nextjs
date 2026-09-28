@@ -240,6 +240,58 @@ const BASE_BLOCKS: BlockTemplate[] = [
       ],
     },
   },
+
+  {
+    type: "leadForm",
+    label: "Lead form",
+    description: "Quote or sales enquiry form. Submissions are routed to Leads.",
+    icon: "user-plus",
+    template: {
+      eyebrow: "Free quote",
+      heading: "Tell us about your project",
+      intro: "Fill in the form and we'll get back to you with the next step.",
+      formId: "lead-main",
+      submitLabel: "Send enquiry",
+      successMessage: "Thanks! We'll get back to you soon.",
+      fields: [
+        { name: "name", label: "Name", required: true },
+        { name: "email", label: "Email", type: "email", required: true },
+        { name: "phone", label: "Phone", type: "tel" },
+        { name: "company", label: "Company" },
+        { name: "package", label: "Package" },
+        { name: "website_url", label: "Website" },
+        { name: "message", label: "Message", type: "textarea", required: true },
+      ],
+    },
+  },
+
+  {
+    type: "bookingForm",
+    label: "Booking form",
+    description: "Booking request form. Submissions are routed to Bookings.",
+    icon: "calendar",
+    template: {
+      eyebrow: "Booking",
+      heading: "Request a booking",
+      intro: "Choose the details below and we'll confirm your booking.",
+      formId: "booking-main",
+      submitLabel: "Send booking request",
+      successMessage: "Thanks! We'll confirm your booking as soon as possible.",
+      fields: [
+        { name: "name", label: "Name", required: true },
+        { name: "email", label: "Email", type: "email", required: true },
+        { name: "phone", label: "Phone", type: "tel" },
+        { name: "company", label: "Company" },
+        { name: "booking_type", label: "Booking type" },
+        { name: "booking_date", label: "Date", type: "date" },
+        { name: "booking_end_date", label: "End date", type: "date" },
+        { name: "booking_time", label: "Time", type: "time" },
+        { name: "booking_guests", label: "Guests", type: "number" },
+        { name: "booking_item", label: "Item / service" },
+        { name: "message", label: "Message", type: "textarea" },
+      ],
+    },
+  },
 ];
 
 const THEME_BLOCKS: Record<string, BlockTemplate[]> = {

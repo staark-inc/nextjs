@@ -63,3 +63,23 @@ test("booking notification exposes booking context through the same template", (
   assert.match(rendered.text, /Time: 15:30/);
   assert.match(rendered.text, /Service: Consultation/);
 });
+
+test("lead notification includes company and package", () => {
+  const rendered = renderSubmissionNotification({
+    kind: "lead",
+    formId: "lead-main",
+    fields: {
+      name: "Costin Ionut",
+      email: "costin@example.com",
+      company: "Staark Inc",
+      package: "Business",
+      message: "Test project",
+    },
+    siteName: "Example AB",
+    to: "owner@example.com",
+  });
+
+  assert.equal(rendered.subject, "New lead - Example AB");
+  assert.match(rendered.text, /Company: Staark Inc/);
+  assert.match(rendered.text, /Package: Business/);
+});

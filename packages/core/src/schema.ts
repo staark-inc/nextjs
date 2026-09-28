@@ -178,6 +178,13 @@ const CONTACT_FIELDS = {
 
 const ContactFieldsSchema = z.object(CONTACT_FIELDS).strict();
 
+const LEAD_FIELDS = {
+  ...CONTACT_FIELDS,
+  package: z.string().trim().max(160).optional(),
+} as const;
+
+const LeadFieldsSchema = z.object(LEAD_FIELDS).strict();
+
 const BookingFieldsSchema = z
   .object({
     ...CONTACT_FIELDS,
@@ -204,7 +211,7 @@ export const ContactSubmissionSchema = SubmissionEnvelopeSchema.extend({
 
 export const LeadSubmissionSchema = SubmissionEnvelopeSchema.extend({
   kind: z.literal("lead"),
-  fields: ContactFieldsSchema,
+  fields: LeadFieldsSchema,
 });
 
 export const BookingSubmissionSchema = SubmissionEnvelopeSchema.extend({

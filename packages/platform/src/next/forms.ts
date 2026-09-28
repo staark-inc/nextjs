@@ -96,6 +96,12 @@ export function createFormsRoute(content: StaarkContent, options: FormsRouteOpti
           if (issue.path[0] === "fields" && typeof issue.path[1] === "string") {
             fieldErrors[issue.path[1]] = issue.message;
           }
+
+          if (issue.code === "unrecognized_keys" && issue.path[0] === "fields") {
+            for (const key of issue.keys) {
+              fieldErrors[key] = "Unsupported field.";
+            }
+          }
         }
         // A filled honeypot looks like success to the bot but is dropped.
         if (parsed.error.issues.some((i) => i.path[0] === "website")) {
