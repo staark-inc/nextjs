@@ -15,3 +15,17 @@ export {
   type StaarkMailMessage,
   type StaarkMailResult,
 } from "./transport.ts";
+
+export {
+  renderEmailTemplate,
+  type EmailTemplateInput,
+  type EmailTemplateRow,
+  type EmailTemplateAction,
+  type RenderedEmailTemplate,
+} from "./template.ts";
+
+export {
+  renderSubmissionNotification,
+  sendSubmissionNotification,
+  type SubmissionNotificationInput,
+} from "./notifications.ts";

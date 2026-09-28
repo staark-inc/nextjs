@@ -86,3 +86,14 @@ export {
   type StaarkMailMessage,
   type StaarkMailResult,
 } from "./mail/index.ts";
+
+export {
+  renderEmailTemplate,
+  renderSubmissionNotification,
+  sendSubmissionNotification,
+  type EmailTemplateInput,
+  type EmailTemplateRow,
+  type EmailTemplateAction,
+  type RenderedEmailTemplate,
+  type SubmissionNotificationInput,
+} from "./mail/index.ts";

@@ -16,6 +16,7 @@ test("smtp resolves authenticated submission safely", () => {
     SMTP_HOST: "smtp.example.com",
     SMTP_PORT: "587",
     SMTP_SECURE: "false",
+    SMTP_EHLO_NAME: "mail.example.com",
     SMTP_USER: "mailer@example.com",
     SMTP_PASSWORD: "secret",
     SMTP_FROM: "Example <mailer@example.com>",
@@ -28,6 +29,7 @@ test("smtp resolves authenticated submission safely", () => {
   assert.equal(config.host, "smtp.example.com");
   assert.equal(config.port, 587);
   assert.equal(config.secure, false);
+  assert.equal(config.ehloName, "mail.example.com");
   assert.deepEqual(config.auth, {
     user: "mailer@example.com",
     password: "secret",

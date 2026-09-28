@@ -37,6 +37,7 @@ function smtpKey(config: SmtpMailConfig): string {
     host: config.host,
     port: config.port,
     secure: config.secure,
+    ehloName: config.ehloName ?? "",
     user: config.auth?.user ?? "",
     password: config.auth?.password ?? "",
     tls: config.tls.rejectUnauthorized,
@@ -65,6 +66,7 @@ function createSmtpTransport(config: SmtpMailConfig): Transporter {
     host: config.host,
     port: config.port,
     secure: config.secure,
+    ...(config.ehloName ? { name: config.ehloName } : {}),
     ...(config.auth ? { auth: config.auth } : {}),
     tls: {
       rejectUnauthorized: config.tls.rejectUnauthorized,

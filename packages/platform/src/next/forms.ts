@@ -1,4 +1,4 @@
-import { FormSubmissionSchema, type FormResult } from "@staark/core";
+import { FormSubmissionSchema, type FormResult, type SubmissionKind } from "@staark/core";
 import { checkFormToken, issueFormToken, type StaarkContent } from "@staark/core/server";
 import { clientAddress } from "../admin/login-guard";
 
@@ -8,8 +8,8 @@ import { clientAddress } from "../admin/login-guard";
  * Mirrors the WordPress forms module's protections: signed time-trap token,
  * honeypot, same-origin check, per-IP/per-form rate limit and a strict field
  * whitelist (contact + booking_* fields). Valid submissions are forwarded to
- * Staark Hub signed with the site secret; the Hub stores them in the Inbox and
- * sends the admin/customer notifications. The site itself never sends mail.
+ * Staark Hub signed with the site secret; the submission is stored before any
+ * optional post-submit notification hook runs.
  */
 
 const WINDOW_MS = 10 * 60 * 1000;
@@ -42,10 +42,19 @@ function json(body: FormResult, status: number): Response {
   return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 }
 
+export type SubmittedFormNotification = {
+  formId: string;
+  kind: SubmissionKind;
+  fields: Record<string, unknown>;
+  pageUrl?: string;
+};
+
 export type FormsRouteOptions = {
   successMessage?: string;
   /** Override for tests. */
   minSeconds?: number;
+  /** Optional post-submit side effect. Failures are logged but never fail the visitor submission. */
+  onSubmitted?: (submission: SubmittedFormNotification) => Promise<void>;
 };
 
 export function createFormsRoute(content: StaarkContent, options: FormsRouteOptions = {}) {
@@ -120,6 +129,22 @@ export function createFormsRoute(content: StaarkContent, options: FormsRouteOpti
       } catch (error) {
         console.error("[staark] Form forward to Staark Hub failed:", (error as Error).message);
         return json({ ok: false, error: "The message could not be sent right now. Please call or email us instead." }, 502);
+      }
+
+      if (options.onSubmitted) {
+        try {
+          await options.onSubmitted({
+            formId: submission.formId,
+            kind: submission.kind,
+            fields: submission.fields,
+            pageUrl: submission.pageUrl,
+          });
+        } catch (error) {
+          console.error(
+            "[staark] Post-submit notification failed:",
+            error instanceof Error ? error.message : String(error),
+          );
+        }
       }
 
       return json({ ok: true, message: options.successMessage ?? "Tack! Vi återkommer så snart vi kan." }, 200);

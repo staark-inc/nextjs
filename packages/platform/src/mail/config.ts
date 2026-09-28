@@ -16,6 +16,7 @@ export type SmtpMailConfig = {
   host: string;
   port: number;
   secure: boolean;
+  ehloName?: string;
   from: string;
   replyTo?: string;
   auth?: {
@@ -41,6 +42,7 @@ export type MailConfigSummary =
       host: string;
       port: number;
       secure: boolean;
+      ehloName?: string;
       from: string;
       replyTo?: string;
       authConfigured: boolean;
@@ -137,6 +139,7 @@ export function resolveMailConfig(
     "SMTP_TLS_REJECT_UNAUTHORIZED",
     true,
   );
+  const ehloName = value(env, "SMTP_EHLO_NAME");
   const connectionTimeoutMs = integerValue(
     env,
     "SMTP_CONNECTION_TIMEOUT_MS",
@@ -150,6 +153,7 @@ export function resolveMailConfig(
     host,
     port,
     secure,
+    ...(ehloName ? { ehloName } : {}),
     from,
     ...(value(env, "SMTP_REPLY_TO")
       ? { replyTo: value(env, "SMTP_REPLY_TO") }
@@ -178,6 +182,7 @@ export function summarizeMailConfig(
     host: config.host,
     port: config.port,
     secure: config.secure,
+    ...(config.ehloName ? { ehloName: config.ehloName } : {}),
     from: config.from,
     ...(config.replyTo ? { replyTo: config.replyTo } : {}),
     authConfigured: Boolean(config.auth),

@@ -48,11 +48,18 @@ services:
       # Safe only while the published port stays loopback-only below.
       STAARK_TRUST_PROXY: ${STAARK_TRUST_PROXY:-1}
 
+      # Submission notification routing. "hub" preserves the existing Hub-owned flow.
+      # Use "local" only when this deployment should send notifications itself.
+      STAARK_NOTIFICATION_MODE: ${STAARK_NOTIFICATION_MODE:-hub}
+      STAARK_NOTIFICATION_TO: ${STAARK_NOTIFICATION_TO:-}
+      STAARK_ADMIN_BASE_URL: ${STAARK_ADMIN_BASE_URL:-}
+
       # Server-side email transport. Disabled until explicitly configured.
       STAARK_MAIL_TRANSPORT: ${STAARK_MAIL_TRANSPORT:-disabled}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_EHLO_NAME: ${SMTP_EHLO_NAME:-}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
