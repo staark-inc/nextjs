@@ -5,6 +5,13 @@ import { useParams } from "next/navigation";
 
 type InboxStatus = "new" | "read" | "replied" | "archived";
 type BookingStatus = "pending" | "confirmed" | "declined";
+type LeadStage =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "offer_sent"
+  | "won"
+  | "lost";
 type SubmissionKind = "contact" | "lead" | "booking";
 type Activity = { at: string; actor: string; message: string };
 type Submission = {
@@ -16,6 +23,9 @@ type Submission = {
   receivedAt: string;
   status: InboxStatus;
   bookingStatus?: BookingStatus;
+  leadStage?: LeadStage;
+  followUpAt?: string;
+  internalNote?: string;
   activity: Activity[];
 };
 
@@ -30,6 +40,16 @@ function formatDate(iso: string): string {
   return `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
+
+function leadStageLabel(stage: LeadStage): string {
+  if (stage === "new") return "New";
+  if (stage === "contacted") return "Contacted";
+  if (stage === "qualified") return "Qualified";
+  if (stage === "offer_sent") return "Offer sent";
+  if (stage === "won") return "Won";
+  return "Lost";
+}
+
 export default function InboxDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
@@ -38,6 +58,7 @@ export default function InboxDetailPage() {
   const [saving, setSaving] = useState(false);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [internalNote, setInternalNote] = useState("");
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   function showToast(msg: string, ok: boolean) {
@@ -54,6 +75,7 @@ export default function InboxDetailPage() {
     }
     const data = await res.json() as Submission;
     setItem(data);
+    setInternalNote(data.internalNote ?? "");
     setSubject((current) => current || `Re: ${data.formId} · ${data.id}`);
     setLoading(false);
     if (markRead && data.status === "new") {
@@ -68,7 +90,7 @@ export default function InboxDetailPage() {
 
   useEffect(() => { void load(true); }, [id]);
 
-  async function update(body: Record<string, string>) {
+  async function update(body: Record<string, string | null>) {
     setSaving(true);
     const res = await fetch(`/api/admin/forms/${encodeURIComponent(id)}`, {
       method: "PATCH",
@@ -128,6 +150,87 @@ export default function InboxDetailPage() {
 
       <div className="sa-inbox-detail-grid">
         <div className="sa-inbox-detail-main">
+          {item.kind === "lead" ? (
+            <section className="sa-card">
+              <div className="sa-card__header">
+                <p className="sa-card__eyebrow">Lead</p>
+                <h2>Sales pipeline</h2>
+              </div>
+
+              <div className="sa-field">
+                <label htmlFor="lead-stage">Stage</label>
+                <select
+                  id="lead-stage"
+                  value={item.leadStage ?? "new"}
+                  disabled={saving}
+                  onChange={(e) =>
+                    void update({ leadStage: e.target.value })
+                  }
+                >
+                  {(
+                    [
+                      "new",
+                      "contacted",
+                      "qualified",
+                      "offer_sent",
+                      "won",
+                      "lost",
+                    ] as LeadStage[]
+                  ).map((stage) => (
+                    <option key={stage} value={stage}>
+                      {leadStageLabel(stage)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sa-field">
+                <label htmlFor="lead-follow-up">Next follow-up</label>
+                <input
+                  id="lead-follow-up"
+                  type="date"
+                  value={item.followUpAt ?? ""}
+                  disabled={saving}
+                  onChange={(e) =>
+                    void update({
+                      followUpAt: e.target.value || null,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="sa-field">
+                <label htmlFor="lead-note">Internal note</label>
+                <textarea
+                  id="lead-note"
+                  className="sa-reply-message"
+                  placeholder="Add an internal note about this lead…"
+                  value={internalNote}
+                  onChange={(e) => setInternalNote(e.target.value)}
+                />
+              </div>
+
+              <div className="sa-inline-actions">
+                <button
+                  className="sa-btn sa-btn--primary"
+                  disabled={saving}
+                  onClick={() =>
+                    void update({
+                      internalNote: internalNote.trim() || null,
+                    })
+                  }
+                >
+                  Save note
+                </button>
+              </div>
+
+              <p className="sa-note">
+                Lead stage, follow-up and notes are internal and are not visible
+                to the customer.
+              </p>
+            </section>
+          ) : null}
+
           {item.bookingStatus ? (
             <section className="sa-card">
               <div className="sa-card__header sa-card__header--row">

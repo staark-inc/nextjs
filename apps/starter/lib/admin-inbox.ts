@@ -8,6 +8,13 @@ import {
 
 export type InboxStatus = "new" | "read" | "replied" | "archived";
 export type BookingStatus = "pending" | "confirmed" | "declined";
+export type LeadStage =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "offer_sent"
+  | "won"
+  | "lost";
 
 export type InboxActivity = {
   at: string;
@@ -25,12 +32,18 @@ export type InboxSubmission = {
   meta?: Record<string, string>;
   status: InboxStatus;
   bookingStatus?: BookingStatus;
+  leadStage?: LeadStage;
+  followUpAt?: string;
+  internalNote?: string;
   activity: InboxActivity[];
 };
 
 type InboxState = {
   status?: InboxStatus;
   bookingStatus?: BookingStatus;
+  leadStage?: LeadStage;
+  followUpAt?: string;
+  internalNote?: string;
   activity?: InboxActivity[];
 };
 
@@ -98,6 +111,9 @@ export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
         meta: raw.meta && typeof raw.meta === "object" ? (raw.meta as Record<string, string>) : undefined,
         status: saved.status ?? "new",
         bookingStatus: kind === "booking" ? (saved.bookingStatus ?? "pending") : undefined,
+        leadStage: kind === "lead" ? (saved.leadStage ?? "new") : undefined,
+        followUpAt: kind === "lead" ? saved.followUpAt : undefined,
+        internalNote: kind === "lead" ? saved.internalNote : undefined,
         activity,
       });
     } catch {
@@ -114,7 +130,14 @@ export async function getInboxSubmission(id: string): Promise<InboxSubmission | 
 
 export async function updateInboxSubmission(
   id: string,
-  patch: { status?: InboxStatus; bookingStatus?: BookingStatus; activityMessage?: string },
+  patch: {
+    status?: InboxStatus;
+    bookingStatus?: BookingStatus;
+    leadStage?: LeadStage;
+    followUpAt?: string | null;
+    internalNote?: string | null;
+    activityMessage?: string;
+  },
 ): Promise<InboxSubmission | null> {
   const current = await getInboxSubmission(id);
   if (!current) return null;
@@ -131,6 +154,45 @@ export async function updateInboxSubmission(
   if (patch.bookingStatus && patch.bookingStatus !== current.bookingStatus) {
     activity.push({ at: new Date().toISOString(), actor: "admin", message: `Booking: ${current.bookingStatus ?? "pending"} → ${patch.bookingStatus}` });
   }
+
+  if (
+    current.kind === "lead" &&
+    patch.leadStage &&
+    patch.leadStage !== current.leadStage
+  ) {
+    activity.push({
+      at: new Date().toISOString(),
+      actor: "admin",
+      message: `Lead stage: ${current.leadStage ?? "new"} → ${patch.leadStage}`,
+    });
+  }
+
+  if (
+    current.kind === "lead" &&
+    patch.followUpAt !== undefined &&
+    patch.followUpAt !== (current.followUpAt ?? null)
+  ) {
+    activity.push({
+      at: new Date().toISOString(),
+      actor: "admin",
+      message: patch.followUpAt
+        ? `Follow-up set for ${patch.followUpAt}`
+        : "Follow-up cleared",
+    });
+  }
+
+  if (
+    current.kind === "lead" &&
+    patch.internalNote !== undefined &&
+    patch.internalNote !== (current.internalNote ?? null)
+  ) {
+    activity.push({
+      at: new Date().toISOString(),
+      actor: "admin",
+      message: patch.internalNote ? "Internal note updated" : "Internal note cleared",
+    });
+  }
+
   if (patch.activityMessage?.trim()) {
     activity.push({ at: new Date().toISOString(), actor: "admin", message: patch.activityMessage.trim().slice(0, 500) });
   }
@@ -139,6 +201,13 @@ export async function updateInboxSubmission(
     ...previous,
     ...(patch.status ? { status: patch.status } : {}),
     ...(patch.bookingStatus ? { bookingStatus: patch.bookingStatus } : {}),
+    ...(patch.leadStage ? { leadStage: patch.leadStage } : {}),
+    ...(patch.followUpAt !== undefined
+      ? { followUpAt: patch.followUpAt ?? undefined }
+      : {}),
+    ...(patch.internalNote !== undefined
+      ? { internalNote: patch.internalNote ?? undefined }
+      : {}),
     activity,
   };
   await writeState(state);
