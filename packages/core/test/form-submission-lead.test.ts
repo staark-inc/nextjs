@@ -19,6 +19,7 @@ test("lead submission accepts package field", () => {
       phone: "0746262452",
       company: "Staark Inc",
       package: "Business",
+      website_url: "https://staarkinc.com",
       message: "Test project",
     },
   });
@@ -27,6 +28,7 @@ test("lead submission accepts package field", () => {
   if (parsed.success) {
     assert.equal(parsed.data.kind, "lead");
     assert.equal(parsed.data.fields.package, "Business");
+    assert.equal(parsed.data.fields.website_url, "https://staarkinc.com");
   }
 });
 

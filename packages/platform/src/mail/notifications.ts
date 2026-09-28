@@ -27,6 +27,7 @@ const COMMON_FIELDS: FieldDefinition[] = [
 
 const LEAD_FIELDS: FieldDefinition[] = [
   { key: "package", label: "Package" },
+  { key: "website_url", label: "Website" },
 ];
 
 const BOOKING_FIELDS: FieldDefinition[] = [

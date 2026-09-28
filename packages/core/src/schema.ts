@@ -181,6 +181,7 @@ const ContactFieldsSchema = z.object(CONTACT_FIELDS).strict();
 const LEAD_FIELDS = {
   ...CONTACT_FIELDS,
   package: z.string().trim().max(160).optional(),
+  website_url: z.string().trim().max(500).optional(),
 } as const;
 
 const LeadFieldsSchema = z.object(LEAD_FIELDS).strict();
