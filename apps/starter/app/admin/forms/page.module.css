@@ -86,3 +86,31 @@
     padding-bottom: 4px;
   }
 }
+
+.quickActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 260px;
+}
+
+.quickActions button,
+.quickActions a {
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .quickActions {
+    min-width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .quickActions {
+    min-width: 200px;
+    justify-content: flex-start;
+  }
+}
+

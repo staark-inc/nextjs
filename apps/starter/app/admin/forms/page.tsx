@@ -85,11 +85,35 @@ function formatFollowUp(value?: string): string {
   });
 }
 
+function nextLeadStage(stage: LeadStage): LeadStage | null {
+  if (stage === "new") return "contacted";
+  if (stage === "contacted") return "qualified";
+  if (stage === "qualified") return "offer_sent";
+  if (stage === "offer_sent") return "won";
+  return null;
+}
+
+function nextLeadActionLabel(stage: LeadStage): string | null {
+  if (stage === "new") return "Mark contacted";
+  if (stage === "contacted") return "Qualify";
+  if (stage === "qualified") return "Offer sent";
+  if (stage === "offer_sent") return "Mark won";
+  return null;
+}
+
+function followUpInDays(days: number): string {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return localDateKey(date);
+}
+
 export default function FormsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | SubmissionKind>("all");
   const [leadStageFilter, setLeadStageFilter] = useState<"all" | LeadStage>("all");
+  const [savingLeadId, setSavingLeadId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   function showToast(msg: string, ok: boolean) {
@@ -105,6 +129,39 @@ export default function FormsPage() {
   }
 
   useEffect(() => { void load(); }, []);
+
+  async function updateLead(
+    id: string,
+    body: Record<string, string | null>,
+    successMessage: string,
+  ) {
+    setSavingLeadId(id);
+
+    try {
+      const res = await fetch(`/api/admin/forms/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        showToast("Could not update the lead.", false);
+        return;
+      }
+
+      const updated = (await res.json()) as Submission;
+
+      setSubmissions((current) =>
+        current.map((item) => (item.id === id ? updated : item)),
+      );
+
+      showToast(successMessage, true);
+    } catch {
+      showToast("Could not update the lead.", false);
+    } finally {
+      setSavingLeadId(null);
+    }
+  }
 
   async function clearAll() {
     if (!confirm("Clear all submissions? This cannot be undone.")) return;
@@ -298,6 +355,9 @@ export default function FormsPage() {
 
                     const leadStage = s.leadStage ?? "new";
                     const followState = followUpState(s.followUpAt);
+                    const nextStage = nextLeadStage(leadStage);
+                    const nextActionLabel = nextLeadActionLabel(leadStage);
+                    const savingLead = savingLeadId === s.id;
 
                     return (
                       <tr key={s.id}>
@@ -396,7 +456,86 @@ export default function FormsPage() {
                         </td>
                         <td className="sa-table__date">{formatDate(s.receivedAt)}</td>
                         <td className="sa-table__actions">
-                          <a className="sa-btn sa-btn--ghost sa-btn--sm" href={`/admin/forms/${s.id}`}>Open</a>
+                          {filter === "lead" ? (
+                            <div className={styles.quickActions}>
+                              {nextStage && nextActionLabel ? (
+                                <button
+                                  className="sa-btn sa-btn--primary sa-btn--sm"
+                                  disabled={savingLead}
+                                  onClick={() =>
+                                    void updateLead(
+                                      s.id,
+                                      { leadStage: nextStage },
+                                      `Lead moved to ${leadStageLabel(nextStage)}.`,
+                                    )
+                                  }
+                                >
+                                  {nextActionLabel}
+                                </button>
+                              ) : null}
+
+                              <button
+                                className="sa-btn sa-btn--ghost sa-btn--sm"
+                                disabled={savingLead}
+                                title="Set follow-up 3 days from today"
+                                onClick={() =>
+                                  void updateLead(
+                                    s.id,
+                                    { followUpAt: followUpInDays(3) },
+                                    "Follow-up set for 3 days from today.",
+                                  )
+                                }
+                              >
+                                +3d
+                              </button>
+
+                              <button
+                                className="sa-btn sa-btn--ghost sa-btn--sm"
+                                disabled={savingLead}
+                                title="Set follow-up 7 days from today"
+                                onClick={() =>
+                                  void updateLead(
+                                    s.id,
+                                    { followUpAt: followUpInDays(7) },
+                                    "Follow-up set for 7 days from today.",
+                                  )
+                                }
+                              >
+                                +7d
+                              </button>
+
+                              {s.followUpAt ? (
+                                <button
+                                  className="sa-btn sa-btn--ghost sa-btn--sm"
+                                  disabled={savingLead}
+                                  title="Clear follow-up"
+                                  onClick={() =>
+                                    void updateLead(
+                                      s.id,
+                                      { followUpAt: null },
+                                      "Follow-up cleared.",
+                                    )
+                                  }
+                                >
+                                  Clear
+                                </button>
+                              ) : null}
+
+                              <a
+                                className="sa-btn sa-btn--ghost sa-btn--sm"
+                                href={`/admin/forms/${s.id}`}
+                              >
+                                Open
+                              </a>
+                            </div>
+                          ) : (
+                            <a
+                              className="sa-btn sa-btn--ghost sa-btn--sm"
+                              href={`/admin/forms/${s.id}`}
+                            >
+                              Open
+                            </a>
+                          )}
                         </td>
                       </tr>
                     );
