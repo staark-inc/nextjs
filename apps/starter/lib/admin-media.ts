@@ -10,6 +10,8 @@ import {
 } from "./storage";
 
 export const IMAGE_EXTENSION = /\.(jpg|jpeg|png|gif|webp|svg|avif|ico)$/i;
+/** Existing SVG assets stay readable, but new uploads are raster-only. */
+export const UPLOAD_IMAGE_EXTENSION = /\.(jpg|jpeg|png|gif|webp|avif|ico)$/i;
 const MEDIA_SEED_MARKER = "media-seeded-v1";
 
 export type MediaMetadata = Record<string, { alt?: string }>;

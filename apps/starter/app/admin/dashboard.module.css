@@ -82,6 +82,10 @@
   fill: var(--sa-primary);
 }
 
+.barSuccess {
+  fill: var(--sa-success);
+}
+
 .meter {
   height: 6px;
   margin-top: 12px;
@@ -127,6 +131,18 @@
 
 .needs {
   position: relative;
+}
+
+.needsTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sortNote {
+  color: var(--sa-muted);
+  font-size: 12.5px;
+  white-space: nowrap;
 }
 
 .count {
@@ -404,6 +420,47 @@
   color: var(--sa-warning);
 }
 
+/* ---- Quick actions --------------------------------------------------------- */
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.shortcut {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  background: var(--sa-surface);
+  color: var(--sa-ink);
+  text-decoration: none;
+}
+
+.shortcut:hover {
+  border-color: var(--sa-primary-line);
+  background: var(--sa-primary-soft);
+}
+
+.shortcut strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcut span {
+  overflow: hidden;
+  color: var(--sa-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---- Deployment ---------------------------------------------------------- */
 
 .deploy {
@@ -438,6 +495,10 @@
 
 @media (max-width: 560px) {
   .stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shortcuts {
     grid-template-columns: minmax(0, 1fr);
   }
 

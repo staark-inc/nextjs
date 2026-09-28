@@ -1,7 +1,10 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { isIP } from "node:net";
 
-/** Absolute lifetime of a local /admin session. */
+/** Default absolute lifetime of a local /admin session. */
 export const ADMIN_SESSION_TTL_SECONDS = 12 * 60 * 60;
+/** Maximum lifetime when the user explicitly chooses "Remember me". */
+export const ADMIN_REMEMBER_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 export const ADMIN_LOGIN_PATH = "/admin/login";
 export const ADMIN_HOME_PATH = "/admin";
@@ -9,22 +12,46 @@ export const ADMIN_HOME_PATH = "/admin";
 export type AdminSessionLike = {
   isLoggedIn?: boolean;
   loginAt?: number;
+  expiresAt?: number;
 };
 
 /**
- * A session is active only when it is marked logged in AND was created within
- * the TTL. iron-session's own ttl slides whenever the cookie is re-saved, so
- * `loginAt` is the absolute bound.
+ * Resolve the application-level absolute expiry.
+ *
+ * Existing sessions created before Remember me was introduced do not contain
+ * `expiresAt`, so they retain the original 12-hour behavior. Explicit expiries
+ * are capped at the 30-day product maximum.
  */
+export function adminSessionExpiresAt(
+  session: AdminSessionLike | null | undefined,
+): number | null {
+  const loginAt = session?.loginAt;
+  if (typeof loginAt !== "number" || !Number.isFinite(loginAt)) return null;
+
+  const explicit = session?.expiresAt;
+  const maxExpiry = loginAt + ADMIN_REMEMBER_TTL_SECONDS * 1000;
+  if (
+    typeof explicit === "number" &&
+    Number.isFinite(explicit) &&
+    explicit >= loginAt &&
+    explicit <= maxExpiry
+  ) {
+    return explicit;
+  }
+
+  return loginAt + ADMIN_SESSION_TTL_SECONDS * 1000;
+}
+
+/** A session is active only while its signed absolute expiry is in the future. */
 export function isAdminSessionActive(
   session: AdminSessionLike | null | undefined,
   now: number = Date.now(),
-  ttlSeconds: number = ADMIN_SESSION_TTL_SECONDS,
 ): boolean {
   if (!session?.isLoggedIn) return false;
-  if (typeof session.loginAt !== "number" || !Number.isFinite(session.loginAt)) return false;
-  const age = now - session.loginAt;
-  return age >= 0 && age < ttlSeconds * 1000;
+  const loginAt = session.loginAt;
+  const expiresAt = adminSessionExpiresAt(session);
+  if (typeof loginAt !== "number" || !Number.isFinite(loginAt) || expiresAt === null) return false;
+  return now >= loginAt && now < expiresAt;
 }
 
 /**
@@ -76,13 +103,27 @@ export function adminCredentialsMatch(
   return userOk && passOk;
 }
 
-/** Best-effort client address for rate limiting behind a proxy. */
-export function clientAddress(headers: Headers): string {
-  return (
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headers.get("x-real-ip")?.trim() ||
-    "unknown"
-  );
+/**
+ * Stable client key for rate limiting.
+ * Forwarded headers are ignored unless the reverse proxy is explicitly trusted.
+ */
+export function clientAddress(
+  headers: Headers,
+  trustProxy: boolean = process.env.STAARK_TRUST_PROXY === "1",
+): string {
+  if (!trustProxy) return "direct";
+
+  const candidates = [
+    headers.get("cf-connecting-ip")?.trim(),
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+    headers.get("x-real-ip")?.trim(),
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && isIP(candidate)) return candidate;
+  }
+
+  return "proxy";
 }
 
 export type LoginRateLimitOptions = {

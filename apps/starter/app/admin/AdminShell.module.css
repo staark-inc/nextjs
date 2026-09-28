@@ -9,7 +9,7 @@
   width: calc(100% - 16px);
   height: 36px;
   margin: 4px 8px 10px;
-  padding: 0 10px;
+  padding: 10px;
   border: 1px solid #1f2d42;
   border-radius: 9px;
   background: #0f1a2a;
@@ -35,7 +35,7 @@
 
 .kbd,
 .kbdLight {
-  padding: 1px 6px;
+  padding: 3px 6px 1px;
   border: 1px solid #2a3a52;
   border-radius: 5px;
   font-family: "SFMono-Regular", Consolas, monospace;
@@ -254,4 +254,22 @@
   .paletteItem small {
     display: none;
   }
+}
+
+/* Log out, inside the user card at the bottom of the sidebar */
+.logoutButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 8px;
+  color: var(--sa-sidebar-text);
+}
+
+.logoutButton:hover {
+  background: var(--sa-sidebar-hover);
+  color: #fff;
 }

@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { WebsiteType } from "@staark/core";
 import AdminIcon from "./AdminIcon";
-import { adminNavItems, SEARCH_ICON } from "./admin-nav";
+import { getAdminNavItems, SEARCH_ICON } from "./admin-nav";
 import styles from "./AdminShell.module.css";
 
 type Command = {
@@ -18,15 +19,6 @@ type Command = {
 type PageSummary = { file: string; path: string; title: string };
 
 const SECTION_ORDER: Command["section"][] = ["Go to", "Pages", "Actions"];
-
-const navCommands: Command[] = adminNavItems.map((item) => ({
-  id: `nav:${item.href}`,
-  section: "Go to",
-  label: item.label,
-  hint: item.description,
-  keywords: item.keywords,
-  run: { type: "route", href: item.href },
-}));
 
 const actionCommands: Command[] = [
   { id: "action:new-page", section: "Actions", label: "Create a page", hint: "Pages", keywords: "new add", run: { type: "route", href: "/admin/pages" } },
@@ -48,7 +40,13 @@ function rank(command: Command, query: string): number {
   return 2;
 }
 
-export default function CommandPalette({ onClose }: { onClose: () => void }) {
+export default function CommandPalette({
+  websiteType,
+  onClose,
+}: {
+  websiteType: WebsiteType;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -56,6 +54,19 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState(0);
   const [pages, setPages] = useState<PageSummary[] | null>(null);
   const [pagesFailed, setPagesFailed] = useState(false);
+
+  const navCommands = useMemo<Command[]>(
+    () =>
+      getAdminNavItems(websiteType).map((item) => ({
+        id: `nav:${item.href}`,
+        section: "Go to",
+        label: item.label,
+        hint: item.description,
+        keywords: item.keywords,
+        run: { type: "route", href: item.href },
+      })),
+    [websiteType],
+  );
 
   // Focus the input on open; give focus back to whatever had it on close.
   useEffect(() => {
@@ -109,7 +120,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
       )
       .map((item) => item.command)
       .slice(0, 20);
-  }, [query, pageCommands]);
+  }, [query, pageCommands, navCommands]);
 
   useEffect(() => {
     setActive(0);

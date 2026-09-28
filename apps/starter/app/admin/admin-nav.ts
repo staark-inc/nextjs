@@ -1,3 +1,6 @@
+import type { WebsiteType } from "@staark/core";
+import { resolveWebsiteProfile } from "@/lib/website-profile";
+
 export type AdminNavGroup = "Overview" | "Leads" | "Website" | "Growth" | "System";
 
 export type AdminNavItem = {
@@ -7,7 +10,7 @@ export type AdminNavItem = {
   icon: string;
   group: AdminNavGroup;
   /** Which live count the sidebar shows next to this item. */
-  badge?: "inbox";
+  badge?: "messages" | "bookings";
   /** Extra words the command palette matches on. */
   keywords?: string;
 };
@@ -16,7 +19,7 @@ export const SEARCH_ICON = "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm5-2 5 5";
 
 export const adminNavGroups: AdminNavGroup[] = ["Overview", "Leads", "Website", "Growth", "System"];
 
-export const adminNavItems: AdminNavItem[] = [
+const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
     href: "/admin",
     label: "Dashboard",
@@ -28,11 +31,20 @@ export const adminNavItems: AdminNavItem[] = [
   {
     href: "/admin/forms",
     label: "Inbox",
-    description: "Messages & bookings",
+    description: "Messages & forms",
     icon: "M4 4h16v16H4V4Zm0 3 8 6 8-6",
     group: "Leads",
-    badge: "inbox",
-    keywords: "forms submissions messages bookings enquiries leads",
+    badge: "messages",
+    keywords: "forms submissions messages enquiries leads contact",
+  },
+  {
+    href: "/admin/bookings",
+    label: "Bookings",
+    description: "Booking requests",
+    icon: "M4 6h16v14H4V6Zm0 4h16 M8 3v4 M16 3v4 M8 14h3 M13 14h3 M8 17h3",
+    group: "Leads",
+    badge: "bookings",
+    keywords: "booking appointments calendar confirm decline reservations",
   },
   {
     href: "/admin/pages",
@@ -107,6 +119,21 @@ export const adminNavItems: AdminNavItem[] = [
     keywords: "business contact opening hours address name",
   },
 ];
+
+export function getAdminNavItems(websiteType: WebsiteType): AdminNavItem[] {
+  const profile = resolveWebsiteProfile(websiteType);
+  return BASE_ADMIN_NAV_ITEMS.map((item) => {
+    if (item.href !== "/admin/forms") return item;
+    return { ...item, description: profile.inboxDescription, keywords: profile.inboxKeywords };
+  });
+}
+
+export function getAdminNavGroups(items: AdminNavItem[]): AdminNavGroup[] {
+  return adminNavGroups.filter((group) => items.some((item) => item.group === group));
+}
+
+/** Backwards-compatible business defaults. */
+export const adminNavItems: AdminNavItem[] = getAdminNavItems("business");
 
 export function isNavActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === href;

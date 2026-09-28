@@ -1,7 +1,9 @@
 {
   "path": "/kontakt",
   "title": "Kontakt",
-  "seo": { "description": "Starta ett projekt med Nordvik Studio i Stockholm." },
+  "seo": {
+    "description": "Starta ett projekt med Nordvik Studio i Stockholm."
+  },
   "updatedAt": "2026-09-26T20:00:00Z",
   "blocks": [
     {
@@ -15,11 +17,31 @@
         "submitLabel": "Skicka förfrågan",
         "successMessage": "Tack! Vi återkommer inom en arbetsdag.",
         "fields": [
-          { "name": "name", "label": "Namn", "required": true },
-          { "name": "email", "label": "E-post", "type": "email", "required": true },
-          { "name": "company", "label": "Företag" },
-          { "name": "booking_type", "label": "Typ av projekt" },
-          { "name": "message", "label": "Om projektet", "type": "textarea", "required": true }
+          {
+            "name": "name",
+            "label": "Namn",
+            "required": true
+          },
+          {
+            "name": "email",
+            "label": "E-post",
+            "type": "email",
+            "required": true
+          },
+          {
+            "name": "company",
+            "label": "Företag"
+          },
+          {
+            "name": "booking_type",
+            "label": "Typ av projekt"
+          },
+          {
+            "name": "message",
+            "label": "Om projektet",
+            "type": "textarea",
+            "required": true
+          }
         ]
       }
     }

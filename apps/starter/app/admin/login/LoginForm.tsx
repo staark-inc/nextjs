@@ -11,6 +11,8 @@ type LoginFormProps = {
   expired: boolean;
   siteName: string;
   host: string;
+  siteUrl: string;
+  supportEmail: string;
 };
 
 type LoginErrorBody = {
@@ -20,7 +22,7 @@ type LoginErrorBody = {
 };
 
 function initialNotice(next: string, expired: boolean): Notice {
-  if (expired) return { tone: "warning", text: "Your session ended after 12 hours. Sign in again to continue." };
+  if (expired) return { tone: "warning", text: "Your session expired. Sign in again to continue." };
   if (next !== "/admin") return { tone: "info", text: `Sign in to continue to ${next}.` };
   return null;
 }
@@ -33,9 +35,17 @@ function formatWait(seconds: number): string {
   return `${seconds} second${seconds === 1 ? "" : "s"}`;
 }
 
-export default function LoginForm({ next, expired, siteName, host }: LoginFormProps) {
+export default function LoginForm({
+  next,
+  expired,
+  siteName,
+  host,
+  siteUrl,
+  supportEmail,
+}: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<Notice>(() => initialNotice(next, expired));
@@ -69,7 +79,7 @@ export default function LoginForm({ next, expired, siteName, host }: LoginFormPr
       res = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, remember }),
       });
     } catch {
       setLoading(false);
@@ -183,11 +193,44 @@ export default function LoginForm({ next, expired, siteName, host }: LoginFormPr
         </div>
       </div>
 
+      <label className={styles.remember}>
+        <input
+          type="checkbox"
+          checked={remember}
+          onChange={(e) => setRemember(e.target.checked)}
+          disabled={locked || loading}
+        />
+        <span>
+          <strong>Remember me</strong>
+          <small>Keep this device signed in for up to 30 days.</small>
+        </span>
+      </label>
+
       <button className={styles.submit} type="submit" disabled={loading || locked || !username || !password}>
         {loading ? "Signing in…" : "Sign in"}
       </button>
 
-      <p className={styles.hint}>You stay signed in for 12 hours on this device.</p>
+      <p className={styles.hint}>
+        {remember
+          ? "This device will stay signed in for up to 30 days."
+          : "For security, this session expires automatically after 12 hours."}
+      </p>
+
+      <div className={styles.help}>
+        <span>Need help?</span>
+        <div className={styles.helpActions}>
+          <a
+            href={`mailto:${supportEmail}?subject=${encodeURIComponent(`Staark Hub sign-in help${siteName ? ` — ${siteName}` : ""}`)}`}
+          >
+            Contact support
+          </a>
+          {siteUrl ? (
+            <a href={siteUrl} target="_blank" rel="noopener noreferrer">
+              Open website <span aria-hidden>↗</span>
+            </a>
+          ) : null}
+        </div>
+      </div>
     </form>
   );
 }

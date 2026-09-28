@@ -1,19 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { WebsiteType } from "@staark/core";
 import type { AdminShellStatus } from "@/lib/admin-shell-status";
+import {
+  WEBSITE_PROFILE_CHANGED_EVENT,
+  normalizeWebsiteType,
+  resolveWebsiteProfile,
+} from "@/lib/website-profile";
 import LogoutLink from "./LogoutLink";
 import BrandMark from "./BrandMark";
 import CommandPalette from "./CommandPalette";
 import AdminIcon from "./AdminIcon";
 import { ADMIN_STATUS_CHANGED_EVENT } from "./admin-events";
-import { adminNavGroups, adminNavItems, isNavActive, SEARCH_ICON, type AdminNavItem } from "./admin-nav";
+import { getAdminNavGroups, getAdminNavItems, isNavActive, SEARCH_ICON, type AdminNavItem } from "./admin-nav";
 import styles from "./AdminShell.module.css";
 
 type AdminShellProps = {
   children: React.ReactNode;
+  websiteType: WebsiteType;
+  siteName: string;
   username: string;
   sessionExpiresAt: number;
   initialStatus: AdminShellStatus;
@@ -23,8 +31,8 @@ type AdminShellProps = {
 const STATUS_REFRESH_MS = 60_000;
 const SESSION_WARNING_MS = 15 * 60_000;
 
-function currentSection(pathname: string) {
-  return adminNavItems.find((item) => isNavActive(pathname, item.href))?.label ?? "Admin";
+function currentSection(pathname: string, navItems: AdminNavItem[]) {
+  return navItems.find((item) => isNavActive(pathname, item.href))?.label ?? "Admin";
 }
 
 function loginUrlForExpiredSession(): string {
@@ -37,9 +45,14 @@ function loginUrlForExpiredSession(): string {
 function formatRemaining(ms: number): string {
   const minutes = Math.max(0, Math.ceil(ms / 60_000));
   if (minutes < 60) return `${minutes} min`;
+
   const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+  const restMinutes = minutes % 60;
+  if (hours < 24) return restMinutes ? `${hours} h ${restMinutes} min` : `${hours} h`;
+
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours ? `${days} d ${restHours} h` : `${days} d`;
 }
 
 function healthLabel(health: AdminShellStatus["health"]): string {
@@ -50,34 +63,55 @@ function healthLabel(health: AdminShellStatus["health"]): string {
 }
 
 function NavBadges({ item, status }: { item: AdminNavItem; status: AdminShellStatus }) {
-  if (item.badge !== "inbox") return null;
-  const { unread, pendingBookings } = status.inbox;
-  if (!unread && !pendingBookings) return null;
-  return (
-    <span className={styles.badges}>
-      {pendingBookings ? (
-        <span className={`${styles.badge} ${styles.badgeWarning}`} title={`${pendingBookings} pending booking${pendingBookings === 1 ? "" : "s"}`}>
-          {pendingBookings}
-          <span className={styles.srOnly}> pending bookings</span>
-        </span>
-      ) : null}
-      {unread ? (
-        <span className={styles.badge} title={`${unread} new message${unread === 1 ? "" : "s"}`}>
-          {unread}
-          <span className={styles.srOnly}> new messages</span>
-        </span>
-      ) : null}
-    </span>
-  );
+  if (item.badge === "messages") {
+    const count = status.inbox.unreadMessages;
+    if (!count) return null;
+    return (
+      <span className={styles.badge} title={`${count} new message${count === 1 ? "" : "s"}`}>
+        {count}
+        <span className={styles.srOnly}> new messages</span>
+      </span>
+    );
+  }
+  if (item.badge === "bookings") {
+    const count = status.inbox.pendingBookings;
+    if (!count) return null;
+    return (
+      <span className={`${styles.badge} ${styles.badgeWarning}`} title={`${count} pending booking${count === 1 ? "" : "s"}`}>
+        {count}
+        <span className={styles.srOnly}> pending bookings</span>
+      </span>
+    );
+  }
+  return null;
 }
 
-export default function AdminShell({ children, username, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
+export default function AdminShell({ websiteType, children, siteName, username, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [activeWebsiteType, setActiveWebsiteType] = useState<WebsiteType>(websiteType);
   const [status, setStatus] = useState<AdminShellStatus>(initialStatus);
   const [now, setNow] = useState(() => Date.now());
   const redirecting = useRef(false);
+
+  const profile = useMemo(() => resolveWebsiteProfile(activeWebsiteType), [activeWebsiteType]);
+  const navItems = useMemo(() => getAdminNavItems(activeWebsiteType), [activeWebsiteType]);
+  const navGroups = useMemo(() => getAdminNavGroups(navItems), [navItems]);
+
+  useEffect(() => {
+    setActiveWebsiteType(websiteType);
+  }, [websiteType]);
+
+  useEffect(() => {
+    function onProfileChanged(event: Event) {
+      const detail = (event as CustomEvent<{ websiteType?: unknown }>).detail;
+      setActiveWebsiteType(normalizeWebsiteType(detail?.websiteType));
+    }
+
+    window.addEventListener(WEBSITE_PROFILE_CHANGED_EVENT, onProfileChanged);
+    return () => window.removeEventListener(WEBSITE_PROFILE_CHANGED_EVENT, onProfileChanged);
+  }, []);
 
   const goToLogin = useCallback(() => {
     if (redirecting.current) return;
@@ -182,8 +216,8 @@ export default function AdminShell({ children, username, sessionExpiresAt, initi
               <BrandMark className="sa-logo__mark" />
             </span>
             <span className="sa-brand__copy">
-              <strong>Staark Hub</strong>
-              <small>NextJS Platform</small>
+              <strong>{siteName}</strong>
+              <small>Staark Hub</small>
             </span>
           </Link>
           <button className="sa-sidebar__close" type="button" onClick={() => setOpen(false)} aria-label="Close navigation">
@@ -198,11 +232,11 @@ export default function AdminShell({ children, username, sessionExpiresAt, initi
         </button>
 
         <div className="sa-sidebar__nav-groups">
-          {adminNavGroups.map((group) => (
+          {navGroups.map((group) => (
             <section className="sa-sidebar__nav-group" key={group} aria-label={group}>
               <div className="sa-sidebar__section-label">{group}</div>
               <ul className="sa-nav sa-nav--v2">
-                {adminNavItems.filter((item) => item.group === group).map((item) => {
+                {navItems.filter((item) => item.group === group).map((item) => {
                   const active = isNavActive(pathname, item.href);
                   return (
                     <li key={item.href}>
@@ -236,12 +270,8 @@ export default function AdminShell({ children, username, sessionExpiresAt, initi
               {sessionEndingSoon ? `Session ends in ${formatRemaining(remainingMs)}` : `Signed in · ${formatRemaining(remainingMs)} left`}
             </span>
           </div>
-        </div>
-
-        <div className="sa-sidebar__footer sa-sidebar__footer--v2">
-          <LogoutLink>
+          <LogoutLink className={styles.logoutButton} label="Log out">
             <AdminIcon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" size={16} />
-            Log out
           </LogoutLink>
         </div>
       </aside>
@@ -256,8 +286,8 @@ export default function AdminShell({ children, username, sessionExpiresAt, initi
             <span />
           </button>
           <div className="sa-topbar__context">
-            <span>NextJS Platform</span>
-            <strong>{currentSection(pathname)}</strong>
+            <span>{siteName}</span>
+            <strong>{currentSection(pathname, navItems)}</strong>
           </div>
           <div className="sa-topbar__actions">
             <button className={styles.topSearch} type="button" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to">
@@ -280,7 +310,7 @@ export default function AdminShell({ children, username, sessionExpiresAt, initi
         </main>
       </div>
 
-      {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} /> : null}
+      {paletteOpen ? <CommandPalette websiteType={activeWebsiteType} onClose={() => setPaletteOpen(false)} /> : null}
     </div>
   );
 }

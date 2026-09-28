@@ -35,12 +35,17 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set a 32+ char secret}
 
+      # Safe only while the published port stays loopback-only below.
+      STAARK_TRUST_PROXY: ${STAARK_TRUST_PROXY:-1}
+
       # Public form time-trap secret.
       STAARK_FORM_SECRET: ${STAARK_FORM_SECRET:?set STAARK_FORM_SECRET}
     volumes:
       - staark-data:/data
     ports:
-      - "3000:3000"
+      # Secure default: only the host reverse proxy can reach the app.
+      # If STAARK_BIND_HOST=0.0.0.0, also set STAARK_TRUST_PROXY=0.
+      - "${STAARK_BIND_HOST:-127.0.0.1}:3000:3000"
 
   # Uncomment for automatic HTTPS on your domain (edit Caddyfile with your domain).
   # caddy:

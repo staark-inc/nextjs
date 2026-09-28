@@ -15,51 +15,38 @@ const schema = z.object({
   eyebrow: z.string().optional(),
   heading: z.string(),
   intro: z.string().optional(),
-  formId: z.string().default("staark-home"),
-  submitLabel: z.string().default("Skicka"),
+  formId: z.string().default("lead-main"),
+  submitLabel: z.string().default("Skicka förfrågan"),
   successMessage: z.string().optional(),
   fields: z.array(fieldDef).default([
     { name: "name", label: "Namn", required: true },
     { name: "email", label: "E-post", type: "email", required: true },
     { name: "phone", label: "Telefon", type: "tel" },
-    { name: "message", label: "Meddelande", type: "textarea", required: true },
+    { name: "company", label: "Företag" },
+    { name: "message", label: "Vad kan vi hjälpa dig med?", type: "textarea" },
   ]),
 });
 
-export const Contact: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) => {
+export const LeadForm: SectionComponent<z.infer<typeof schema>> = ({ props }) => {
   const p = schema.parse(props);
-  const { contact } = ctx.site;
+
   return (
-    <section className="sk-section sk-section--surface" id="kontakt">
+    <section className="sk-section sk-section--surface">
       <Container>
         <div className="sk-contact">
           <div className="sk-contact__intro">
             {p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}
             <h2>{p.heading}</h2>
             {p.intro ? <p>{p.intro}</p> : null}
-            <ul className="sk-contact__meta">
-              <li>
-                <a href={`mailto:${contact.email}`}>{contact.email}</a>
-              </li>
-              {contact.phone ? (
-                <li>
-                  <a href={`tel:${contact.phone.replace(/\s+/g, "")}`}>{contact.phone}</a>
-                </li>
-              ) : null}
-              {contact.address ? (
-                <li>
-                  {contact.address.street}, {contact.address.postalCode} {contact.address.city}
-                </li>
-              ) : null}
-              {contact.openingHours.map((h) => (
-                <li key={h.days}>
-                  <strong>{h.days}:</strong> {h.hours}
-                </li>
-              ))}
-            </ul>
           </div>
           <div className="sk-contact__form">
-            <ContactForm formId={p.formId} kind="contact" fields={p.fields} submitLabel={p.submitLabel} successMessage={p.successMessage} />
+            <ContactForm
+              formId={p.formId}
+              kind="lead"
+              fields={p.fields}
+              submitLabel={p.submitLabel}
+              successMessage={p.successMessage}
+            />
           </div>
         </div>
       </Container>

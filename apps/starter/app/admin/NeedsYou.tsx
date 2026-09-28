@@ -112,9 +112,11 @@ export default function NeedsYou({ tasks, moreTasks }: NeedsYouProps) {
       <div className="sa-card__header">
         <div>
           <span className="sa-card__eyebrow">Today</span>
-          <h2 id="needs-you-title">Needs you</h2>
+          <h2 id="needs-you-title" className={styles.needsTitle}>
+            Needs you <span className={styles.count}>{visible.length}</span>
+          </h2>
         </div>
-        <span className={styles.count}>{visible.length ? `${visible.length} open` : "All clear"}</span>
+        <span className={styles.sortNote}>{visible.length ? "Sorted by urgency" : "All clear"}</span>
       </div>
 
       {visible.length ? (
@@ -192,9 +194,9 @@ export default function NeedsYou({ tasks, moreTasks }: NeedsYouProps) {
 
       {moreCount ? (
         <p className={styles.moreNote}>
-          <Link href="/admin/forms">
-            {moreCount} more waiting in Inbox
-          </Link>
+          {moreTasks.bookings ? <Link href="/admin/bookings">{moreTasks.bookings} more booking requests</Link> : null}
+          {moreTasks.bookings && moreTasks.messages ? " · " : null}
+          {moreTasks.messages ? <Link href="/admin/forms">{moreTasks.messages} more new messages</Link> : null}
         </p>
       ) : null}
 

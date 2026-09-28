@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { loadDashboard } from "@/lib/admin-dashboard";
 import { plural, relativeTime, type ActivityEvent } from "@/lib/dashboard-model";
+import { getSession } from "@/lib/auth";
 import AdminIcon from "./AdminIcon";
+import Greeting from "./Greeting";
 import NeedsYou from "./NeedsYou";
 import styles from "./dashboard.module.css";
 
@@ -24,7 +26,17 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function DailyBars({ values, label }: { values: number[]; label: string }) {
+function DailyBars({
+  values,
+  label,
+  unit,
+  tone = "primary",
+}: {
+  values: number[];
+  label: string;
+  unit: [string, string];
+  tone?: "primary" | "success";
+}) {
   const width = 140;
   const height = 34;
   const gap = 2;
@@ -46,7 +58,7 @@ function DailyBars({ values, label }: { values: number[]; label: string }) {
           <g key={index}>
             {/* Full-height invisible hit area so each day is easy to hover. */}
             <rect x={x} y={0} width={barWidth} height={height} fill="transparent">
-              <title>{`${labels[index]}: ${plural(value, "enquiry", "enquiries")}`}</title>
+              <title>{`${labels[index]}: ${plural(value, unit[0], unit[1])}`}</title>
             </rect>
             {h > 0 ? (
               <rect
@@ -55,7 +67,7 @@ function DailyBars({ values, label }: { values: number[]; label: string }) {
                 width={barWidth}
                 height={h}
                 rx={Math.min(2, barWidth / 2)}
-                className={isToday ? styles.barToday : styles.bar}
+                className={`${isToday ? styles.barToday : styles.bar} ${tone === "success" ? styles.barSuccess : ""}`}
                 pointerEvents="none"
               />
             ) : null}
@@ -85,7 +97,7 @@ function seoChip(issues: string[]): { label: string; className: string | undefin
 }
 
 export default async function AdminDashboard() {
-  const data = await loadDashboard();
+  const [data, session] = await Promise.all([loadDashboard(), getSession()]);
   const { stats, tasks, now } = data;
   const firstKind = tasks[0]?.kind;
 
@@ -107,12 +119,13 @@ export default async function AdminDashboard() {
     <>
       <section className="sa-page-header">
         <div>
-          <span className="sa-page-eyebrow">Overview</span>
-          <h1 className="sa-h1">{data.siteName}</h1>
+          <Greeting name={session.username ?? "admin"} locale={data.locale} serverNow={now} />
           <p className="sa-subtitle">{summary}</p>
         </div>
         <div className="sa-page-header__actions">
-          <a className="sa-btn sa-btn--ghost" href="/" target="_blank" rel="noopener noreferrer">View website ↗</a>
+          <Link className="sa-btn sa-btn--ghost" href="/admin/pages">
+            <AdminIcon d="M4 20h4L19 9l-4-4L4 16v4Z" size={15} /> Edit a page
+          </Link>
           <Link className="sa-btn sa-btn--primary" href="/admin/forms">Open inbox</Link>
         </div>
       </section>
@@ -122,18 +135,28 @@ export default async function AdminDashboard() {
           <span className={styles.statLabel}>Enquiries · last 7 days</span>
           <strong className={styles.statValue}>{stats.enquiries.current}</strong>
           <span className={styles.statNote}>{deltaText}</span>
-          <DailyBars values={stats.enquiries.daily} label="Enquiries per day, last 14 days" />
+          <DailyBars values={stats.enquiries.daily} label="Enquiries per day, last 14 days" unit={["enquiry", "enquiries"]} />
         </article>
 
         <article className={styles.stat}>
-          <span className={styles.statLabel}>Bookings waiting</span>
-          <strong className={styles.statValue}>{stats.bookings.pending}</strong>
+          <span className={styles.statLabel}>Bookings confirmed</span>
+          <strong className={styles.statValue}>
+            {stats.bookings.confirmed}
+            <small> / {stats.bookings.total}</small>
+          </strong>
           <span className={styles.statNote}>
             {stats.bookings.total
-              ? `${stats.bookings.confirmed} confirmed · ${stats.bookings.declined} declined`
+              ? stats.bookings.pending
+                ? `${stats.bookings.pending} waiting on you`
+                : "Every request has an answer"
               : "No booking requests yet"}
           </span>
-          <Meter value={stats.bookings.total - stats.bookings.pending} max={stats.bookings.total} label="Booking requests answered" />
+          <DailyBars
+            values={stats.bookings.daily}
+            label="Booking requests per day, last 14 days"
+            unit={["booking request", "booking requests"]}
+            tone="success"
+          />
         </article>
 
         <article className={styles.stat}>
@@ -228,18 +251,40 @@ export default async function AdminDashboard() {
             ) : null}
           </section>
 
-          <section className="sa-card sa-shortcuts">
+          <section className="sa-card">
             <div className="sa-card__header sa-card__header--compact">
               <div>
                 <span className="sa-card__eyebrow">Create</span>
                 <h2>Quick actions</h2>
               </div>
             </div>
-            <nav className="sa-shortcut-list" aria-label="Quick actions">
-              <Link href="/admin/pages"><span>New page</span><small>Start from a page template</small><AdminIcon d={ARROW} size={16} /></Link>
-              <Link href="/admin/media"><span>Upload media</span><small>Add images to the library</small><AdminIcon d={ARROW} size={16} /></Link>
-              <Link href="/admin/navigation"><span>Change the menu</span><small>Links in header and footer</small><AdminIcon d={ARROW} size={16} /></Link>
-              <Link href="/admin/site"><span>Business details</span><small>Contact info and opening hours</small><AdminIcon d={ARROW} size={16} /></Link>
+            <nav className={styles.shortcuts} aria-label="Quick actions">
+              {data.quick.home ? (
+                <Link href={`/admin/pages/${encodeURIComponent(data.quick.home.file)}`} className={styles.shortcut}>
+                  <strong>Edit {data.quick.home.title}</strong>
+                  <span>{data.quick.home.blocks.length ? data.quick.home.blocks.slice(0, 3).join(", ") : "Home page"}</span>
+                </Link>
+              ) : (
+                <Link href="/admin/pages" className={styles.shortcut}>
+                  <strong>New page</strong>
+                  <span>Start from a template</span>
+                </Link>
+              )}
+              <Link href="/admin/media" className={styles.shortcut}>
+                <strong>Upload images</strong>
+                <span>JPG, PNG, WebP</span>
+              </Link>
+              <Link href="/admin/navigation" className={styles.shortcut}>
+                <strong>Change menu</strong>
+                <span>
+                  {plural(data.quick.menu.links, "link")}
+                  {data.quick.menu.cta ? " + button" : ""}
+                </span>
+              </Link>
+              <Link href="/admin/site" className={styles.shortcut}>
+                <strong>{data.quick.openingHours ? "Opening hours" : "Business details"}</strong>
+                <span>{data.quick.openingHours || "Contact info and address"}</span>
+              </Link>
             </nav>
           </section>
 

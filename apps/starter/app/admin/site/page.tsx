@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { WebsiteType } from "@staark/core";
+import {
+  normalizeWebsiteType,
+  resolveWebsiteProfile,
+} from "@/lib/website-profile";
 
 type NavLink = { label: string; href: string };
 type OpeningHour = { days: string; hours: string };
 type SiteData = {
   name: string;
   tagline?: string;
+  websiteType?: WebsiteType;
   locale?: string;
   url: string;
   theme?: Record<string, unknown>;
@@ -34,6 +40,7 @@ type SiteData = {
 function normalizeSite(raw: SiteData): SiteData {
   return {
     ...raw,
+    websiteType: normalizeWebsiteType(raw.websiteType),
     brand: { ...(raw.brand ?? {}) },
     contact: {
       email: "",
@@ -80,6 +87,10 @@ export default function SiteEditor() {
   const primary = site?.navigation?.primary ?? [];
   const footer = site?.navigation?.footer ?? [];
   const openingHours = site?.contact?.openingHours ?? [];
+  const websiteProfile = useMemo(
+    () => resolveWebsiteProfile(site?.websiteType),
+    [site?.websiteType],
+  );
 
   const previewHost = useMemo(() => {
     if (!site?.url) return "Not configured";
@@ -210,7 +221,7 @@ export default function SiteEditor() {
     const saved = normalizeSite(data.site ?? site);
     setSite(saved);
     setAdvancedJson(JSON.stringify(saved, null, 2));
-    showToast("Settings saved.", true);
+showToast("Settings saved.", true);
   }
 
   if (!site) return <p style={{ padding: 40 }}>Loading…</p>;
@@ -244,6 +255,16 @@ export default function SiteEditor() {
             <div className="sa-field">
               <label htmlFor="site-locale">Locale</label>
               <input id="site-locale" value={site.locale ?? ""} onChange={(e) => setSite({ ...site, locale: e.target.value })} placeholder="sv-SE" />
+            </div>
+            <div className="sa-field sa-settings-field--wide">
+              <label>Website type</label>
+              <div className="sa-readonly-profile">
+                <div className="sa-readonly-profile__head">
+                  <strong>{websiteProfile.label}</strong>
+                  <span>Managed by Staark</span>
+                </div>
+                <p>{websiteProfile.description}</p>
+              </div>
             </div>
             <div className="sa-field sa-settings-field--wide">
               <label htmlFor="site-tagline">Tagline</label>

@@ -1,3 +1,4 @@
+import { SubmissionKindSchema, inferSubmissionKind, type SubmissionKind } from "@staark/core";
 import {
   readStateJson,
   readStateText,
@@ -17,6 +18,7 @@ export type InboxActivity = {
 export type InboxSubmission = {
   id: string;
   formId: string;
+  kind: SubmissionKind;
   fields: Record<string, unknown>;
   pageUrl?: string;
   receivedAt: string;
@@ -38,15 +40,6 @@ function submissionId(index: number): string {
   return `SFS-${String(index + 1).padStart(5, "0")}`;
 }
 
-function isBooking(fields: Record<string, unknown>, formId: string): boolean {
-  return (
-    formId.toLowerCase().includes("booking") ||
-    "booking_date" in fields ||
-    "booking_time" in fields ||
-    "booking_type" in fields ||
-    "booking_item" in fields
-  );
-}
 
 async function readState(): Promise<InboxStateFile> {
   try {
@@ -78,6 +71,7 @@ export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
     try {
       const raw = JSON.parse(lines[index]!) as {
         formId?: unknown;
+        kind?: unknown;
         fields?: unknown;
         pageUrl?: unknown;
         receivedAt?: unknown;
@@ -86,6 +80,8 @@ export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
       const id = submissionId(index);
       const fields = raw.fields && typeof raw.fields === "object" ? (raw.fields as Record<string, unknown>) : {};
       const formId = typeof raw.formId === "string" ? raw.formId : "form";
+      const kindResult = SubmissionKindSchema.safeParse(raw.kind);
+      const kind = kindResult.success ? kindResult.data : inferSubmissionKind(formId, fields);
       const receivedAt = typeof raw.receivedAt === "string" ? raw.receivedAt : new Date(0).toISOString();
       const saved = state[id] ?? {};
       const activity = saved.activity?.length
@@ -95,12 +91,13 @@ export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
       submissions.push({
         id,
         formId,
+        kind,
         fields,
         pageUrl: typeof raw.pageUrl === "string" ? raw.pageUrl : undefined,
         receivedAt,
         meta: raw.meta && typeof raw.meta === "object" ? (raw.meta as Record<string, string>) : undefined,
         status: saved.status ?? "new",
-        bookingStatus: isBooking(fields, formId) ? (saved.bookingStatus ?? "pending") : undefined,
+        bookingStatus: kind === "booking" ? (saved.bookingStatus ?? "pending") : undefined,
         activity,
       });
     } catch {

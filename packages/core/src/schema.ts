@@ -34,9 +34,27 @@ export const TokenOverridesSchema = z
   .partial();
 export type TokenOverrides = z.infer<typeof TokenOverridesSchema>;
 
+/**
+ * Product profile for a Staark Next website.
+ * Separate from the visual theme: this describes the business/use-case.
+ */
+export const WEBSITE_TYPES = [
+  "business",
+  "salon",
+  "restaurant",
+  "hotel",
+  "automotive",
+  "portfolio",
+  "custom",
+] as const;
+export const WebsiteTypeSchema = z.enum(WEBSITE_TYPES);
+export type WebsiteType = z.infer<typeof WebsiteTypeSchema>;
+
 export const SiteSettingsSchema = z.object({
   name: z.string().min(1),
   tagline: z.string().optional(),
+  /** Business/use-case profile. Independent from the visual theme. */
+  websiteType: WebsiteTypeSchema.default("business"),
   locale: z.string().default("sv-SE"),
   /** Canonical public origin, e.g. https://salongnova.se */
   url: z.string().url(),
@@ -145,46 +163,97 @@ export const PageSummarySchema = z.object({
 });
 export type PageSummary = z.infer<typeof PageSummarySchema>;
 
-/** Fields a public form may send. Mirrors the WordPress `[staark_contact_form]` + booking fields. */
-export const FORM_FIELDS = [
-  "name",
-  "email",
-  "phone",
-  "company",
-  "subject",
-  "message",
-  "booking_type",
-  "booking_date",
-  "booking_end_date",
-  "booking_time",
-  "booking_guests",
-  "booking_item",
-] as const;
-export type FormField = (typeof FORM_FIELDS)[number];
+export const SUBMISSION_KINDS = ["contact", "lead", "booking"] as const;
+export const SubmissionKindSchema = z.enum(SUBMISSION_KINDS);
+export type SubmissionKind = z.infer<typeof SubmissionKindSchema>;
 
-export const FormSubmissionSchema = z.object({
+const CONTACT_FIELDS = {
+  name: z.string().trim().min(1).max(120),
+  email: z.string().trim().email().max(200),
+  phone: z.string().trim().max(40).optional(),
+  company: z.string().trim().max(160).optional(),
+  subject: z.string().trim().max(200).optional(),
+  message: z.string().trim().max(5000).optional(),
+} as const;
+
+const ContactFieldsSchema = z.object(CONTACT_FIELDS).strict();
+
+const BookingFieldsSchema = z
+  .object({
+    ...CONTACT_FIELDS,
+    booking_type: z.string().trim().max(80).optional(),
+    booking_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    booking_end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    booking_time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    booking_guests: z.coerce.number().int().min(1).max(500).optional(),
+    booking_item: z.string().trim().max(160).optional(),
+  })
+  .strict();
+
+const SubmissionEnvelopeSchema = z.object({
   formId: z.string().regex(/^[a-z0-9\-_]{1,64}$/),
   token: z.string().min(10).max(200),
-  /** Honeypot: must stay empty. */
   website: z.string().max(0).optional().default(""),
-  fields: z
-    .object({
-      name: z.string().trim().min(1).max(120),
-      email: z.string().trim().email().max(200),
-      phone: z.string().trim().max(40).optional(),
-      company: z.string().trim().max(160).optional(),
-      subject: z.string().trim().max(200).optional(),
-      message: z.string().trim().max(5000).optional(),
-      booking_type: z.string().trim().max(80).optional(),
-      booking_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      booking_end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      booking_time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-      booking_guests: z.coerce.number().int().min(1).max(500).optional(),
-      booking_item: z.string().trim().max(160).optional(),
-    })
-    .strict(),
   pageUrl: z.string().max(500).optional(),
 });
+
+export const ContactSubmissionSchema = SubmissionEnvelopeSchema.extend({
+  kind: z.literal("contact"),
+  fields: ContactFieldsSchema,
+});
+
+export const LeadSubmissionSchema = SubmissionEnvelopeSchema.extend({
+  kind: z.literal("lead"),
+  fields: ContactFieldsSchema,
+});
+
+export const BookingSubmissionSchema = SubmissionEnvelopeSchema.extend({
+  kind: z.literal("booking"),
+  fields: BookingFieldsSchema,
+});
+
+function submissionRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+export function inferSubmissionKind(formId: unknown, fields: unknown): SubmissionKind {
+  const id = typeof formId === "string" ? formId.toLowerCase() : "";
+  const values = submissionRecord(fields);
+
+  if (
+    id.includes("booking") ||
+    id.includes("bokning") ||
+    "booking_type" in values ||
+    "booking_date" in values ||
+    "booking_end_date" in values ||
+    "booking_time" in values ||
+    "booking_guests" in values ||
+    "booking_item" in values
+  ) {
+    return "booking";
+  }
+
+  return "contact";
+}
+
+const StrictFormSubmissionSchema = z.discriminatedUnion("kind", [
+  ContactSubmissionSchema,
+  LeadSubmissionSchema,
+  BookingSubmissionSchema,
+]);
+
+export const FormSubmissionSchema = z.preprocess((value) => {
+  const raw = submissionRecord(value);
+  if (SubmissionKindSchema.safeParse(raw.kind).success) return value;
+
+  return {
+    ...raw,
+    kind: inferSubmissionKind(raw.formId, raw.fields),
+  };
+}, StrictFormSubmissionSchema);
+
 export type FormSubmission = z.infer<typeof FormSubmissionSchema>;
 
 export type FormResult = { ok: true; message: string } | { ok: false; error: string; fieldErrors?: Record<string, string> };

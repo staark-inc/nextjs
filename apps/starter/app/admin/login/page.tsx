@@ -23,6 +23,7 @@ type LoginPageProps = {
 };
 
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function loadSitePreview(): Promise<SitePreview | null> {
   // The login page must render even when content storage is unavailable.
@@ -42,6 +43,21 @@ function hostOf(url: string | undefined): string {
   }
 }
 
+function websiteUrl(url: string | undefined): string {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+function supportEmail(): string {
+  const configured = process.env.STAARK_ADMIN_SUPPORT_EMAIL?.trim();
+  return configured && EMAIL.test(configured) ? configured : "support@staarkinc.com";
+}
+
 function color(value: string | undefined, fallback: string): string {
   return value && HEX_COLOR.test(value) ? value : fallback;
 }
@@ -54,6 +70,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const site = await loadSitePreview();
   const siteName = site?.name?.trim() || "";
   const host = hostOf(site?.url);
+  const siteUrl = websiteUrl(site?.url);
+  const adminSupportEmail = supportEmail();
   const navLabels = (site?.navigation?.primary ?? [])
     .map((item) => item.label?.trim())
     .filter((label): label is string => Boolean(label))
@@ -76,9 +94,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </div>
 
-        <LoginForm next={next} expired={expired} siteName={siteName} host={host} />
-
-        <p className={styles.footnote}>Lost access? Contact the Staark developer who manages this website.</p>
+        <LoginForm
+          next={next}
+          expired={expired}
+          siteName={siteName}
+          host={host}
+          siteUrl={siteUrl}
+          supportEmail={adminSupportEmail}
+        />
       </section>
 
       {siteName ? (

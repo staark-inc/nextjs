@@ -1,7 +1,7 @@
 import { getIronSession, type IronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
 import {
-  ADMIN_SESSION_TTL_SECONDS,
+  ADMIN_REMEMBER_TTL_SECONDS,
   isAdminSessionActive,
   resolveAdminAuthConfig,
 } from "@staark/platform/server";
@@ -10,6 +10,8 @@ export type SessionData = {
   isLoggedIn: boolean;
   username?: string;
   loginAt?: number;
+  expiresAt?: number;
+  remember?: boolean;
 };
 
 export const ADMIN_SESSION_COOKIE = "staark-admin";
@@ -19,7 +21,9 @@ export function adminSessionOptions(sessionSecret: string): SessionOptions {
   return {
     password: sessionSecret,
     cookieName: ADMIN_SESSION_COOKIE,
-    ttl: ADMIN_SESSION_TTL_SECONDS,
+    // The encrypted cookie may live for the maximum remembered lifetime.
+    // isAdminSessionActive() still enforces the signed 12h/30d absolute expiry.
+    ttl: ADMIN_REMEMBER_TTL_SECONDS,
     cookieOptions: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,

@@ -1,8 +1,9 @@
 import { FormSubmissionSchema, type FormResult } from "@staark/core";
 import { checkFormToken, issueFormToken, type StaarkContent } from "@staark/core/server";
+import { clientAddress } from "../admin/login-guard";
 
 /**
- * Public form endpoint → S-Hub Inbox.
+ * Public form endpoint → typed Staark Hub submission intake.
  *
  * Mirrors the WordPress forms module's protections: signed time-trap token,
  * honeypot, same-origin check, per-IP/per-form rate limit and a strict field
@@ -35,10 +36,6 @@ function sameOrigin(req: Request): boolean {
   } catch {
     return false;
   }
-}
-
-function clientIp(req: Request): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 }
 
 function json(body: FormResult, status: number): Response {
@@ -108,13 +105,14 @@ export function createFormsRoute(content: StaarkContent, options: FormsRouteOpti
         return json({ ok: false, error: message }, 400);
       }
 
-      if (rateLimited(`${clientIp(req)}|${submission.formId}`)) {
+      if (rateLimited(`${clientAddress(req.headers)}|${submission.formId}`)) {
         return json({ ok: false, error: "Too many requests. Try again in a few minutes." }, 429);
       }
 
       try {
         await content.submitForm({
           formId: submission.formId,
+          kind: submission.kind,
           fields: submission.fields,
           pageUrl: submission.pageUrl,
           meta: { userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300) },

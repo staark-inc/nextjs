@@ -11,6 +11,8 @@ import { Process } from "./sections/Process";
 import { Testimonials } from "./sections/Testimonials";
 import { Cta } from "./sections/Cta";
 import { Contact } from "./sections/Contact";
+import { LeadForm } from "./sections/LeadForm";
+import { BookingForm } from "./sections/BookingForm";
 
 /**
  * S-Hub Light — the parent theme. Child themes (Salong, Bygg, Gästfrihet) set
@@ -35,10 +37,12 @@ export const lightTheme: ThemeDefinition = {
     testimonials: Testimonials,
     cta: Cta,
     contact: Contact,
+    leadForm: LeadForm,
+    bookingForm: BookingForm,
   },
 };
 
 export { SiteHeader, SiteFooter } from "./components/chrome";
 export { Container, Button, Eyebrow, siteCta } from "./components/primitives";
-export { Hero, Cards, LinkColumns, ProjectsShowcase, Freeform, Services, Process, Testimonials, Cta, Contact };
+export { Hero, Cards, LinkColumns, ProjectsShowcase, Freeform, Services, Process, Testimonials, Cta, Contact, LeadForm, BookingForm };
 export default lightTheme;

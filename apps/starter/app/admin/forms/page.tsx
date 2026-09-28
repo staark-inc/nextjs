@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 
 type InboxStatus = "new" | "read" | "replied" | "archived";
 type BookingStatus = "pending" | "confirmed" | "declined";
+type SubmissionKind = "contact" | "lead" | "booking";
 
 type Submission = {
   id: string;
   formId: string;
+  kind: SubmissionKind;
   fields: Record<string, unknown>;
   pageUrl?: string;
   receivedAt: string;
@@ -25,10 +27,16 @@ function statusClass(status: InboxStatus): string {
   return "sa-status--read";
 }
 
+function kindLabel(kind: SubmissionKind): string {
+  if (kind === "contact") return "Messages";
+  if (kind === "lead") return "Leads";
+  return "Bookings";
+}
+
 export default function FormsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState<"all" | SubmissionKind>("all");
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   function showToast(msg: string, ok: boolean) {
@@ -67,7 +75,7 @@ export default function FormsPage() {
   }
 
   const formIds = [...new Set(submissions.map((s) => s.formId))];
-  const filtered = filter === "all" ? submissions : submissions.filter((s) => s.formId === filter);
+  const filtered = filter === "all" ? submissions : submissions.filter((s) => s.kind === filter);
   const today = new Date().toDateString();
   const todayCount = submissions.filter((s) => new Date(s.receivedAt).toDateString() === today).length;
   const openCount = submissions.filter((s) => s.status === "new" || s.status === "read").length;
@@ -113,7 +121,7 @@ export default function FormsPage() {
           <div className="sa-empty">
             <div className="sa-empty__icon">✉️</div>
             <div className="sa-empty__title">No submissions yet</div>
-            <div className="sa-empty__desc">Messages and bookings from the website will appear here.</div>
+            <div className="sa-empty__desc">Messages, leads and booking requests from the website will appear here.</div>
           </div>
         </div>
       ) : (
@@ -123,11 +131,11 @@ export default function FormsPage() {
               <button className={`sa-tab${filter === "all" ? " sa-tab--active" : ""}`} onClick={() => setFilter("all")}>
                 All <span className="sa-tab__count">{submissions.length}</span>
               </button>
-              {formIds.map((id) => {
-                const count = submissions.filter((s) => s.formId === id).length;
+              {(["contact", "lead", "booking"] as const).map((kind) => {
+                const count = submissions.filter((s) => s.kind === kind).length;
                 return (
-                  <button key={id} className={`sa-tab${filter === id ? " sa-tab--active" : ""}`} onClick={() => setFilter(id)}>
-                    {id} <span className="sa-tab__count">{count}</span>
+                  <button key={kind} className={`sa-tab${filter === kind ? " sa-tab--active" : ""}`} onClick={() => setFilter(kind)}>
+                    {kindLabel(kind)} <span className="sa-tab__count">{count}</span>
                   </button>
                 );
               })}
@@ -162,7 +170,8 @@ export default function FormsPage() {
                           {email ? <div className="sa-table__secondary">{email}</div> : null}
                         </td>
                         <td>
-                          <span className="sa-badge sa-badge--primary">{s.formId}</span>
+                          <span className="sa-badge sa-badge--primary">{kindLabel(s.kind)}</span>
+                          <span className="sa-table__secondary">{s.formId}</span>
                           {s.bookingStatus ? <span className={`sa-badge sa-booking-badge sa-booking-badge--${s.bookingStatus}`}>{s.bookingStatus}</span> : null}
                           {message ? <div className="sa-inbox-preview">{message.slice(0, 110)}{message.length > 110 ? "…" : ""}</div> : null}
                         </td>

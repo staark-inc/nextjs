@@ -5,10 +5,12 @@ import { useParams } from "next/navigation";
 
 type InboxStatus = "new" | "read" | "replied" | "archived";
 type BookingStatus = "pending" | "confirmed" | "declined";
+type SubmissionKind = "contact" | "lead" | "booking";
 type Activity = { at: string; actor: string; message: string };
 type Submission = {
   id: string;
   formId: string;
+  kind: SubmissionKind;
   fields: Record<string, unknown>;
   pageUrl?: string;
   receivedAt: string;
@@ -115,7 +117,7 @@ export default function InboxDetailPage() {
 
       <div className="sa-page-header">
         <div>
-          <p className="sa-page-eyebrow">{item.formId}</p>
+          <p className="sa-page-eyebrow">{item.kind} · {item.formId}</p>
           <h1 className="sa-h1">{name}</h1>
           <p className="sa-subtitle">{item.id} · received {formatDate(item.receivedAt)}</p>
         </div>
@@ -197,6 +199,7 @@ export default function InboxDetailPage() {
               {email ? <div><dt>Email</dt><dd><a href={`mailto:${email}`}>{email}</a></dd></div> : null}
               {phone ? <div><dt>Phone</dt><dd><a href={`tel:${phone}`}>{phone}</a></dd></div> : null}
               {item.pageUrl ? <div><dt>Page</dt><dd><a href={item.pageUrl} target="_blank" rel="noopener noreferrer">{item.pageUrl}</a></dd></div> : null}
+              <div><dt>Type</dt><dd>{item.kind}</dd></div>
               <div><dt>Form</dt><dd>{item.formId}</dd></div>
               <div><dt>Reference</dt><dd>{item.id}</dd></div>
             </dl>

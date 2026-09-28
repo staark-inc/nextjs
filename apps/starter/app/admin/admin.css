@@ -21,6 +21,7 @@
   --sa-bg: #f6f7f9;
   --sa-surface: #ffffff;
   --sa-surface-soft: #f7f8fa;
+  --sa-surface-blue: #f3f6fa;
   --sa-sidebar: #0c1522;
   --sa-sidebar-hover: #121f30;
   --sa-sidebar-text: #9aabc2;
@@ -35,6 +36,7 @@
   --sa-primary-hover: #006be4;
   --sa-primary-soft: #eaf4ff;
   --sa-primary-line: #bfdcff;
+  --sa-cyan: #19d7ff;
   --sa-danger: #c93545;
   --sa-danger-soft: #fff0f2;
   --sa-danger-line: #ffd0d6;
@@ -4086,4 +4088,64 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
     grid-column: 2;
     width: 100%;
   }
+}
+
+
+/* 11A Website profile */
+.sa-field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--sa-line-strong);
+  border-radius: var(--sa-radius-sm);
+  background: var(--sa-surface);
+  color: var(--sa-ink);
+  font: inherit;
+}
+
+.sa-field select:focus {
+  outline: none;
+  border-color: var(--sa-primary);
+  box-shadow: 0 0 0 3px rgba(8, 124, 255, 0.18);
+}
+
+.sa-website-profile-help span { font-size: 12.5px; }
+.sa-website-profile-help small { font-size: 11.5px; }
+
+
+
+
+/* 11A2 Website type — compact managed profile */
+.sa-readonly-profile {
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius-sm);
+  background: var(--sa-surface-soft);
+}
+
+.sa-readonly-profile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sa-readonly-profile__head strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.sa-readonly-profile__head span {
+  color: var(--sa-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.sa-readonly-profile p {
+  margin: 0;
+  color: var(--sa-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
 }

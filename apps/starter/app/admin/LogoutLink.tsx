@@ -1,6 +1,13 @@
 "use client";
 
-export default function LogoutLink({ children }: { children: React.ReactNode }) {
+type LogoutLinkProps = {
+  children: React.ReactNode;
+  className?: string;
+  /** Accessible name when the link shows only an icon. */
+  label?: string;
+};
+
+export default function LogoutLink({ children, className, label }: LogoutLinkProps) {
   async function handleLogout(e: React.MouseEvent) {
     e.preventDefault();
     await fetch("/api/admin/auth/logout", { method: "POST" });
@@ -8,7 +15,7 @@ export default function LogoutLink({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <a href="/admin/login" data-logout onClick={handleLogout}>
+    <a href="/admin/login" data-logout onClick={handleLogout} className={className} aria-label={label} title={label}>
       {children}
     </a>
   );

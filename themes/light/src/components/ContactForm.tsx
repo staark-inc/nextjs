@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { SubmissionKind } from "@staark/core";
 
 /**
  * Client form that talks to the site's own /api/staark/forms route (built from
@@ -14,6 +15,8 @@ export type FieldDef = { name: string; label: string; type?: "text" | "email" | 
 
 export type ContactFormProps = {
   formId: string;
+  kind: SubmissionKind;
+  /** Internal routing metadata supplied by the section type, not the client editor. */
   endpoint?: string;
   fields: FieldDef[];
   submitLabel: string;
@@ -22,7 +25,7 @@ export type ContactFormProps = {
 
 type State = { status: "idle" | "loading" | "ok" | "error"; message?: string; fieldErrors?: Record<string, string> };
 
-export function ContactForm({ formId, endpoint = "/api/staark/forms", fields, submitLabel, successMessage }: ContactFormProps) {
+export function ContactForm({ formId, kind, endpoint = "/api/staark/forms", fields, submitLabel, successMessage }: ContactFormProps) {
   const [token, setToken] = useState<string | null>(null);
   const [state, setState] = useState<State>({ status: "idle" });
   const formRef = useRef<HTMLFormElement>(null);
@@ -55,7 +58,7 @@ export function ContactForm({ formId, endpoint = "/api/staark/forms", fields, su
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ formId, token, website: String(data.get("website") ?? ""), fields: values, pageUrl: location.href }),
+      body: JSON.stringify({ formId, kind, token, website: String(data.get("website") ?? ""), fields: values, pageUrl: location.href }),
     });
     const body: { ok: boolean; message?: string; error?: string; fieldErrors?: Record<string, string> } = await res.json();
 

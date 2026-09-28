@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   ADMIN_SESSION_TTL_SECONDS,
+  ADMIN_REMEMBER_TTL_SECONDS,
   adminCredentialsMatch,
   clientAddress,
   createLoginRateLimiter,
+  adminSessionExpiresAt,
   isAdminSessionActive,
   safeAdminNext,
   secureEqual,
@@ -20,6 +22,34 @@ test("session is active only when logged in and within the TTL", () => {
   assert.equal(isAdminSessionActive({ isLoggedIn: false, loginAt: now }, now), false);
   assert.equal(isAdminSessionActive({ isLoggedIn: true, loginAt: now + HOUR }, now), false);
   assert.equal(isAdminSessionActive(null, now), false);
+});
+
+test("remembered sessions use their signed absolute expiry", () => {
+  const now = 1_000_000_000_000;
+  const loginAt = now - 24 * 60 * 60 * 1000;
+  const rememberedExpiry = loginAt + ADMIN_REMEMBER_TTL_SECONDS * 1000;
+
+  assert.equal(
+    adminSessionExpiresAt({ isLoggedIn: true, loginAt, expiresAt: rememberedExpiry }),
+    rememberedExpiry,
+  );
+  assert.equal(
+    isAdminSessionActive({ isLoggedIn: true, loginAt, expiresAt: rememberedExpiry }, now),
+    true,
+  );
+
+  // Without an explicit expiry the legacy/default 12-hour lifetime still applies.
+  assert.equal(isAdminSessionActive({ isLoggedIn: true, loginAt }, now), false);
+
+  // Invalid over-long expiries are ignored and fall back to the 12-hour default.
+  assert.equal(
+    adminSessionExpiresAt({
+      isLoggedIn: true,
+      loginAt,
+      expiresAt: loginAt + (ADMIN_REMEMBER_TTL_SECONDS + 60) * 1000,
+    }),
+    loginAt + ADMIN_SESSION_TTL_SECONDS * 1000,
+  );
 });
 
 test("safeAdminNext keeps admin paths and rejects everything else", () => {
@@ -78,8 +108,20 @@ test("rate limiter forgets failures after the window and on reset", () => {
   assert.deepEqual(limiter.check("ip", 70_001), { allowed: true, remaining: 3 });
 });
 
-test("clientAddress prefers the first forwarded address", () => {
-  assert.equal(clientAddress(new Headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" })), "203.0.113.7");
-  assert.equal(clientAddress(new Headers({ "x-real-ip": "198.51.100.2" })), "198.51.100.2");
-  assert.equal(clientAddress(new Headers()), "unknown");
+test("clientAddress trusts forwarded addresses only behind a trusted proxy", () => {
+  const forwarded = new Headers({
+    "cf-connecting-ip": "203.0.113.8",
+    "x-forwarded-for": "203.0.113.7, 10.0.0.1",
+    "x-real-ip": "198.51.100.2",
+  });
+
+  assert.equal(clientAddress(forwarded, false), "direct");
+  assert.equal(clientAddress(forwarded, true), "203.0.113.8");
+  assert.equal(
+    clientAddress(new Headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" }), true),
+    "203.0.113.7",
+  );
+  assert.equal(clientAddress(new Headers({ "x-real-ip": "198.51.100.2" }), true), "198.51.100.2");
+  assert.equal(clientAddress(new Headers({ "x-forwarded-for": "spoofed" }), true), "proxy");
+  assert.equal(clientAddress(new Headers(), true), "proxy");
 });

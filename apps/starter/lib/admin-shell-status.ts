@@ -5,7 +5,10 @@ export type ShellHealthStatus = "ok" | "warning" | "error" | "unknown";
 
 export type AdminShellStatus = {
   inbox: {
+    /** Every submission with status "new", bookings included. */
     unread: number;
+    /** New submissions that are not booking requests. */
+    unreadMessages: number;
     pendingBookings: number;
   };
   health: {
@@ -60,10 +63,11 @@ async function inboxCounts(): Promise<AdminShellStatus["inbox"]> {
     const inbox = await listInboxSubmissions();
     return {
       unread: inbox.filter((item) => item.status === "new").length,
+      unreadMessages: inbox.filter((item) => item.status === "new" && !item.bookingStatus).length,
       pendingBookings: inbox.filter((item) => item.bookingStatus === "pending").length,
     };
   } catch {
-    return { unread: 0, pendingBookings: 0 };
+    return { unread: 0, unreadMessages: 0, pendingBookings: 0 };
   }
 }
 

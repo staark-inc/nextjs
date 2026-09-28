@@ -33,7 +33,18 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: `${field}: ${issue?.message ?? "Invalid site settings."}` }, { status: 422 });
   }
 
-  await writeContentJson("site.json", parsed.data);
+  const existing = await readContentJson<unknown>("site.json");
+  const existingParsed = SiteSettingsSchema.safeParse(existing);
+  const lockedWebsiteType = existingParsed.success
+    ? existingParsed.data.websiteType
+    : "business";
+
+  const site = {
+    ...parsed.data,
+    websiteType: lockedWebsiteType,
+  };
+
+  await writeContentJson("site.json", site);
   revalidatePath("/", "layout");
-  return NextResponse.json({ ok: true, site: parsed.data });
+  return NextResponse.json({ ok: true, site });
 }

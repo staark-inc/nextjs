@@ -526,13 +526,6 @@ li.sk-steps__item > div > p {
     box-shadow: 0 1px 2px #1018280f, 0 12px 30px -18px #10182859;
 }
 
-article.sk-card.sk-card--soft {
-    display: flex;
-    flex-wrap: balance;
-    align-items: baseline;
-    gap: 5px;
-}
-
 /* Generic section appearance */
 .sk-block-appearance {
   position: relative;
@@ -560,4 +553,56 @@ article.sk-card.sk-card--soft {
   --sk-color-ink: var(--sk-color-white, #fff);
   --sk-color-muted: color-mix(in srgb, var(--sk-color-white, #fff) 82%, transparent);
   --sk-color-line: color-mix(in srgb, var(--sk-color-white, #fff) 22%, transparent);
+}
+
+/* Appearance contrast guard */
+.sk-block-appearance--surface > section,
+.sk-block-appearance--accent > section,
+.sk-block-appearance--dark > section,
+.sk-block-appearance--gradient > section {
+  background: inherit;
+}
+
+.sk-block-appearance--accent,
+.sk-block-appearance--dark,
+.sk-block-appearance--gradient {
+  color: var(--sk-color-white, #fff);
+}
+
+.sk-block-appearance--accent > section .sk-eyebrow,
+.sk-block-appearance--dark > section .sk-eyebrow,
+.sk-block-appearance--gradient > section .sk-eyebrow {
+  color: color-mix(in srgb, var(--sk-color-white, #fff) 84%, transparent);
+}
+
+.sk-block-appearance--accent :is(.sk-card, .sk-project-card, .sk-steps__item),
+.sk-block-appearance--dark :is(.sk-card, .sk-project-card, .sk-steps__item),
+.sk-block-appearance--gradient :is(.sk-card, .sk-project-card, .sk-steps__item) {
+  --sk-color-ink: #101828;
+  --sk-color-muted: #667085;
+  --sk-color-line: #e4e7ec;
+  color: #101828;
+}
+
+.sk-block-appearance--accent :is(.sk-field input, .sk-field textarea),
+.sk-block-appearance--dark :is(.sk-field input, .sk-field textarea),
+.sk-block-appearance--gradient :is(.sk-field input, .sk-field textarea) {
+  --sk-color-ink: #101828;
+  --sk-color-muted: #667085;
+  --sk-color-line: #e4e7ec;
+  color: #101828;
+}
+
+.sk-block-appearance--accent .sk-btn--primary,
+.sk-block-appearance--dark .sk-btn--primary,
+.sk-block-appearance--gradient .sk-btn--primary {
+  background: var(--sk-color-white, #fff);
+  color: #101828;
+}
+
+.sk-block-appearance--accent .sk-btn--primary:hover,
+.sk-block-appearance--dark .sk-btn--primary:hover,
+.sk-block-appearance--gradient .sk-btn--primary:hover {
+  background: color-mix(in srgb, var(--sk-color-white, #fff) 90%, transparent);
+  color: #101828;
 }

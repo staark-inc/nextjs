@@ -38,12 +38,20 @@ async function serve(ctx: Ctx, head: boolean): Promise<Response> {
   const contentType =
     CONTENT_TYPES[path.extname(name).toLowerCase()] ?? "application/octet-stream";
 
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": contentType,
+    "Content-Length": String(bytes.byteLength),
+    "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+    "X-Content-Type-Options": "nosniff",
+  };
+
+  if (path.extname(name).toLowerCase() === ".svg") {
+    responseHeaders["Content-Security-Policy"] =
+      "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+  }
+
   return new Response(head ? null : Buffer.from(bytes), {
-    headers: {
-      "Content-Type": contentType,
-      "Content-Length": String(bytes.byteLength),
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
-    },
+    headers: responseHeaders,
   });
 }
 

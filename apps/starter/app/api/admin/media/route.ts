@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 import {
   IMAGE_EXTENSION,
+  UPLOAD_IMAGE_EXTENSION,
   deleteMediaFile,
   describeMediaFile,
   listMediaFiles,
@@ -61,6 +62,12 @@ export async function POST(req: NextRequest) {
     const requested = safeMediaName(file.name);
     if (!requested || !IMAGE_EXTENSION.test(requested)) {
       return NextResponse.json({ error: `${file.name} is not a supported image file.` }, { status: 415 });
+    }
+    if (!UPLOAD_IMAGE_EXTENSION.test(requested)) {
+      return NextResponse.json(
+        { error: "SVG uploads are disabled for security. Use JPEG, PNG, WebP, AVIF, GIF or ICO." },
+        { status: 415 },
+      );
     }
 
     let name: string;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ADMIN_SESSION_TTL_SECONDS } from "@staark/platform/server";
+import { adminSessionExpiresAt } from "@staark/platform/server";
 import { getSession, isSessionActive } from "@/lib/auth";
 
 export async function GET() {
@@ -7,6 +7,7 @@ export async function GET() {
   const active = isSessionActive(session);
   return NextResponse.json({
     isLoggedIn: active,
-    expiresAt: active && session.loginAt ? session.loginAt + ADMIN_SESSION_TTL_SECONDS * 1000 : null,
+    expiresAt: active ? adminSessionExpiresAt(session) : null,
+    remember: active ? session.remember === true : false,
   });
 }

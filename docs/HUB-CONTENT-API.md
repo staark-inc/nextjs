@@ -60,7 +60,7 @@ theme section and `props` is validated by that section). Return HTTP 404 with
 A public form submission forwarded from the site (S-Hub Inbox). Body:
 
 ```json
-{ "formId": "salong-bokning", "fields": { "name": "…", "email": "…", "booking_date": "2026-10-01", "booking_time": "14:00", "booking_item": "Klippning" }, "pageUrl": "https://…/kontakt", "meta": { "userAgent": "…" } }
+{ "formId": "salong-bokning", "kind": "booking", "fields": { "name": "…", "email": "…", "booking_date": "2026-10-01", "booking_time": "14:00", "booking_item": "Klippning" }, "pageUrl": "https://…/kontakt", "meta": { "userAgent": "…" } }
 ```
 
 The site has already validated fields, run the honeypot, the same-origin check,

@@ -23,6 +23,8 @@ import {
 type DashboardSite = {
   name?: string;
   locale?: string;
+  contact?: { openingHours?: Array<{ days?: string; hours?: string }> };
+  navigation?: { primary?: unknown[]; cta?: { label?: string } };
   theme?: {
     preset?: string;
     studio?: { id?: string; name?: string; sourceUpdatedAt?: string };
@@ -30,7 +32,7 @@ type DashboardSite = {
   };
 };
 
-export type DashboardPage = SeoPage & { updatedAt: string; score: number; issues: SeoIssue[] };
+export type DashboardPage = SeoPage & { updatedAt: string; score: number; issues: SeoIssue[]; blockTypes: string[] };
 
 export type DashboardData = {
   siteName: string;
@@ -40,7 +42,7 @@ export type DashboardData = {
   moreTasks: { messages: number; bookings: number };
   stats: {
     enquiries: { daily: number[]; current: number; previous: number; delta: number };
-    bookings: { confirmed: number; declined: number; pending: number; total: number };
+    bookings: { daily: number[]; confirmed: number; declined: number; pending: number; total: number };
     search: { ready: number; indexed: number; needsWork: number };
     media: { count: number; missingAlt: number; bytes: number };
   };
@@ -53,6 +55,11 @@ export type DashboardData = {
     studioId: string;
     pending: boolean;
     colors: { primary: string; surface: string; ink: string };
+  };
+  quick: {
+    home: { file: string; title: string; blocks: string[] } | null;
+    menu: { links: number; cta: string };
+    openingHours: string;
   };
   deployment: {
     source: "hub" | "fixtures" | string;
@@ -102,7 +109,7 @@ async function loadPages(): Promise<DashboardPage[]> {
   return Promise.all(
     entries.map(async ({ entry, file }) => {
       const fallbackPath = `/${file.replace(/\.json$/i, "")}`;
-      let page: SeoPage & { updatedAt: string };
+      let page: SeoPage & { updatedAt: string; blockTypes: string[] };
       try {
         const data = await readContentJson<Record<string, unknown>>(`pages/${file}`);
         if (!data) throw new Error("Page object is missing.");
@@ -117,9 +124,14 @@ async function loadPages(): Promise<DashboardPage[]> {
           noindex: seo.noindex === true,
           updatedAt:
             typeof data.updatedAt === "string" ? data.updatedAt : entry.mtime > 0 ? new Date(entry.mtime).toISOString() : "",
+          blockTypes: Array.isArray(data.blocks)
+            ? data.blocks
+                .map((block) => (block && typeof block === "object" && typeof (block as { type?: unknown }).type === "string" ? (block as { type: string }).type : ""))
+                .filter(Boolean)
+            : [],
         };
       } catch {
-        page = { file, path: fallbackPath, title: file.replace(/\.json$/i, ""), seoTitle: "", seoDescription: "", noindex: false, updatedAt: "" };
+        page = { file, path: fallbackPath, title: file.replace(/\.json$/i, ""), seoTitle: "", seoDescription: "", noindex: false, updatedAt: "", blockTypes: [] };
       }
       return { ...page, score: seoScore(page), issues: seoIssues(page) };
     }),
@@ -257,6 +269,15 @@ export async function loadDashboard(): Promise<DashboardData> {
   // ---- Stats -------------------------------------------------------------
   const enquiryDaily = dailyCounts(inbox.map((item) => item.receivedAt), 14, now);
   const bookings = inbox.filter((item) => item.bookingStatus);
+  const bookingDaily = dailyCounts(bookings.map((item) => item.receivedAt), 14, now);
+
+  // ---- Quick actions -------------------------------------------------------
+  const homePage = pages.find((page) => page.path === "/") ?? null;
+  const readableBlock = (type: string) => type.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  const hours = (site.contact?.openingHours ?? [])
+    .map((entry) => [entry.days, entry.hours].filter(Boolean).join(" "))
+    .filter(Boolean)
+    .join(", ");
 
   // ---- Activity ----------------------------------------------------------
   const pageTitle = new Map(pages.map((page) => [page.file, page.title]));
@@ -329,6 +350,7 @@ export async function loadDashboard(): Promise<DashboardData> {
     stats: {
       enquiries: { daily: enquiryDaily, ...weekOverWeek(enquiryDaily) },
       bookings: {
+        daily: bookingDaily,
         confirmed: bookings.filter((item) => item.bookingStatus === "confirmed").length,
         declined: bookings.filter((item) => item.bookingStatus === "declined").length,
         pending: pendingBookings.length,
@@ -350,6 +372,11 @@ export async function loadDashboard(): Promise<DashboardData> {
         surface: site.theme?.overrides?.colors?.surface ?? "#f1f5f9",
         ink: site.theme?.overrides?.colors?.ink ?? "#0f172a",
       },
+    },
+    quick: {
+      home: homePage ? { file: homePage.file, title: homePage.title, blocks: homePage.blockTypes.map(readableBlock) } : null,
+      menu: { links: site.navigation?.primary?.length ?? 0, cta: site.navigation?.cta?.label?.trim() ?? "" },
+      openingHours: hours,
     },
     deployment: {
       source,

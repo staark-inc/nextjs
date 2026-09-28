@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  ADMIN_REMEMBER_TTL_SECONDS,
+  ADMIN_SESSION_TTL_SECONDS,
   adminCredentialsMatch,
   clientAddress,
   createLoginRateLimiter,
@@ -46,10 +48,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, code: "bad_request" }, { status: 400 });
   }
 
-  const { username, password } = (body ?? {}) as { username?: unknown; password?: unknown };
+  const { username, password, remember } = (body ?? {}) as {
+    username?: unknown;
+    password?: unknown;
+    remember?: unknown;
+  };
   if (
     typeof username !== "string" ||
     typeof password !== "string" ||
+    (remember !== undefined && typeof remember !== "boolean") ||
     !username ||
     !password ||
     username.length > MAX_FIELD_LENGTH ||
@@ -67,10 +74,20 @@ export async function POST(req: NextRequest) {
   limiter.reset(key);
 
   const session = await getSession();
+  const loginAt = Date.now();
+  const remembered = remember === true;
+  const ttlSeconds = remembered ? ADMIN_REMEMBER_TTL_SECONDS : ADMIN_SESSION_TTL_SECONDS;
+
   session.isLoggedIn = true;
   session.username = config.username;
-  session.loginAt = Date.now();
+  session.loginAt = loginAt;
+  session.expiresAt = loginAt + ttlSeconds * 1000;
+  session.remember = remembered;
   await session.save();
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    expiresAt: session.expiresAt,
+    remember: remembered,
+  });
 }

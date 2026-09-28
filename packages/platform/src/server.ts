@@ -42,9 +42,11 @@ export {
 
 export {
   ADMIN_SESSION_TTL_SECONDS,
+  ADMIN_REMEMBER_TTL_SECONDS,
   ADMIN_LOGIN_PATH,
   ADMIN_HOME_PATH,
   isAdminSessionActive,
+  adminSessionExpiresAt,
   safeAdminNext,
   secureEqual,
   adminCredentialsMatch,

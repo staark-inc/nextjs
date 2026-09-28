@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { ADMIN_SESSION_TTL_SECONDS } from "@staark/platform/server";
+import type { WebsiteType } from "@staark/core";
+import { adminSessionExpiresAt } from "@staark/platform/server";
 import { getSession, isSessionActive } from "@/lib/auth";
+import { normalizeWebsiteType } from "@/lib/website-profile";
 import { peekAdminShellStatus } from "@/lib/admin-shell-status";
+import { readContentJson } from "@/lib/storage";
 import AdminShell from "./AdminShell";
 import "./admin.css";
 
@@ -21,11 +24,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!isSessionActive(session)) return children;
 
-  const status = await peekAdminShellStatus();
-  const sessionExpiresAt = (session.loginAt ?? Date.now()) + ADMIN_SESSION_TTL_SECONDS * 1000;
+  let websiteType: WebsiteType = "business";
+  try {
+    const site = await readContentJson<{ websiteType?: unknown }>("site.json");
+    websiteType = normalizeWebsiteType(site?.websiteType);
+  } catch {
+    // Admin remains usable if content storage is temporarily unavailable.
+  }
+
+
+  const [status, site] = await Promise.all([
+    peekAdminShellStatus(),
+    readContentJson<{ name?: string }>("site.json").catch(() => null),
+  ]);
+  const sessionExpiresAt = adminSessionExpiresAt(session) ?? Date.now();
 
   return (
     <AdminShell
+      websiteType={websiteType}
+      siteName={site?.name?.trim() || "Staark Hub"}
       username={session.username ?? "Admin"}
       sessionExpiresAt={sessionExpiresAt}
       initialStatus={status}

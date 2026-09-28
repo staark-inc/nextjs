@@ -209,6 +209,46 @@ export const BLOCK_FIELDS: Record<string, Field[]> = {
       ],
     },
   ],
+  leadForm: [
+    EYEBROW,
+    { name: "heading", label: "Heading", type: "text" },
+    { name: "intro", label: "Intro", type: "textarea" },
+    { name: "formId", label: "Form ID", type: "text", help: "Internal source identifier." },
+    { name: "submitLabel", label: "Submit button label", type: "text" },
+    { name: "successMessage", label: "Success message", type: "text" },
+    {
+      name: "fields",
+      label: "Form fields",
+      type: "array",
+      itemLabel: "{label}",
+      fields: [
+        { name: "name", label: "Name (key)", type: "text" },
+        { name: "label", label: "Label", type: "text" },
+        { name: "type", label: "Type", type: "select", options: ["text", "email", "tel", "textarea", "date", "time", "number"] },
+        { name: "required", label: "Required", type: "boolean" },
+      ],
+    },
+  ],
+  bookingForm: [
+    EYEBROW,
+    { name: "heading", label: "Heading", type: "text" },
+    { name: "intro", label: "Intro", type: "textarea" },
+    { name: "formId", label: "Form ID", type: "text", help: "Internal source identifier." },
+    { name: "submitLabel", label: "Submit button label", type: "text" },
+    { name: "successMessage", label: "Success message", type: "text" },
+    {
+      name: "fields",
+      label: "Booking fields",
+      type: "array",
+      itemLabel: "{label}",
+      fields: [
+        { name: "name", label: "Name (key)", type: "text" },
+        { name: "label", label: "Label", type: "text" },
+        { name: "type", label: "Type", type: "select", options: ["text", "email", "tel", "textarea", "date", "time", "number"] },
+        { name: "required", label: "Required", type: "boolean" },
+      ],
+    },
+  ],
 
   // salong
   priceList: [
