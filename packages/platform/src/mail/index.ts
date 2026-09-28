@@ -1,7 +1,9 @@
 export {
   MailConfigurationError,
   resolveMailConfig,
+  summarizeMailConfig,
   type MailConfig,
+  type MailConfigSummary,
   type DisabledMailConfig,
   type SmtpMailConfig,
 } from "./config.ts";

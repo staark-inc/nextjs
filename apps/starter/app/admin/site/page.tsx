@@ -9,6 +9,26 @@ import {
 
 type NavLink = { label: string; href: string };
 type OpeningHour = { days: string; hours: string };
+type MailStatus =
+  | {
+      transport: "disabled";
+      configured: false;
+      error?: string;
+    }
+  | {
+      transport: "smtp";
+      configured: true;
+      host: string;
+      port: number;
+      secure: boolean;
+      from: string;
+      replyTo?: string;
+      authConfigured: boolean;
+      tlsRejectUnauthorized: boolean;
+      connectionTimeoutMs: number;
+      error?: string;
+    };
+
 type SiteData = {
   name: string;
   tagline?: string;
@@ -64,11 +84,52 @@ export default function SiteEditor() {
   const [advancedJson, setAdvancedJson] = useState("");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [mailStatus, setMailStatus] = useState<MailStatus | null>(null);
+  const [mailLoading, setMailLoading] = useState(true);
+  const [mailTesting, setMailTesting] = useState<"verify" | "send" | null>(null);
+  const [mailRecipient, setMailRecipient] = useState("");
+
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
     window.setTimeout(() => setToast(null), 3500);
   }
+
+  async function loadMailStatus() {
+    setMailLoading(true);
+    try {
+      const res = await fetch("/api/admin/mail/status", {
+        cache: "no-store",
+      });
+
+      if (res.status === 403 || res.status === 401) {
+        setMailStatus(null);
+        return;
+      }
+
+      const data = (await res.json().catch(() => ({}))) as
+        | MailStatus
+        | { error?: string };
+
+      if (!("transport" in data)) {
+        throw new Error(data.error ?? "Could not load email transport status.");
+      }
+
+      setMailStatus(data);
+    } catch (error) {
+      setMailStatus({
+        transport: "disabled",
+        configured: false,
+        error: error instanceof Error ? error.message : "Could not load email transport status.",
+      });
+    } finally {
+      setMailLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadMailStatus();
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/site")
@@ -199,6 +260,63 @@ export default function SiteEditor() {
       showToast("Advanced JSON applied to the editor.", true);
     } catch {
       showToast("Invalid JSON — check the syntax before applying.", false);
+    }
+  }
+
+  async function testMailConnection() {
+    setMailTesting("verify");
+    try {
+      const res = await fetch("/api/admin/mail/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verifyOnly: true }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "SMTP connection test failed.");
+      showToast("Email connection verified.", true);
+      await loadMailStatus();
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "SMTP connection test failed.",
+        false,
+      );
+    } finally {
+      setMailTesting(null);
+    }
+  }
+
+  async function sendTestMail() {
+    const to = mailRecipient.trim();
+    if (!to) {
+      showToast("Enter an email address for the test message.", false);
+      return;
+    }
+
+    setMailTesting("send");
+    try {
+      const res = await fetch("/api/admin/mail/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        messageId?: string;
+      };
+      if (!res.ok) throw new Error(data.error ?? "Could not send test email.");
+      showToast(
+        data.messageId
+          ? `Test email sent - ${data.messageId}`
+          : "Test email sent.",
+        true,
+      );
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not send test email.",
+        false,
+      );
+    } finally {
+      setMailTesting(null);
     }
   }
 
@@ -391,6 +509,102 @@ showToast("Settings saved.", true);
             <input id="seo-og" value={site.seo?.ogImage ?? ""} onChange={(e) => setSeo("ogImage", e.target.value)} placeholder="/uploads/og.jpg" />
           </div>
         </div>
+      </section>
+
+      <section className="sa-settings-panel sa-manager-only sa-mail-settings">
+        <div className="sa-settings-panel__head">
+          <div>
+            <span className="sa-settings-kicker">Email</span>
+            <h2>Email transport</h2>
+          </div>
+          <span
+            className={`sa-badge ${
+              mailStatus?.configured ? "sa-badge--success" : "sa-badge--muted"
+            }`}
+          >
+            {mailLoading
+              ? "Checking..."
+              : mailStatus?.configured
+                ? "Configured"
+                : "Disabled"}
+          </span>
+        </div>
+
+        {mailStatus?.error ? (
+          <div className="sa-mail-settings__notice sa-mail-settings__notice--error">
+            {mailStatus.error}
+          </div>
+        ) : null}
+
+        {mailStatus?.configured ? (
+          <>
+            <dl className="sa-mail-settings__summary">
+              <div>
+                <dt>SMTP server</dt>
+                <dd><code>{mailStatus.host}:{mailStatus.port}</code></dd>
+              </div>
+              <div>
+                <dt>Security</dt>
+                <dd>{mailStatus.secure ? "TLS / SMTPS" : "STARTTLS / relay"}</dd>
+              </div>
+              <div>
+                <dt>From</dt>
+                <dd>{mailStatus.from}</dd>
+              </div>
+              <div>
+                <dt>Reply-To</dt>
+                <dd>{mailStatus.replyTo || "Uses From address"}</dd>
+              </div>
+              <div>
+                <dt>Authentication</dt>
+                <dd>{mailStatus.authConfigured ? "Configured" : "Trusted relay / none"}</dd>
+              </div>
+              <div>
+                <dt>TLS certificates</dt>
+                <dd>{mailStatus.tlsRejectUnauthorized ? "Verified" : "Verification disabled"}</dd>
+              </div>
+            </dl>
+
+            <div className="sa-mail-settings__actions">
+              <button
+                type="button"
+                className="sa-btn sa-btn--ghost"
+                onClick={testMailConnection}
+                disabled={mailTesting !== null}
+              >
+                {mailTesting === "verify" ? "Testing..." : "Test connection"}
+              </button>
+
+              <div className="sa-mail-settings__send">
+                <input
+                  type="email"
+                  value={mailRecipient}
+                  onChange={(e) => setMailRecipient(e.target.value)}
+                  placeholder="you@example.com"
+                  aria-label="Test email recipient"
+                />
+                <button
+                  type="button"
+                  className="sa-btn sa-btn--primary"
+                  onClick={sendTestMail}
+                  disabled={mailTesting !== null}
+                >
+                  {mailTesting === "send" ? "Sending..." : "Send test email"}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="sa-mail-settings__notice">
+            Email delivery is currently disabled. Configure the SMTP environment
+            variables for this deployment, recreate the container, then return
+            here to verify the connection.
+          </div>
+        )}
+
+        <p className="sa-mail-settings__hint">
+          SMTP credentials stay server-side and are never returned to this page.
+        </p>
       </section>
 
       <details className="sa-settings-advanced">

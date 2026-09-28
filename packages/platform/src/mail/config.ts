@@ -30,6 +30,24 @@ export type SmtpMailConfig = {
 
 export type MailConfig = DisabledMailConfig | SmtpMailConfig;
 
+export type MailConfigSummary =
+  | {
+      transport: "disabled";
+      configured: false;
+    }
+  | {
+      transport: "smtp";
+      configured: true;
+      host: string;
+      port: number;
+      secure: boolean;
+      from: string;
+      replyTo?: string;
+      authConfigured: boolean;
+      tlsRejectUnauthorized: boolean;
+      connectionTimeoutMs: number;
+    };
+
 function value(env: MailEnvironment, key: string): string | undefined {
   const raw = env[key];
   return raw?.trim() || undefined;
@@ -139,5 +157,31 @@ export function resolveMailConfig(
     ...(user && password ? { auth: { user, password } } : {}),
     tls: { rejectUnauthorized },
     connectionTimeoutMs,
+  };
+}
+
+export function summarizeMailConfig(
+  env: MailEnvironment = process.env,
+): MailConfigSummary {
+  const config = resolveMailConfig(env);
+
+  if (config.transport === "disabled") {
+    return {
+      transport: "disabled",
+      configured: false,
+    };
+  }
+
+  return {
+    transport: "smtp",
+    configured: true,
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    from: config.from,
+    ...(config.replyTo ? { replyTo: config.replyTo } : {}),
+    authConfigured: Boolean(config.auth),
+    tlsRejectUnauthorized: config.tls.rejectUnauthorized,
+    connectionTimeoutMs: config.connectionTimeoutMs,
   };
 }

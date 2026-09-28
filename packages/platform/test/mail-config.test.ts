@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   MailConfigurationError,
   resolveMailConfig,
+  summarizeMailConfig,
 } from "../src/mail/config.ts";
 
 test("mail transport is disabled by default", () => {
@@ -83,4 +84,32 @@ test("invalid smtp booleans and ports are rejected", () => {
       }),
     MailConfigurationError,
   );
+});
+
+test("mail summary is safe for manager UI and never exposes credentials", () => {
+  const summary = summarizeMailConfig({
+    STAARK_MAIL_TRANSPORT: "smtp",
+    SMTP_HOST: "smtp.example.com",
+    SMTP_PORT: "587",
+    SMTP_USER: "mailer@example.com",
+    SMTP_PASSWORD: "super-secret-password",
+    SMTP_FROM: "Example <mailer@example.com>",
+    SMTP_REPLY_TO: "support@example.com",
+  });
+
+  assert.deepEqual(summary, {
+    transport: "smtp",
+    configured: true,
+    host: "smtp.example.com",
+    port: 587,
+    secure: false,
+    from: "Example <mailer@example.com>",
+    replyTo: "support@example.com",
+    authConfigured: true,
+    tlsRejectUnauthorized: true,
+    connectionTimeoutMs: 10_000,
+  });
+
+  assert.equal("auth" in summary, false);
+  assert.equal(JSON.stringify(summary).includes("super-secret-password"), false);
 });

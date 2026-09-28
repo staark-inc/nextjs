@@ -75,10 +75,12 @@ export {
 export {
   MailConfigurationError,
   resolveMailConfig,
+  summarizeMailConfig,
   getMailTransport,
   verifyMailTransport,
   sendMail,
   type MailConfig,
+  type MailConfigSummary,
   type DisabledMailConfig,
   type SmtpMailConfig,
   type StaarkMailMessage,
