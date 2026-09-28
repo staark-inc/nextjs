@@ -103,6 +103,9 @@ importers:
       '@staark/core':
         specifier: workspace:*
         version: link:../core
+      nodemailer:
+        specifier: ^10.0.11
+        version: 10.0.12
     devDependencies:
       '@types/node':
         specifier: ^22.20.4
@@ -670,6 +673,10 @@ packages:
       sass:
         optional: true
 
+  nodemailer@10.0.12:
+    resolution: {integrity: sha512-PQ46oNbNMuH/Sno7B5IWIU9etytwrO0xdTFvWXpIQFRXhBAXtzD48243AS+BCbQQTPD8y3fqUrgLn0tSo77gvg==}
+    engines: {node: '>=20.0.0'}
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -1172,6 +1179,8 @@ snapshots:
       - '@babel/core'
       - '@types/node'
       - babel-plugin-macros
+
+  nodemailer@10.0.12: {}
 
   picocolors@1.1.1: {}
 

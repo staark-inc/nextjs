@@ -15,7 +15,8 @@
     "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "dependencies": {
-    "@staark/core": "workspace:*"
+    "@staark/core": "workspace:*",
+    "nodemailer": "^10.0.11"
   },
   "peerDependencies": {
     "next": ">=16.0.0",

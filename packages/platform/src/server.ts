@@ -71,3 +71,16 @@ export {
   resolveDeploymentIdentity,
   type ResolveDeploymentIdentityOptions,
 } from "./deployment/identity";
+
+export {
+  MailConfigurationError,
+  resolveMailConfig,
+  getMailTransport,
+  verifyMailTransport,
+  sendMail,
+  type MailConfig,
+  type DisabledMailConfig,
+  type SmtpMailConfig,
+  type StaarkMailMessage,
+  type StaarkMailResult,
+} from "./mail/index.ts";
