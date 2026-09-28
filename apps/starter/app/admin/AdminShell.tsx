@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AdminRole } from "@staark/platform/server";
 import type { WebsiteType } from "@staark/core";
 import type { AdminShellStatus } from "@/lib/admin-shell-status";
+import type { AdminFeature } from "@/lib/admin-features";
 import {
   WEBSITE_PROFILE_CHANGED_EVENT,
   normalizeWebsiteType,
@@ -23,6 +25,8 @@ type AdminShellProps = {
   websiteType: WebsiteType;
   siteName: string;
   username: string;
+  role: AdminRole;
+  features: AdminFeature[];
   sessionExpiresAt: number;
   initialStatus: AdminShellStatus;
   development: boolean;
@@ -86,7 +90,7 @@ function NavBadges({ item, status }: { item: AdminNavItem; status: AdminShellSta
   return null;
 }
 
-export default function AdminShell({ websiteType, children, siteName, username, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
+export default function AdminShell({ websiteType, children, siteName, username, role, features, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -96,7 +100,13 @@ export default function AdminShell({ websiteType, children, siteName, username, 
   const redirecting = useRef(false);
 
   const profile = useMemo(() => resolveWebsiteProfile(activeWebsiteType), [activeWebsiteType]);
-  const navItems = useMemo(() => getAdminNavItems(activeWebsiteType), [activeWebsiteType]);
+  const navItems = useMemo(
+    () =>
+      getAdminNavItems(activeWebsiteType).filter((item) =>
+        features.includes(item.feature),
+      ),
+    [activeWebsiteType, features],
+  );
   const navGroups = useMemo(() => getAdminNavGroups(navItems), [navItems]);
 
   useEffect(() => {
@@ -208,7 +218,7 @@ export default function AdminShell({ websiteType, children, siteName, username, 
           : styles.healthUnknown;
 
   return (
-    <div className="sa-shell sa-shell--v2">
+    <div className="sa-shell sa-shell--v2" data-admin-role={role}>
       <aside className={`sa-sidebar sa-sidebar--v2${open ? " sa-sidebar--open" : ""}`} aria-label="Admin navigation">
         <div className="sa-sidebar__brand sa-sidebar__brand--v2">
           <Link className="sa-brand" href="/admin" aria-label="Staark admin dashboard">
@@ -266,6 +276,7 @@ export default function AdminShell({ websiteType, children, siteName, username, 
           <div className="sa-sidebar__avatar">{username[0]?.toUpperCase() ?? "A"}</div>
           <div className="sa-sidebar__user-copy">
             <strong>{username}</strong>
+            <small>{role === "manager" ? "Manager account" : "Client account"}</small>
             <span className={sessionEndingSoon ? styles.sessionWarning : undefined}>
               {sessionEndingSoon ? `Session ends in ${formatRemaining(remainingMs)}` : `Signed in · ${formatRemaining(remainingMs)} left`}
             </span>
@@ -293,10 +304,13 @@ export default function AdminShell({ websiteType, children, siteName, username, 
             <button className={styles.topSearch} type="button" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to">
               <AdminIcon d={SEARCH_ICON} size={16} />
             </button>
-            <Link className={`sa-topbar__health ${healthTone}`} href="/admin/health" aria-label={`Site Health: ${healthLabel(health)}`}>
+            {features.includes("health") ? (
+              <Link className={`sa-topbar__health ${healthTone}`} href="/admin/health" aria-label={`Site Health: ${healthLabel(health)}`}>
               <span className="sa-topbar__health-dot" aria-hidden="true" />
               {healthLabel(health)}
             </Link>
+            ) : null}
+            <span className="sa-topbar__pill">{role === "manager" ? "Staark Manager" : "Client"}</span>
             {development ? <span className="sa-topbar__pill">Development</span> : null}
             <a className="sa-topbar__site-link" href="/" target="_blank" rel="noopener noreferrer">
               View site
@@ -310,7 +324,7 @@ export default function AdminShell({ websiteType, children, siteName, username, 
         </main>
       </div>
 
-      {paletteOpen ? <CommandPalette websiteType={activeWebsiteType} onClose={() => setPaletteOpen(false)} /> : null}
+      {paletteOpen ? <CommandPalette websiteType={activeWebsiteType} features={features} onClose={() => setPaletteOpen(false)} /> : null}
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { resolveAdminRole } from "@staark/platform/server";
 import { loadDashboard } from "@/lib/admin-dashboard";
 import { plural, relativeTime, type ActivityEvent } from "@/lib/dashboard-model";
 import { getSession } from "@/lib/auth";
+import { resolveAccessibleAdminFeatures } from "@/lib/admin-features";
 import AdminIcon from "./AdminIcon";
 import Greeting from "./Greeting";
 import NeedsYou from "./NeedsYou";
@@ -98,11 +100,35 @@ function seoChip(issues: string[]): { label: string; className: string | undefin
 
 export default async function AdminDashboard() {
   const [data, session] = await Promise.all([loadDashboard(), getSession()]);
-  const { stats, tasks, now } = data;
-  const firstKind = tasks[0]?.kind;
+  const { stats, now } = data;
+  const role = resolveAdminRole(session.role);
+  const features = resolveAccessibleAdminFeatures(role);
+  const isManager = role === "manager";
+  const bookingEnabled = features.includes("booking");
 
-  const summary = tasks.length
-    ? `${plural(tasks.length, "thing")} need${tasks.length === 1 ? "s" : ""} you.${
+  const visibleTasks = data.tasks.filter((task) => {
+    if (task.kind === "booking") return bookingEnabled;
+    if (task.kind === "health") return features.includes("health");
+    if (task.kind === "design") return features.includes("themes");
+    return true;
+  });
+
+  const visibleActivity = data.activity.filter((event) => {
+    if (event.kind === "backup") return features.includes("backups");
+    if (event.kind === "booking") return bookingEnabled;
+    if (!bookingEnabled && /\bbooking\b/i.test(event.text)) return false;
+    return true;
+  });
+
+  const visibleMoreTasks = {
+    ...data.moreTasks,
+    bookings: bookingEnabled ? data.moreTasks.bookings : 0,
+  };
+
+  const firstKind = visibleTasks[0]?.kind;
+
+  const summary = visibleTasks.length
+    ? `${plural(visibleTasks.length, "thing")} need${visibleTasks.length === 1 ? "s" : ""} you.${
         firstKind === "booking" ? " Bookings first." : firstKind === "health" ? " Site errors first." : ""
       }`
     : "Nothing needs you right now.";
@@ -132,31 +158,59 @@ export default async function AdminDashboard() {
 
       <section className={styles.stats} aria-label="Website at a glance">
         <article className={styles.stat}>
-          <span className={styles.statLabel}>Enquiries · last 7 days</span>
+          <span className={styles.statLabel}>Messages · last 7 days</span>
           <strong className={styles.statValue}>{stats.enquiries.current}</strong>
           <span className={styles.statNote}>{deltaText}</span>
-          <DailyBars values={stats.enquiries.daily} label="Enquiries per day, last 14 days" unit={["enquiry", "enquiries"]} />
+          <DailyBars values={stats.enquiries.daily} label="Messages per day, last 14 days" unit={["message", "messages"]} />
         </article>
 
+        {bookingEnabled ? (
+          <article className={styles.stat}>
+            <span className={styles.statLabel}>Bookings confirmed</span>
+            <strong className={styles.statValue}>
+              {stats.bookings.confirmed}
+              <small> / {stats.bookings.total}</small>
+            </strong>
+            <span className={styles.statNote}>
+              {stats.bookings.total
+                ? stats.bookings.pending
+                  ? `${stats.bookings.pending} waiting on you`
+                  : "Every request has an answer"
+                : "No booking requests yet"}
+            </span>
+            <DailyBars
+              values={stats.bookings.daily}
+              label="Booking requests per day, last 14 days"
+              unit={["booking request", "booking requests"]}
+              tone="success"
+            />
+          </article>
+        ) : (
+          <article className={styles.stat}>
+            <span className={styles.statLabel}>Needs your attention</span>
+            <strong className={styles.statValue}>{visibleTasks.length}</strong>
+            <span className={styles.statNote}>
+              {visibleTasks.length ? "Messages or website items need a look" : "Everything looks good"}
+            </span>
+            <Meter
+              value={visibleTasks.length ? 0 : 1}
+              max={1}
+              label={visibleTasks.length ? "Items need attention" : "No items need attention"}
+            />
+          </article>
+        )}
+
         <article className={styles.stat}>
-          <span className={styles.statLabel}>Bookings confirmed</span>
+          <span className={styles.statLabel}>Website</span>
           <strong className={styles.statValue}>
-            {stats.bookings.confirmed}
-            <small> / {stats.bookings.total}</small>
+            {data.pages.length}
+            <small> {data.pages.length === 1 ? "page" : "pages"}</small>
           </strong>
           <span className={styles.statNote}>
-            {stats.bookings.total
-              ? stats.bookings.pending
-                ? `${stats.bookings.pending} waiting on you`
-                : "Every request has an answer"
-              : "No booking requests yet"}
+            {plural(data.quick.menu.links, "menu link")}
+            {data.quick.menu.cta ? " + button" : ""} · {stats.media.count} {stats.media.count === 1 ? "image" : "images"}
           </span>
-          <DailyBars
-            values={stats.bookings.daily}
-            label="Booking requests per day, last 14 days"
-            unit={["booking request", "booking requests"]}
-            tone="success"
-          />
+          <Meter value={data.pages.length ? 1 : 0} max={1} label="Website content available" />
         </article>
 
         <article className={styles.stat}>
@@ -170,23 +224,48 @@ export default async function AdminDashboard() {
           </span>
           <Meter value={stats.search.ready} max={stats.search.indexed} label="Pages ready for search" />
         </article>
+      </section>
 
-        <article className={styles.stat}>
-          <span className={styles.statLabel}>Media</span>
-          <strong className={styles.statValue}>
-            {stats.media.count}
-            <small> {stats.media.count === 1 ? "file" : "files"}</small>
-          </strong>
-          <span className={styles.statNote}>
-            {stats.media.missingAlt ? `${stats.media.missingAlt} without alt text` : "All have alt text"} · {formatBytes(stats.media.bytes)}
-          </span>
-          <Meter value={stats.media.count - stats.media.missingAlt} max={stats.media.count} label="Images with alt text" />
-        </article>
+      <section className={`sa-card ${styles.overviewQuick}`}>
+        <div className="sa-card__header sa-card__header--compact">
+          <div>
+            <span className="sa-card__eyebrow">Create</span>
+            <h2>Quick actions</h2>
+          </div>
+        </div>
+        <nav className={styles.shortcuts} aria-label="Quick actions">
+          {data.quick.home ? (
+            <Link href={`/admin/pages/${encodeURIComponent(data.quick.home.file)}`} className={styles.shortcut}>
+              <strong>Edit {data.quick.home.title}</strong>
+              <span>{data.quick.home.blocks.length ? data.quick.home.blocks.slice(0, 3).join(", ") : "Home page"}</span>
+            </Link>
+          ) : (
+            <Link href="/admin/pages" className={styles.shortcut}>
+              <strong>New page</strong>
+              <span>Start from a template</span>
+            </Link>
+          )}
+          <Link href="/admin/media" className={styles.shortcut}>
+            <strong>Upload images</strong>
+            <span>JPG, PNG, WebP</span>
+          </Link>
+          <Link href="/admin/navigation" className={styles.shortcut}>
+            <strong>Change menu</strong>
+            <span>
+              {plural(data.quick.menu.links, "link")}
+              {data.quick.menu.cta ? " + button" : ""}
+            </span>
+          </Link>
+          <Link href="/admin/site" className={styles.shortcut}>
+            <strong>{data.quick.openingHours ? "Opening hours" : "Business details"}</strong>
+            <span>{data.quick.openingHours || "Contact info and address"}</span>
+          </Link>
+        </nav>
       </section>
 
       <div className={styles.grid}>
         <div className={styles.column}>
-          <NeedsYou tasks={tasks} moreTasks={data.moreTasks} />
+          <NeedsYou tasks={visibleTasks} moreTasks={visibleMoreTasks} />
 
           <section className="sa-card">
             <div className="sa-card__header">
@@ -194,11 +273,15 @@ export default async function AdminDashboard() {
                 <span className="sa-card__eyebrow">History</span>
                 <h2>Recent activity</h2>
               </div>
-              <Link href="/admin/backups">Backups <AdminIcon d={ARROW} size={16} /></Link>
+              {isManager ? (
+                <Link href="/admin/backups">Backups <AdminIcon d={ARROW} size={16} /></Link>
+              ) : (
+                <Link href="/admin/forms">View inbox <AdminIcon d={ARROW} size={16} /></Link>
+              )}
             </div>
-            {data.activity.length ? (
+            {visibleActivity.length ? (
               <ul className={styles.feed}>
-                {data.activity.map((event) => (
+                {visibleActivity.map((event) => (
                   <li key={event.id}>
                     <Link href={event.href ?? "/admin"} className={styles.feedItem}>
                       <span className={styles.feedIcon}><AdminIcon d={ACTIVITY_ICONS[event.kind]} size={15} /></span>
@@ -209,7 +292,7 @@ export default async function AdminDashboard() {
                 ))}
               </ul>
             ) : (
-              <p className={styles.emptyNote}>Edits, enquiries, uploads and backups will show up here.</p>
+              <p className={styles.emptyNote}>Edits, messages and uploads will show up here.</p>
             )}
           </section>
         </div>
@@ -251,44 +334,10 @@ export default async function AdminDashboard() {
             ) : null}
           </section>
 
-          <section className="sa-card">
-            <div className="sa-card__header sa-card__header--compact">
-              <div>
-                <span className="sa-card__eyebrow">Create</span>
-                <h2>Quick actions</h2>
-              </div>
-            </div>
-            <nav className={styles.shortcuts} aria-label="Quick actions">
-              {data.quick.home ? (
-                <Link href={`/admin/pages/${encodeURIComponent(data.quick.home.file)}`} className={styles.shortcut}>
-                  <strong>Edit {data.quick.home.title}</strong>
-                  <span>{data.quick.home.blocks.length ? data.quick.home.blocks.slice(0, 3).join(", ") : "Home page"}</span>
-                </Link>
-              ) : (
-                <Link href="/admin/pages" className={styles.shortcut}>
-                  <strong>New page</strong>
-                  <span>Start from a template</span>
-                </Link>
-              )}
-              <Link href="/admin/media" className={styles.shortcut}>
-                <strong>Upload images</strong>
-                <span>JPG, PNG, WebP</span>
-              </Link>
-              <Link href="/admin/navigation" className={styles.shortcut}>
-                <strong>Change menu</strong>
-                <span>
-                  {plural(data.quick.menu.links, "link")}
-                  {data.quick.menu.cta ? " + button" : ""}
-                </span>
-              </Link>
-              <Link href="/admin/site" className={styles.shortcut}>
-                <strong>{data.quick.openingHours ? "Opening hours" : "Business details"}</strong>
-                <span>{data.quick.openingHours || "Contact info and address"}</span>
-              </Link>
-            </nav>
-          </section>
 
-          <section className="sa-card sa-overview-design">
+
+          {isManager ? (
+            <section className="sa-card sa-overview-design">
             <div className="sa-overview-design__top">
               <div>
                 <span className="sa-card__eyebrow">Active design</span>
@@ -310,8 +359,10 @@ export default async function AdminDashboard() {
               Open Theme Studio
             </Link>
           </section>
+          ) : null}
 
-          <section className="sa-card">
+          {isManager ? (
+            <section className="sa-card">
             <div className="sa-card__header sa-card__header--compact">
               <div>
                 <span className="sa-card__eyebrow">System</span>
@@ -330,6 +381,7 @@ export default async function AdminDashboard() {
               <dd>{data.deployment.lastBackupAt ? relativeTime(data.deployment.lastBackupAt, now) : "None yet"}</dd>
             </dl>
           </section>
+          ) : null}
         </aside>
       </div>
     </>

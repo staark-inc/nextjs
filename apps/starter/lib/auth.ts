@@ -1,5 +1,6 @@
 import { getIronSession, type IronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import type { AdminRole } from "@staark/platform/server";
 import {
   ADMIN_REMEMBER_TTL_SECONDS,
   isAdminSessionActive,
@@ -9,6 +10,7 @@ import {
 export type SessionData = {
   isLoggedIn: boolean;
   username?: string;
+  role?: AdminRole;
   loginAt?: number;
   expiresAt?: number;
   remember?: boolean;

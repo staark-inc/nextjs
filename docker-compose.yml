@@ -31,9 +31,19 @@ services:
       # STAARK_S3_BUCKET, STAARK_S3_ENDPOINT, STAARK_S3_ACCESS_KEY_ID, STAARK_S3_SECRET_ACCESS_KEY
 
       # Local /admin — REQUIRED in production (the app refuses to start admin without them).
+      # Existing account = Staark Manager
       ADMIN_USERNAME: ${ADMIN_USERNAME:?set ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+
+      # Client account
+      ADMIN_CLIENT_USERNAME: ${ADMIN_CLIENT_USERNAME:?set ADMIN_CLIENT_USERNAME}
+      ADMIN_CLIENT_PASSWORD: ${ADMIN_CLIENT_PASSWORD:?set ADMIN_CLIENT_PASSWORD}
+
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set a 32+ char secret}
+
+      # Optional client capabilities. Example: booking
+      # Hub provisioning becomes the source of truth later.
+      STAARK_ENTITLEMENTS: ${STAARK_ENTITLEMENTS:-}
 
       # Safe only while the published port stays loopback-only below.
       STAARK_TRUST_PROXY: ${STAARK_TRUST_PROXY:-1}

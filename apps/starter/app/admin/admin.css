@@ -4149,3 +4149,10 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   font-size: 12.5px;
   line-height: 1.45;
 }
+
+
+/* 11B2-C: manager-only settings fragments */
+.sa-shell[data-admin-role="client"] .sa-settings-advanced,
+.sa-shell[data-admin-role="client"] .sa-manager-only {
+  display: none !important;
+}

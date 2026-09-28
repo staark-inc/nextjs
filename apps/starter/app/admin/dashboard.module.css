@@ -527,3 +527,16 @@
     transition: none;
   }
 }
+
+
+/* ---- 11B2-C role-aware overview ---------------------------------------- */
+
+.overviewQuick {
+  margin-bottom: 18px;
+}
+
+@media (min-width: 1181px) {
+  .overviewQuick .shortcuts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

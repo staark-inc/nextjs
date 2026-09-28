@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { resolveAdminRole } from "@staark/platform/server";
 import type { WebsiteType } from "@staark/core";
 import { adminSessionExpiresAt } from "@staark/platform/server";
 import { getSession, isSessionActive } from "@/lib/auth";
 import { normalizeWebsiteType } from "@/lib/website-profile";
 import { peekAdminShellStatus } from "@/lib/admin-shell-status";
+import { resolveAccessibleAdminFeatures } from "@/lib/admin-features";
 import { readContentJson } from "@/lib/storage";
 import AdminShell from "./AdminShell";
 import "./admin.css";
@@ -33,6 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
 
+  const role = resolveAdminRole(session.role);
+  const features = resolveAccessibleAdminFeatures(role);
+
   const [status, site] = await Promise.all([
     peekAdminShellStatus(),
     readContentJson<{ name?: string }>("site.json").catch(() => null),
@@ -44,6 +49,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       websiteType={websiteType}
       siteName={site?.name?.trim() || "Staark Hub"}
       username={session.username ?? "Admin"}
+      role={role}
+      features={features}
       sessionExpiresAt={sessionExpiresAt}
       initialStatus={status}
       development={process.env.NODE_ENV !== "production"}

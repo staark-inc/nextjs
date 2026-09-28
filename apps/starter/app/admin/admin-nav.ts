@@ -1,3 +1,4 @@
+import type { AdminFeature } from "@/lib/admin-features";
 import type { WebsiteType } from "@staark/core";
 import { resolveWebsiteProfile } from "@/lib/website-profile";
 
@@ -5,6 +6,7 @@ export type AdminNavGroup = "Overview" | "Leads" | "Website" | "Growth" | "Syste
 
 export type AdminNavItem = {
   href: string;
+  feature: AdminFeature;
   label: string;
   description: string;
   icon: string;
@@ -22,6 +24,7 @@ export const adminNavGroups: AdminNavGroup[] = ["Overview", "Leads", "Website", 
 const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
     href: "/admin",
+    feature: "dashboard",
     label: "Dashboard",
     description: "Overview",
     icon: "M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z",
@@ -30,6 +33,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/forms",
+    feature: "inbox",
     label: "Inbox",
     description: "Messages & forms",
     icon: "M4 4h16v16H4V4Zm0 3 8 6 8-6",
@@ -39,6 +43,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/bookings",
+    feature: "booking",
     label: "Bookings",
     description: "Booking requests",
     icon: "M4 6h16v14H4V6Zm0 4h16 M8 3v4 M16 3v4 M8 14h3 M13 14h3 M8 17h3",
@@ -48,6 +53,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/pages",
+    feature: "pages",
     label: "Pages",
     description: "Content",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 1v5h5 M8 13h8 M8 17h6",
@@ -56,6 +62,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/media",
+    feature: "media",
     label: "Media",
     description: "Images & assets",
     icon: "M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm0 12 4.5-4.5 3 3 2-2 6.5 6.5 M15.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z",
@@ -64,6 +71,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/navigation",
+    feature: "navigation",
     label: "Navigation",
     description: "Menus & links",
     icon: "M4 6h16 M4 12h10 M4 18h16 M18 10l2 2-2 2",
@@ -72,6 +80,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/themes",
+    feature: "themes",
     label: "Themes",
     description: "Look & presets",
     icon: "M12 2 3 7l9 5 9-5-9-5ZM3 12l9 5 9-5 M3 17l9 5 9-5",
@@ -80,6 +89,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/seo",
+    feature: "seo",
     label: "SEO",
     description: "Search visibility",
     icon: "M10 13a5 5 0 0 0 7.54.54l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15 M14 11a5 5 0 0 0-7.54-.54l-2 2a5 5 0 0 0 7.07 7.07l1.15-1.15",
@@ -88,6 +98,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/redirects",
+    feature: "redirects",
     label: "Redirects",
     description: "URL forwarding",
     icon: "M5 7h10a4 4 0 0 1 4 4v1 M15 9l4-4 4 4 M19 17H9a4 4 0 0 1-4-4v-1 M9 15l-4 4-4-4",
@@ -96,6 +107,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/health",
+    feature: "health",
     label: "Site Health",
     description: "Diagnostics",
     icon: "M12 3 4 6v5c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6l-8-3Z M9 12l2 2 4-5",
@@ -104,6 +116,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/backups",
+    feature: "backups",
     label: "Backups",
     description: "Restore & recovery",
     icon: "M12 3a9 9 0 1 1-8.49 6 M3 4v5h5 M12 7v5l3 2",
@@ -112,6 +125,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/site",
+    feature: "settings",
     label: "Settings",
     description: "Business details",
     icon: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2 3.46-.09-.03a1.65 1.65 0 0 0-1.82.33l-.24.14a1.65 1.65 0 0 0-.8 1.63V22h-4v-.09a1.65 1.65 0 0 0-.8-1.63l-.24-.14a1.65 1.65 0 0 0-1.82-.33l-.09.03-2-3.46.06-.06A1.65 1.65 0 0 0 6.6 15v-.28a1.65 1.65 0 0 0-.93-1.49l-.08-.04v-4l.08-.04a1.65 1.65 0 0 0 .93-1.49V7.4a1.65 1.65 0 0 0-.33-1.82l-.06-.06 2-3.46.09.03a1.65 1.65 0 0 0 1.82-.33l.24-.14a1.65 1.65 0 0 0 .8-1.63V0h4v.09a1.65 1.65 0 0 0 .8 1.63l.24.14a1.65 1.65 0 0 0 1.82.33l.09-.03 2 3.46-.06.06a1.65 1.65 0 0 0-.33 1.82v.28c0 .64.36 1.22.93 1.49l.08.04v4l-.08.04a1.65 1.65 0 0 0-.93 1.49V15Z",

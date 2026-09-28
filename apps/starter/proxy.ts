@@ -3,9 +3,15 @@ import { getIronSession } from "iron-session";
 import { adminSessionOptions, type SessionData } from "@/lib/auth";
 import { findMatchingRedirect } from "@/lib/admin-redirects";
 import {
+  canAccessAdminFeature,
+  featureForAdminPath,
+  resolveAdminEntitlements,
+} from "@/lib/admin-features";
+import {
   ADMIN_LOGIN_PATH,
   isAdminSessionActive,
   resolveAdminAuthConfig,
+  resolveAdminRole,
   safeAdminNext,
 } from "@staark/platform/server";
 
@@ -102,7 +108,26 @@ export async function proxy(req: NextRequest) {
     return res;
   }
 
-  if (active) return res;
+  if (active) {
+    const role = resolveAdminRole(session.role);
+    const feature = featureForAdminPath(pathname);
+    const entitlements = resolveAdminEntitlements();
+
+    if (feature === null || canAccessAdminFeature(role, feature, entitlements)) {
+      return res;
+    }
+
+    if (isApi) {
+      return NextResponse.json(
+        { ok: false, error: "Not authorized for this admin feature.", feature },
+        { status: 403 },
+      );
+    }
+
+    const dashboard = new URL("/admin", req.url);
+    dashboard.searchParams.set("denied", feature);
+    return NextResponse.redirect(dashboard);
+  }
 
   if (isApi) {
     return NextResponse.json({ ok: false, error: "Not authenticated." }, { status: 401 });

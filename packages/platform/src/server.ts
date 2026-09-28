@@ -41,6 +41,15 @@ export {
 } from "./admin/auth-config";
 
 export {
+  ADMIN_ROLES,
+  resolveAdminAccounts,
+  resolveAdminLoginAccount,
+  resolveAdminRole,
+  type AdminRole,
+  type AdminAccount,
+} from "./admin/roles";
+
+export {
   ADMIN_SESSION_TTL_SECONDS,
   ADMIN_REMEMBER_TTL_SECONDS,
   ADMIN_LOGIN_PATH,

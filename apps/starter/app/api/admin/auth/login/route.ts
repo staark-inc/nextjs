@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   ADMIN_REMEMBER_TTL_SECONDS,
   ADMIN_SESSION_TTL_SECONDS,
-  adminCredentialsMatch,
   clientAddress,
   createLoginRateLimiter,
   resolveAdminAuthConfig,
+  resolveAdminLoginAccount,
   type AdminAuthConfig,
   type LoginRateLimiter,
 } from "@staark/platform/server";
@@ -65,7 +65,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, code: "bad_request" }, { status: 400 });
   }
 
-  if (!adminCredentialsMatch(config, { username, password })) {
+  const account = resolveAdminLoginAccount(config, { username, password });
+  if (!account) {
     const after = limiter.recordFailure(key);
     if (!after.allowed) return tooManyAttempts(after.retryAfterSeconds);
     return NextResponse.json({ ok: false, code: "invalid", remaining: after.remaining }, { status: 401 });
@@ -79,7 +80,8 @@ export async function POST(req: NextRequest) {
   const ttlSeconds = remembered ? ADMIN_REMEMBER_TTL_SECONDS : ADMIN_SESSION_TTL_SECONDS;
 
   session.isLoggedIn = true;
-  session.username = config.username;
+  session.username = account.username;
+  session.role = account.role;
   session.loginAt = loginAt;
   session.expiresAt = loginAt + ttlSeconds * 1000;
   session.remember = remembered;

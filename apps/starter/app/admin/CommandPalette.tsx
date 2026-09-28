@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { WebsiteType } from "@staark/core";
+import type { AdminFeature } from "@/lib/admin-features";
 import AdminIcon from "./AdminIcon";
 import { getAdminNavItems, SEARCH_ICON } from "./admin-nav";
 import styles from "./AdminShell.module.css";
@@ -13,6 +14,7 @@ type Command = {
   label: string;
   hint: string;
   keywords?: string;
+  feature?: AdminFeature;
   run: { type: "route"; href: string } | { type: "external"; href: string } | { type: "logout" };
 };
 
@@ -21,9 +23,9 @@ type PageSummary = { file: string; path: string; title: string };
 const SECTION_ORDER: Command["section"][] = ["Go to", "Pages", "Actions"];
 
 const actionCommands: Command[] = [
-  { id: "action:new-page", section: "Actions", label: "Create a page", hint: "Pages", keywords: "new add", run: { type: "route", href: "/admin/pages" } },
-  { id: "action:backup", section: "Actions", label: "Create a backup", hint: "Backups", keywords: "snapshot save", run: { type: "route", href: "/admin/backups" } },
-  { id: "action:redirect", section: "Actions", label: "Add a redirect", hint: "Redirects", keywords: "301 url", run: { type: "route", href: "/admin/redirects" } },
+  { id: "action:new-page", section: "Actions", feature: "pages", label: "Create a page", hint: "Pages", keywords: "new add", run: { type: "route", href: "/admin/pages" } },
+  { id: "action:backup", section: "Actions", feature: "backups", label: "Create a backup", hint: "Backups", keywords: "snapshot save", run: { type: "route", href: "/admin/backups" } },
+  { id: "action:redirect", section: "Actions", feature: "redirects", label: "Add a redirect", hint: "Redirects", keywords: "301 url", run: { type: "route", href: "/admin/redirects" } },
   { id: "action:view-site", section: "Actions", label: "View website", hint: "Opens in a new tab", keywords: "open live public", run: { type: "external", href: "/" } },
   { id: "action:logout", section: "Actions", label: "Log out", hint: "End this session", keywords: "sign out exit", run: { type: "logout" } },
 ];
@@ -42,9 +44,11 @@ function rank(command: Command, query: string): number {
 
 export default function CommandPalette({
   websiteType,
+  features,
   onClose,
 }: {
   websiteType: WebsiteType;
+  features: AdminFeature[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -57,15 +61,26 @@ export default function CommandPalette({
 
   const navCommands = useMemo<Command[]>(
     () =>
-      getAdminNavItems(websiteType).map((item) => ({
-        id: `nav:${item.href}`,
-        section: "Go to",
-        label: item.label,
-        hint: item.description,
-        keywords: item.keywords,
-        run: { type: "route", href: item.href },
-      })),
-    [websiteType],
+      getAdminNavItems(websiteType)
+        .filter((item) => features.includes(item.feature))
+        .map((item) => ({
+          id: `nav:${item.href}`,
+          section: "Go to",
+          label: item.label,
+          hint: item.description,
+          keywords: item.keywords,
+          feature: item.feature,
+          run: { type: "route", href: item.href },
+        })),
+    [websiteType, features],
+  );
+
+  const allowedActionCommands = useMemo(
+    () =>
+      actionCommands.filter(
+        (command) => !command.feature || features.includes(command.feature),
+      ),
+    [features],
   );
 
   // Focus the input on open; give focus back to whatever had it on close.
@@ -106,10 +121,10 @@ export default function CommandPalette({
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) {
-      return [...navCommands, ...pageCommands.slice(0, 6), ...actionCommands];
+      return [...navCommands, ...pageCommands.slice(0, 6), ...allowedActionCommands];
     }
     const terms = q.split(/\s+/);
-    const found = [...navCommands, ...pageCommands, ...actionCommands].filter((command) => matches(command, terms));
+    const found = [...navCommands, ...pageCommands, ...allowedActionCommands].filter((command) => matches(command, terms));
     return found
       .map((command, index) => ({ command, index, score: rank(command, q) }))
       .sort(
@@ -120,7 +135,7 @@ export default function CommandPalette({
       )
       .map((item) => item.command)
       .slice(0, 20);
-  }, [query, pageCommands, navCommands]);
+  }, [query, pageCommands, navCommands, allowedActionCommands]);
 
   useEffect(() => {
     setActive(0);
