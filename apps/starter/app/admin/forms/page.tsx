@@ -200,6 +200,24 @@ export default function FormsPage() {
 
   const leadSubmissions = submissions.filter((s) => s.kind === "lead");
 
+  const leadSummary = {
+    new: leadSubmissions.filter(
+      (lead) => (lead.leadStage ?? "new") === "new",
+    ).length,
+    dueToday: leadSubmissions.filter(
+      (lead) => followUpState(lead.followUpAt) === "today",
+    ).length,
+    overdue: leadSubmissions.filter(
+      (lead) => followUpState(lead.followUpAt) === "overdue",
+    ).length,
+    qualified: leadSubmissions.filter(
+      (lead) => lead.leadStage === "qualified",
+    ).length,
+    offerSent: leadSubmissions.filter(
+      (lead) => lead.leadStage === "offer_sent",
+    ).length,
+  };
+
   const today = new Date().toDateString();
   const todayCount = submissions.filter((s) => new Date(s.receivedAt).toDateString() === today).length;
   const openCount = submissions.filter((s) => s.status === "new" || s.status === "read").length;
@@ -282,7 +300,43 @@ export default function FormsPage() {
           </div>
 
           {filter === "lead" ? (
-            <div className={`${styles.leadFilters} sa-toolbar sa-toolbar--wrap`}>
+            <>
+              <section className={styles.leadSummary} aria-label="Lead summary">
+                <div className={styles.leadSummaryItem}>
+                  <span>New</span>
+                  <strong>{leadSummary.new}</strong>
+                </div>
+
+                <div
+                  className={`${styles.leadSummaryItem} ${
+                    leadSummary.dueToday > 0 ? styles.leadSummaryWarning : ""
+                  }`}
+                >
+                  <span>Due today</span>
+                  <strong>{leadSummary.dueToday}</strong>
+                </div>
+
+                <div
+                  className={`${styles.leadSummaryItem} ${
+                    leadSummary.overdue > 0 ? styles.leadSummaryDanger : ""
+                  }`}
+                >
+                  <span>Overdue</span>
+                  <strong>{leadSummary.overdue}</strong>
+                </div>
+
+                <div className={styles.leadSummaryItem}>
+                  <span>Qualified</span>
+                  <strong>{leadSummary.qualified}</strong>
+                </div>
+
+                <div className={styles.leadSummaryItem}>
+                  <span>Offer sent</span>
+                  <strong>{leadSummary.offerSent}</strong>
+                </div>
+              </section>
+
+              <div className={`${styles.leadFilters} sa-toolbar sa-toolbar--wrap`}>
               <div className="sa-tab-bar">
                 <button
                   className={`sa-tab${leadStageFilter === "all" ? " sa-tab--active" : ""}`}
@@ -318,7 +372,8 @@ export default function FormsPage() {
                   );
                 })}
               </div>
-            </div>
+              </div>
+            </>
           ) : null}
 
           <div className="sa-card sa-table-card">
