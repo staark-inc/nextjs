@@ -8,6 +8,10 @@ import {
 
 import { resolvePublicContentConfig } from "./content-source";
 import {
+  preparePostgresPageDestinationRedirect,
+  upsertPostgresRedirectWithRepositories,
+} from "./admin-redirects";
+import {
   createPostgresRepositories,
   withPostgresTransaction,
   type PageRecord,
@@ -230,6 +234,22 @@ async function assertPathAvailable(
       `Path ${pathname} belongs to a deleted page. Restore or reuse that page before moving another page to this path.`,
     );
   }
+
+  const current = currentPageId
+    ? await repositories.pages.findById(siteId, currentPageId, { includeDeleted: true })
+    : null;
+  const blockingRedirect = await preparePostgresPageDestinationRedirect(
+    repositories,
+    siteId,
+    pathname,
+    current?.page.path ?? pathname,
+  );
+  if (blockingRedirect) {
+    throw new AdminPageConflictError(
+      `Path ${pathname} is reserved by redirect ${blockingRedirect.from} → ${blockingRedirect.to}. Delete or change that redirect first.`,
+    );
+  }
+
   return existing;
 }
 
@@ -360,6 +380,14 @@ export async function savePostgresAdminPage(
         saved.page.path,
       );
       await repositories.sites.upsertByKey({ key: site.key, settings });
+      await upsertPostgresRedirectWithRepositories(
+        repositories,
+        site.id,
+        current.page.path,
+        saved.page.path,
+        301,
+        "page-path-change",
+      );
     }
 
     return {
@@ -455,6 +483,24 @@ export async function restorePostgresAdminPageRevision(
 
     const restored = await repositories.pages.replace(site.id, pageId, target);
     if (!restored) throw new AdminPageNotFoundError();
+
+    if (current.page.path !== restored.page.path) {
+      const settings = replaceNavigationPath(
+        site.settings,
+        current.page.path,
+        restored.page.path,
+      );
+      await repositories.sites.upsertByKey({ key: site.key, settings });
+      await upsertPostgresRedirectWithRepositories(
+        repositories,
+        site.id,
+        current.page.path,
+        restored.page.path,
+        301,
+        "page-path-change",
+      );
+    }
+
     return restored.page;
   });
 }

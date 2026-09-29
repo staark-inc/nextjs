@@ -119,28 +119,6 @@ export async function PUT(req: Request, ctx: Ctx) {
         return NextResponse.json({ error: "Page not found." }, { status: 404 });
       }
 
-      let redirectCreated = false;
-      let redirectWarning: string | undefined;
-      if (saved.pathChanged) {
-        try {
-          await upsertRedirect(
-            saved.previousPath,
-            saved.record.page.path,
-            301,
-            "page-path-change",
-          );
-          redirectCreated = true;
-        } catch (error) {
-          // Redirects remain legacy-owned until their dedicated Storage v2
-          // phase. A redirect failure must not pretend the transactional DB
-          // page save failed after it has already committed.
-          redirectWarning = (error as Error).message || "Could not create redirect.";
-          console.warn(
-            `[staark] Page ${requested} saved in PostgreSQL, but its legacy redirect could not be written: ${redirectWarning}`,
-          );
-        }
-      }
-
       revalidatePath("/", "layout");
       revalidatePath(saved.record.page.path);
       if (saved.pathChanged) revalidatePath(saved.previousPath);
@@ -148,8 +126,7 @@ export async function PUT(req: Request, ctx: Ctx) {
       return NextResponse.json({
         ok: true,
         page: saved.record.page,
-        redirectCreated,
-        ...(redirectWarning ? { redirectWarning } : {}),
+        redirectCreated: saved.pathChanged,
       });
     } catch (error) {
       const status = error instanceof AdminPageConflictError

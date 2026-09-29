@@ -43,8 +43,8 @@ function canRedirectPublicRequest(req: NextRequest): boolean {
 /**
  * Public redirects + admin gate.
  *
- * Redirects are file-backed and resolved per request so changes from the local
- * ACP become effective immediately without rebuilding the deployment.
+ * Redirects are resolved per request from the active Storage v2 source so ACP
+ * changes become effective immediately without rebuilding the deployment.
  *
  * Admin configuration is still resolved lazily and only for admin requests.
  * Missing ADMIN_* must never take down public pages.

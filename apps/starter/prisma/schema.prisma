@@ -21,7 +21,8 @@ model Site {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  pages Page[]
+  pages     Page[]
+  redirects Redirect[]
 
   @@map("sites")
 }
@@ -87,4 +88,24 @@ model PageRevision {
 
   @@index([siteId, pageId, createdAt], map: "page_revisions_site_id_page_id_created_at_idx")
   @@map("page_revisions")
+}
+
+
+/// Runtime redirect rule owned by one Site.
+model Redirect {
+  id        String   @id @default(uuid()) @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  fromPath  String   @map("from_path") @db.VarChar(1024)
+  to        String   @db.VarChar(2048)
+  status    Int      @default(301) @db.SmallInt
+  enabled   Boolean  @default(true)
+  source    String   @default("manual") @db.VarChar(40)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "redirects_site_id_fkey")
+
+  @@unique([siteId, fromPath], map: "redirects_site_id_from_path_key")
+  @@index([siteId, enabled], map: "redirects_site_id_enabled_idx")
+  @@map("redirects")
 }

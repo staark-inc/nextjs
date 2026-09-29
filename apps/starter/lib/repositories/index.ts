@@ -10,6 +10,11 @@ export {
   type RevisionRepository,
 } from "./revision-repository";
 export type {
+  RedirectRecord,
+  RedirectRepository,
+  SaveRedirectInput,
+} from "./redirect-repository";
+export type {
   RepositorySet,
   RepositoryTransaction,
 } from "./repository-set";
