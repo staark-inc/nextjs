@@ -7,6 +7,55 @@ import {
 } from "@/lib/admin-site-settings";
 import { requireAuth } from "../guard";
 
+function normalizeOptionalSiteFields(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return input;
+  }
+
+  const body = input as Record<string, unknown>;
+  const rawNavigation = body.navigation;
+
+  if (
+    !rawNavigation ||
+    typeof rawNavigation !== "object" ||
+    Array.isArray(rawNavigation)
+  ) {
+    return input;
+  }
+
+  const navigation = rawNavigation as Record<string, unknown>;
+  const rawCta = navigation.cta;
+
+  if (
+    !rawCta ||
+    typeof rawCta !== "object" ||
+    Array.isArray(rawCta)
+  ) {
+    return input;
+  }
+
+  const cta = rawCta as Record<string, unknown>;
+  const label =
+    typeof cta.label === "string" ? cta.label.trim() : "";
+  const href =
+    typeof cta.href === "string" ? cta.href.trim() : "";
+
+  // Empty optional CTA means "no CTA".
+  // Partially completed CTA remains untouched so schema validation
+  // can correctly reject it.
+  if (label || href) {
+    return input;
+  }
+
+  const nextNavigation = { ...navigation };
+  delete nextNavigation.cta;
+
+  return {
+    ...body,
+    navigation: nextNavigation,
+  };
+}
+
 export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
@@ -32,7 +81,7 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Invalid JSON request." }, { status: 400 });
   }
 
-  const parsed = SiteSettingsSchema.safeParse(body);
+  const parsed = SiteSettingsSchema.safeParse(normalizeOptionalSiteFields(body));
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const field = issue?.path.length ? issue.path.join(".") : "site";

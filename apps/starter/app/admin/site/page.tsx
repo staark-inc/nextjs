@@ -79,7 +79,9 @@ function normalizeSite(raw: SiteData): SiteData {
       primary: [...(raw.navigation?.primary ?? [])],
       footer: [...(raw.navigation?.footer ?? [])],
       ...(raw.navigation ?? {}),
-      cta: raw.navigation?.cta ? { ...raw.navigation.cta } : { label: "", href: "" },
+      ...(raw.navigation?.cta
+        ? { cta: { ...raw.navigation.cta } }
+        : {}),
     },
     seo: { ...(raw.seo ?? {}) },
   };
