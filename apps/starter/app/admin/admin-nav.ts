@@ -93,7 +93,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/themes",
-    feature: "themes",
+    feature: "design",
     label: "Themes",
     description: "Look & presets",
     icon: "M12 2 3 7l9 5 9-5-9-5ZM3 12l9 5 9-5 M3 17l9 5 9-5",

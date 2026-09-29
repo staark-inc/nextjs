@@ -5,8 +5,11 @@ import { adminSessionExpiresAt } from "@staark/platform/server";
 import { getSession, isSessionActive } from "@/lib/auth";
 import { normalizeWebsiteType } from "@/lib/website-profile";
 import { peekAdminShellStatus } from "@/lib/admin-shell-status";
-import { resolveAccessibleAdminFeatures } from "@/lib/admin-features";
-import { readContentJson } from "@/lib/storage";
+import {
+  resolveAccessibleAdminFeatures,
+  resolveAdminEntitlements,
+} from "@/lib/admin-features";
+import { readAdminSiteSettings } from "@/lib/admin-site-settings";
 import AdminShell from "./AdminShell";
 import "./admin.css";
 
@@ -26,23 +29,34 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!isSessionActive(session)) return children;
 
-  let websiteType: WebsiteType = "business";
+  let site: Awaited<
+    ReturnType<typeof readAdminSiteSettings>
+  > | null = null;
+
   try {
-    const site = await readContentJson<{ websiteType?: unknown }>("site.json");
-    websiteType = normalizeWebsiteType(site?.websiteType);
+    site = await readAdminSiteSettings();
   } catch {
-    // Admin remains usable if content storage is temporarily unavailable.
+    // Admin remains usable if the active content source
+    // is temporarily unavailable.
   }
 
+  const websiteType: WebsiteType =
+    normalizeWebsiteType(site?.websiteType);
 
   const role = resolveAdminRole(session.role);
-  const features = resolveAccessibleAdminFeatures(role);
 
-  const [status, site] = await Promise.all([
-    peekAdminShellStatus(),
-    readContentJson<{ name?: string }>("site.json").catch(() => null),
-  ]);
-  const sessionExpiresAt = adminSessionExpiresAt(session) ?? Date.now();
+  const features =
+    resolveAccessibleAdminFeatures(role);
+
+  const entitlements =
+    resolveAdminEntitlements();
+
+  const status =
+    await peekAdminShellStatus();
+
+  const sessionExpiresAt =
+    adminSessionExpiresAt(session) ??
+    Date.now();
 
   return (
     <AdminShell
@@ -51,6 +65,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       username={session.username ?? "Admin"}
       role={role}
       features={features}
+      entitlements={entitlements}
       sessionExpiresAt={sessionExpiresAt}
       initialStatus={status}
       development={process.env.NODE_ENV !== "production"}

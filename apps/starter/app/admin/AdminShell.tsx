@@ -28,6 +28,7 @@ type AdminShellProps = {
   username: string;
   role: AdminRole;
   features: AdminFeature[];
+  entitlements: AdminFeature[];
   sessionExpiresAt: number;
   initialStatus: AdminShellStatus;
   development: boolean;
@@ -91,7 +92,7 @@ function NavBadges({ item, status }: { item: AdminNavItem; status: AdminShellSta
   return null;
 }
 
-export default function AdminShell({ websiteType, children, siteName, username, role, features, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
+export default function AdminShell({ websiteType, children, siteName, username, role, features, entitlements, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -106,12 +107,39 @@ export default function AdminShell({ websiteType, children, siteName, username, 
   );
 
   const visibleFeatures = useMemo<AdminFeature[]>(() => {
-    if (role === "manager") return features;
+    if (role === "client") {
+      return [
+        ...resolveClientFeatures(
+          activeWebsiteType,
+          features,
+        ),
+      ];
+    }
 
-    return [
-      ...resolveClientFeatures(activeWebsiteType, features),
-    ];
-  }, [activeWebsiteType, features, role]);
+    const contextualProductFeatures =
+      new Set<AdminFeature>(
+        resolveClientFeatures(
+          activeWebsiteType,
+          entitlements,
+        ),
+      );
+
+    return features.filter((feature) => {
+      if (
+        feature !== "booking" &&
+        feature !== "services"
+      ) {
+        return true;
+      }
+
+      return contextualProductFeatures.has(feature);
+    });
+  }, [
+    activeWebsiteType,
+    entitlements,
+    features,
+    role,
+  ]);
 
   const navItems = useMemo(
     () =>

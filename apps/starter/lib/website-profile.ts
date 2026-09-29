@@ -121,11 +121,9 @@ const BASE_CLIENT_FEATURES: readonly AdminFeature[] = [
   "inbox",
   "pages",
   "media",
-  "themes",
   "navigation",
+  "design",
   "seo",
-  "redirects",
-  "backups",
   "settings",
 ];
 

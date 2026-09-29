@@ -11,7 +11,7 @@ import {
 import {
   resolveClientFeatures,
 } from "@/lib/website-profile";
-import { readContentJson } from "@/lib/storage";
+import { readAdminSiteSettings } from "@/lib/admin-site-settings";
 import {
   ADMIN_LOGIN_PATH,
   isAdminSessionActive,
@@ -156,10 +156,11 @@ export async function proxy(req: NextRequest) {
         let websiteType: unknown;
 
         try {
-          const site = await readContentJson<{ websiteType?: unknown }>(
-            "site.json",
-          );
-          websiteType = site?.websiteType;
+          const site =
+            await readAdminSiteSettings();
+
+          websiteType =
+            site.websiteType;
         } catch {
           // Fall back to the restrictive generic client profile.
           websiteType = "business";
@@ -168,12 +169,14 @@ export async function proxy(req: NextRequest) {
         const availableFeatures =
           resolveAccessibleAdminFeatures(role);
 
-        const clientFeatures = resolveClientFeatures(
-          websiteType,
-          availableFeatures,
-        );
+        const clientFeatures =
+          resolveClientFeatures(
+            websiteType,
+            availableFeatures,
+          );
 
-        allowed = clientFeatures.includes(feature);
+        allowed =
+          clientFeatures.includes(feature);
       }
     }
 
