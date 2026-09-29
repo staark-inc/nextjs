@@ -36,3 +36,12 @@ export function getPrismaClient(): PrismaClient {
 
   return globalForPrisma.__staarkPrisma;
 }
+
+/** Close the lazily-created client so one-shot CLI jobs can exit cleanly. */
+export async function disconnectPrismaClient(): Promise<void> {
+  const prisma = globalForPrisma.__staarkPrisma;
+  if (!prisma) return;
+
+  await prisma.$disconnect();
+  delete globalForPrisma.__staarkPrisma;
+}

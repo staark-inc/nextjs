@@ -49,3 +49,48 @@ The existing Backup & Restore implementation snapshots logical storage paths. On
 - Block ordering is indexed but not database-unique. Reorder operations can therefore update positions safely inside one transaction; repositories normalize positions before commit.
 - `PageRevision.snapshot` stores the complete page domain snapshot, including blocks, matching the current restore semantics and allowing historical restore even after block schemas evolve.
 - The current max-50 revision policy remains repository behavior, not a database constraint.
+
+
+## Phase 3 legacy JSON importer
+
+Phase 3 adds a one-shot, repository-backed importer for the Phase 1 models. It does **not** switch runtime reads or admin writes to PostgreSQL.
+
+Safety properties:
+
+- dry-run is the default; database writes require an explicit `--write`;
+- `site.json` and every page are validated with the shared `@staark/core` schemas before any write;
+- page paths and block ids are checked for collisions before any write;
+- writes run inside one PostgreSQL repository transaction;
+- the importer is idempotent: unchanged site/pages/revision checksums are skipped;
+- soft-deleted pages found in the source are reactivated rather than duplicated;
+- database pages missing from the source are reported and left untouched; there is no prune/delete mode;
+- legacy `.staark/revisions/pages/**` history is imported when present, preserving checksum, timestamp, reason and full page snapshot;
+- orphan revision history blocks a write instead of being silently discarded;
+- source JSON, `/data`, media and object-storage bytes are never modified.
+
+The source may be either a storage root containing `content/site.json` (for example `/data` or a theme demo root) or the `content` directory itself.
+
+### First migration rehearsal: Kreatör
+
+From the repository root, with `DATABASE_URL` pointing at the Phase 1 database:
+
+```bash
+pnpm install
+
+pnpm --filter @staark/starter db:import:legacy -- \
+  --source ../../themes/kreator/demo \
+  --site-key kreator-demo
+```
+
+The first command is a dry-run and must report zero writes. Review the plan, then apply exactly the same source/key explicitly:
+
+```bash
+pnpm --filter @staark/starter db:import:legacy -- \
+  --source ../../themes/kreator/demo \
+  --site-key kreator-demo \
+  --write
+```
+
+Immediately repeat the dry-run. A successful idempotency check should report the site/pages as `unchanged` and no new revisions to create.
+
+For a persisted deployment root, use the same flow with its storage root, for example `--source /data --site-key <stable-client-key>`. `--skip-revisions` exists only for an intentional content-only migration; do not use it to hide orphan revision warnings during a real cutover.

@@ -102,6 +102,7 @@ export class PostgresRevisionRepository implements RevisionRepository {
         reason,
         checksum,
         snapshot: toPrismaJson(page),
+        ...(input.createdAt ? { createdAt: input.createdAt } : {}),
       },
     });
 

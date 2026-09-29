@@ -22,6 +22,8 @@ export type CreatePageRevisionInput = {
    * New revisions calculate the checksum when this field is omitted.
    */
   checksum?: string;
+  /** Preserve the historical timestamp when importing legacy revisions. */
+  createdAt?: Date;
 };
 
 export interface RevisionRepository {

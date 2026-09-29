@@ -13,7 +13,8 @@
     "db:generate": "prisma generate --config prisma7.config.ts",
     "db:migrate:dev": "prisma migrate dev --config prisma7.config.ts",
     "db:migrate:deploy": "prisma migrate deploy --config prisma7.config.ts",
-    "db:status": "prisma migrate status --config prisma7.config.ts"
+    "db:status": "prisma migrate status --config prisma7.config.ts",
+    "db:import:legacy": "tsx scripts/import-legacy-content.ts"
   },
   "dependencies": {
     "@staark/core": "workspace:*",
@@ -41,6 +42,7 @@
     "@types/react-dom": "^19.3.0",
     "typescript": "^5.9.3",
     "@types/pg": "8.23.1",
-    "prisma": "7.10.0"
+    "prisma": "7.10.0",
+    "tsx": "4.23.15"
   }
 }
