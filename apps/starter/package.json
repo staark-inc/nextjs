@@ -16,7 +16,8 @@
     "db:status": "prisma migrate status --config prisma7.config.ts",
     "db:import:legacy": "tsx scripts/import-legacy-content.ts",
     "db:import:redirects": "tsx scripts/import-legacy-redirects.ts",
-    "db:import:submissions": "tsx scripts/import-legacy-submissions.ts"
+    "db:import:submissions": "tsx scripts/import-legacy-submissions.ts",
+    "db:bootstrap-site": "tsx scripts/bootstrap-site.ts"
   },
   "dependencies": {
     "@staark/core": "workspace:*",
