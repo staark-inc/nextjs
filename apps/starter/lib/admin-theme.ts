@@ -1,5 +1,8 @@
 import { getThemeRuntime } from "@/lib/theme-runtime";
-import { readContentJson, writeContentJson } from "@/lib/storage";
+import {
+  readAdminSiteSettings,
+  writeAdminSiteSettings,
+} from "@/lib/admin-site-settings";
 
 export type ThemeTokens = {
   colors?: Record<string, string>;
@@ -26,13 +29,12 @@ export type SiteThemeConfig = {
 };
 
 export async function readSite(): Promise<Record<string, unknown>> {
-  const site = await readContentJson<Record<string, unknown>>("site.json");
-  if (!site) throw new Error("Site settings not found.");
-  return site;
+  const site = await readAdminSiteSettings();
+  return site as unknown as Record<string, unknown>;
 }
 
 export async function writeSite(site: Record<string, unknown>): Promise<void> {
-  await writeContentJson("site.json", site);
+  await writeAdminSiteSettings(site);
 }
 
 function asStringRecord(value: unknown): Record<string, string> {

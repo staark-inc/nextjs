@@ -1,18 +1,24 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { SiteSettingsSchema } from "@staark/core";
-import { readContentJson, writeContentJson } from "@/lib/storage";
+import {
+  mutateAdminSiteSettings,
+  readAdminSiteSettings,
+} from "@/lib/admin-site-settings";
 import { requireAuth } from "../guard";
 
 export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
-  const site = await readContentJson<unknown>("site.json");
-  if (site === null) {
-    return NextResponse.json({ error: "Site settings not found." }, { status: 404 });
+  try {
+    return NextResponse.json(await readAdminSiteSettings());
+  } catch (error) {
+    return NextResponse.json(
+      { error: (error as Error).message || "Site settings not found." },
+      { status: 404 },
+    );
   }
-  return NextResponse.json(site);
 }
 
 export async function PUT(req: Request) {
@@ -30,21 +36,28 @@ export async function PUT(req: Request) {
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const field = issue?.path.length ? issue.path.join(".") : "site";
-    return NextResponse.json({ error: `${field}: ${issue?.message ?? "Invalid site settings."}` }, { status: 422 });
+    return NextResponse.json(
+      { error: `${field}: ${issue?.message ?? "Invalid site settings."}` },
+      { status: 422 },
+    );
   }
 
-  const existing = await readContentJson<unknown>("site.json");
-  const existingParsed = SiteSettingsSchema.safeParse(existing);
-  const lockedWebsiteType = existingParsed.success
-    ? existingParsed.data.websiteType
-    : "business";
+  try {
+    // websiteType is provisioned/managed by Staark. The Settings editor may
+    // round-trip it, but must never change it locally.
+    const site = await mutateAdminSiteSettings((current) =>
+      SiteSettingsSchema.parse({
+        ...parsed.data,
+        websiteType: current.websiteType,
+      }),
+    );
 
-  const site = {
-    ...parsed.data,
-    websiteType: lockedWebsiteType,
-  };
-
-  await writeContentJson("site.json", site);
-  revalidatePath("/", "layout");
-  return NextResponse.json({ ok: true, site });
+    revalidatePath("/", "layout");
+    return NextResponse.json({ ok: true, site });
+  } catch (error) {
+    return NextResponse.json(
+      { error: (error as Error).message || "Could not save site settings." },
+      { status: 500 },
+    );
+  }
 }

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { SiteSettingsSchema } from "@staark/core";
 import {
-  contentStoragePath,
-  listContent,
-  readContentJson,
-  writeContentJson,
-} from "@/lib/storage";
+  listAdminPageOptions,
+  mutateAdminSiteSettings,
+  readAdminSiteSettings,
+} from "@/lib/admin-site-settings";
 import { requireAuth } from "../guard";
 
 type Link = { label: string; href: string };
@@ -73,35 +73,6 @@ function normalizeNavigation(input: unknown): Navigation {
   return { primary, footer, footerColumns, ...(cta ? { cta } : {}) };
 }
 
-async function pageFiles(): Promise<string[]> {
-  const prefix = `${contentStoragePath("pages")}/`;
-  return (await listContent("pages"))
-    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
-    .filter((file) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
-    .sort();
-}
-
-async function pageOptions(): Promise<Array<{ path: string; title: string }>> {
-  try {
-    const files = await pageFiles();
-    const pages = await Promise.all(files.map(async (file) => {
-      try {
-        const page = await readContentJson<Record<string, unknown>>(`pages/${file}`);
-        if (!page) return null;
-        return {
-          path: typeof page.path === "string" ? page.path : "",
-          title: typeof page.title === "string" ? page.title : file.replace(/\.json$/i, ""),
-        };
-      } catch {
-        return null;
-      }
-    }));
-    return pages.filter((page): page is { path: string; title: string } => Boolean(page?.path));
-  } catch {
-    return [];
-  }
-}
-
 function internalPath(href: string): string | null {
   if (!href.startsWith("/")) return null;
   return href.split(/[?#]/, 1)[0] || "/";
@@ -136,16 +107,19 @@ export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
-  const [site, pages] = await Promise.all([
-    readContentJson<Record<string, unknown>>("site.json"),
-    pageOptions(),
-  ]);
-  if (!site) {
-    return NextResponse.json({ error: "Site settings not found." }, { status: 404 });
+  try {
+    const [site, pages] = await Promise.all([
+      readAdminSiteSettings(),
+      listAdminPageOptions(),
+    ]);
+    const navigation = normalizeNavigation(site.navigation);
+    return NextResponse.json({ navigation, pages, warnings: warnings(navigation, pages) });
+  } catch (error) {
+    return NextResponse.json(
+      { error: (error as Error).message || "Site settings not found." },
+      { status: 500 },
+    );
   }
-
-  const navigation = normalizeNavigation(site.navigation ?? { primary: [], footer: [] });
-  return NextResponse.json({ navigation, pages, warnings: warnings(navigation, pages) });
 }
 
 export async function PUT(req: Request) {
@@ -156,15 +130,19 @@ export async function PUT(req: Request) {
     const body = (await req.json()) as Record<string, unknown>;
     const navigation = normalizeNavigation(body.navigation);
     const [site, pages] = await Promise.all([
-      readContentJson<Record<string, unknown>>("site.json"),
-      pageOptions(),
+      mutateAdminSiteSettings((current) =>
+        SiteSettingsSchema.parse({ ...current, navigation }),
+      ),
+      listAdminPageOptions(),
     ]);
-    if (!site) throw new Error("Site settings not found.");
 
-    site.navigation = navigation;
-    await writeContentJson("site.json", site);
+    const savedNavigation = normalizeNavigation(site.navigation);
     revalidatePath("/", "layout");
-    return NextResponse.json({ ok: true, navigation, warnings: warnings(navigation, pages) });
+    return NextResponse.json({
+      ok: true,
+      navigation: savedNavigation,
+      warnings: warnings(savedNavigation, pages),
+    });
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || "Could not save navigation." },

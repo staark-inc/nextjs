@@ -1,7 +1,9 @@
 import {
+  readSite,
   readThemePresets,
   sanitizeComponents,
   sanitizeOverrides,
+  writeSite,
   type AdminThemePreset,
   type ThemeOverrides,
 } from "@/lib/admin-theme";
@@ -9,11 +11,9 @@ import { resolveThemeRuntime } from "@/lib/theme-runtime";
 import {
   deleteState,
   listState,
-  readContentJson,
   readStateJson,
   stateExists,
   stateStoragePath,
-  writeContentJson,
   writeStateJson,
 } from "@/lib/storage";
 
@@ -308,8 +308,7 @@ export async function applyStudioTheme(id: string): Promise<{
 }> {
   const theme = await readStudioTheme(id);
   const contentDir = process.env.STAARK_CONTENT_DIR?.trim() || "content";
-  const site = await readContentJson<Record<string, unknown>>("site.json");
-  if (!site) throw new Error("Site settings not found.");
+  const site = await readSite();
   const previousTheme =
     site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
       ? (site.theme as Record<string, unknown>)
@@ -349,7 +348,7 @@ export async function applyStudioTheme(id: string): Promise<{
       appliedAt,
     },
   };
-  await writeContentJson("site.json", site);
+  await writeSite(site);
 
   return {
     theme,

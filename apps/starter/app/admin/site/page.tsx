@@ -66,7 +66,13 @@ function normalizeSite(raw: SiteData): SiteData {
       email: "",
       phone: "",
       ...(raw.contact ?? {}),
-      address: { ...(raw.contact?.address ?? {}) },
+      address: {
+        street: "",
+        postalCode: "",
+        city: "",
+        country: "SE",
+        ...(raw.contact?.address ?? {}),
+      },
       openingHours: [...(raw.contact?.openingHours ?? [])],
     },
     navigation: {
