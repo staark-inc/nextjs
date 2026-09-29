@@ -9,5 +9,5 @@ import type { PrismaClient } from "@/generated/prisma/client";
  */
 export type RepositoryDbClient = Pick<
   PrismaClient,
-  "site" | "page" | "pageRevision" | "redirect"
+  "site" | "page" | "pageRevision" | "redirect" | "submission"
 >;

@@ -9,6 +9,7 @@ import { PostgresPageRepository } from "./page-repository";
 import { PostgresRedirectRepository } from "./redirect-repository";
 import { PostgresRevisionRepository } from "./revision-repository";
 import { PostgresSiteRepository } from "./site-repository";
+import { PostgresSubmissionRepository } from "./submission-repository";
 
 export function createPostgresRepositories(
   db: RepositoryDbClient = getPrismaClient(),
@@ -18,6 +19,7 @@ export function createPostgresRepositories(
     pages: new PostgresPageRepository(db),
     revisions: new PostgresRevisionRepository(db),
     redirects: new PostgresRedirectRepository(db),
+    submissions: new PostgresSubmissionRepository(db),
   };
 }
 

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { cache } from "react";
 import {
   normalizePath,
@@ -109,6 +110,44 @@ const postgresPage = cache(async (pagePath: string): Promise<Page | null> => {
   return record?.page ?? null;
 });
 
+
+function newSubmissionReference(): string {
+  return `SFS-${randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase()}`;
+}
+
+async function submitPostgresForm(
+  submission: Parameters<StaarkContent["submitForm"]>[0],
+): Promise<void> {
+  const repo = repositories();
+  const site = await repo.sites.findByKey(publicContentConfig.siteKey);
+  if (!site) {
+    throw new Error(
+      `No PostgreSQL Site exists for STAARK_SITE_KEY="${publicContentConfig.siteKey}".`,
+    );
+  }
+
+  const receivedAt = new Date().toISOString();
+  await repo.submissions.create({
+    siteId: site.id,
+    id: newSubmissionReference(),
+    formId: submission.formId,
+    kind: submission.kind,
+    fields: submission.fields,
+    pageUrl: submission.pageUrl,
+    meta: submission.meta,
+    status: "new",
+    bookingStatus: submission.kind === "booking" ? "pending" : undefined,
+    receivedAt,
+    activity: [
+      {
+        at: receivedAt,
+        actor: "system",
+        message: "Submission received",
+      },
+    ],
+  });
+}
+
 const postgresContent: StaarkContent = {
   // Connection still describes the existing Hub/fixture transport. Public
   // reads are selected independently through STAARK_DATA_SOURCE.
@@ -145,9 +184,9 @@ const postgresContent: StaarkContent = {
     }
   },
 
-  // PHASE 4 migrates public reads only. Inbox/submission persistence is still
-  // legacy/Hub-owned until its dedicated Storage v2 phase.
-  submitForm: (submission) => legacyContent.submitForm(submission),
+  // PHASE 8: accepted forms persist in the same PostgreSQL tenant as content.
+  // No dual-write: legacy/Hub submission persistence is used only in legacy mode.
+  submitForm: (submission) => submitPostgresForm(submission),
 };
 
 /**

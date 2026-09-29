@@ -22,7 +22,8 @@ model Site {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   pages     Page[]
-  redirects Redirect[]
+  redirects   Redirect[]
+  submissions Submission[]
 
   @@map("sites")
 }
@@ -108,4 +109,45 @@ model Redirect {
   @@unique([siteId, fromPath], map: "redirects_site_id_from_path_key")
   @@index([siteId, enabled], map: "redirects_site_id_enabled_idx")
   @@map("redirects")
+}
+
+
+/// A website form submission. `fields` stays JSONB because forms are intentionally flexible,
+/// while workflow state is normalized for Inbox/Bookings/CRM queries.
+model Submission {
+  siteId        String   @map("site_id") @db.Uuid
+  id            String   @db.VarChar(80)
+  formId        String   @map("form_id") @db.VarChar(64)
+  kind          String   @db.VarChar(20)
+  fields        Json     @default("{}") @db.JsonB
+  pageUrl       String?  @map("page_url") @db.VarChar(2048)
+  meta          Json     @default("{}") @db.JsonB
+  status        String   @default("new") @db.VarChar(20)
+  bookingStatus String?  @map("booking_status") @db.VarChar(20)
+  receivedAt    DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site       Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "submissions_site_id_fkey")
+  activities SubmissionActivity[]
+
+  @@id([siteId, id], map: "submissions_pkey")
+  @@index([siteId, kind, status, receivedAt], map: "submissions_site_id_kind_status_received_at_idx")
+  @@index([siteId, bookingStatus, receivedAt], map: "submissions_site_id_booking_status_received_at_idx")
+  @@map("submissions")
+}
+
+/// Timeline entry for Inbox/booking activity.
+model SubmissionActivity {
+  id           String   @id @default(uuid()) @db.Uuid
+  siteId       String   @map("site_id") @db.Uuid
+  submissionId String   @map("submission_id") @db.VarChar(80)
+  at           DateTime @default(now()) @db.Timestamptz(3)
+  actor        String   @db.VarChar(80)
+  message      String   @db.VarChar(500)
+
+  submission Submission @relation(fields: [siteId, submissionId], references: [siteId, id], onDelete: Cascade, map: "submission_activities_site_id_submission_id_fkey")
+
+  @@index([siteId, submissionId, at], map: "submission_activities_site_id_submission_id_at_idx")
+  @@map("submission_activities")
 }

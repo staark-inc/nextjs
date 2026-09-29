@@ -15,6 +15,17 @@ export type {
   SaveRedirectInput,
 } from "./redirect-repository";
 export type {
+  BookingStatus,
+  CreateSubmissionActivityInput,
+  CreateSubmissionInput,
+  SubmissionActivityRecord,
+  SubmissionListOptions,
+  SubmissionRecord,
+  SubmissionRepository,
+  SubmissionStatus,
+  UpdateSubmissionInput,
+} from "./submission-repository";
+export type {
   RepositorySet,
   RepositoryTransaction,
 } from "./repository-set";
