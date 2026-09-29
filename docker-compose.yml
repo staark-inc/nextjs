@@ -17,6 +17,13 @@ services:
       STAARK_CONTENT_DIR: ${STAARK_CONTENT_DIR:-content/webb}
       STAARK_CONTENT_SOURCE: ${STAARK_CONTENT_SOURCE:-fixtures}
 
+      # Storage v2 public read cutover. These do not change Hub/fixture transport.
+      STAARK_DATA_SOURCE: ${STAARK_DATA_SOURCE:-legacy}
+      STAARK_DATA_FALLBACK: ${STAARK_DATA_FALLBACK:-none}
+      STAARK_SITE_KEY: ${STAARK_SITE_KEY:-}
+      # When web runs in this compose network, PostgreSQL is reached as db:5432.
+      DATABASE_URL: ${DATABASE_URL:-}
+
       # Stable deployment identity + release metadata used by the Hub update channel.
       # Leave STAARK_DEPLOYMENT_ID empty to generate/persist one under /data.
       STAARK_DEPLOYMENT_ID: ${STAARK_DEPLOYMENT_ID:-}

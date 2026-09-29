@@ -22,6 +22,12 @@ WORKDIR /repo
 # (for example @staark/platform -> @staark/core and themes -> theme-light).
 COPY --from=deps /repo ./
 COPY . .
+# Prisma client is generated, not committed. Generate it in every fresh image
+# before Next.js traces the PostgreSQL repository dependency graph. `generate`
+# does not connect to PostgreSQL; the placeholder URL only satisfies config
+# validation during the image build.
+RUN DATABASE_URL=postgresql://staark:build-only@127.0.0.1:5432/staark \
+    pnpm --filter @staark/starter db:generate
 RUN pnpm --filter @staark/starter build
 
 # 3. Minimal runtime — only the standalone output + static assets + content
