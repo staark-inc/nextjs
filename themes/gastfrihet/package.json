@@ -4,10 +4,13 @@
   "description": "S-Hub Gästfrihet — child theme of S-Hub Light for guesthouses, B&Bs and small hotels (rooms, amenities, gallery).",
   "private": true,
   "type": "module",
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./manifest": "./src/manifest.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

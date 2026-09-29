@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { readSite, readSiteTheme } from "@/lib/admin-theme";
 import { resolveThemeRuntime } from "@/lib/theme-runtime";
+import {
+  availableBlockIdsForTheme,
+  themeOwnedBlockIds,
+  resolveThemeManifest,
+} from "@/lib/theme-manifests";
 import { requireAuth } from "../guard";
+import {
+  themeBlockTemplatesFor,
+} from "@/lib/theme-admin-registry";
 
 type BlockTemplate = {
   type: string;
@@ -294,90 +302,32 @@ const BASE_BLOCKS: BlockTemplate[] = [
   },
 ];
 
-const THEME_BLOCKS: Record<string, BlockTemplate[]> = {
-  salong: [
-    {
-      type: "priceList",
-      label: "Price list",
-      description: "Service price list grouped by category.",
-      icon: "receipt",
-      template: {
-        eyebrow: "Prices",
-        heading: "Our prices",
-        categories: [
-          {
-            name: "Haircut",
-            items: [
-              { name: "Women's cut", price: "495 kr", duration: "45 min" },
-              { name: "Men's cut", price: "395 kr", duration: "30 min" },
-            ],
-          },
-        ],
-      },
-    },
-    {
-      type: "gallery",
-      label: "Gallery",
-      description: "Image gallery to showcase your work.",
-      icon: "image",
-      template: {
-        heading: "Our work",
-        images: [
-          { src: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=70", alt: "Work sample 1" },
-          { src: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=70", alt: "Work sample 2" },
-        ],
-      },
-    },
-  ],
-  gastfrihet: [
-    {
-      type: "rooms",
-      label: "Rooms",
-      description: "Room cards with price, capacity and amenities.",
-      icon: "bed",
-      template: {
-        eyebrow: "Rooms",
-        heading: "Available rooms",
-        intro: "Browse our rooms and find your perfect stay.",
-        rooms: [
-          {
-            name: "Standard room",
-            image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=70",
-            occupancy: "2 guests",
-            description: "A comfortable room with a view.",
-            price: "990 kr/night",
-            amenities: ["Double bed", "Private bath", "WiFi"],
-            href: "/kontakt",
-          },
-        ],
-      },
-    },
-    {
-      type: "amenities",
-      label: "Amenities",
-      description: "Icon grid showing available amenities and facilities.",
-      icon: "sparkles",
-      template: {
-        heading: "Amenities",
-        intro: "Everything you need for a comfortable stay.",
-        items: [
-          { label: "Breakfast included", icon: "🍳" },
-          { label: "Free WiFi", icon: "📶" },
-          { label: "Free parking", icon: "🚗" },
-          { label: "Pets welcome", icon: "🐾" },
-        ],
-      },
-    },
-  ],
-};
-
 export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
   const site = await readSite();
   const activeTheme = resolveThemeRuntime(readSiteTheme(site).family).id;
-  const blocks = [...BASE_BLOCKS, ...(THEME_BLOCKS[activeTheme] ?? [])];
+  const blocks = [
+    ...BASE_BLOCKS,
+    ...themeBlockTemplatesFor(activeTheme),
+  ];
 
-  return NextResponse.json({ blocks, theme: activeTheme });
+  const allowedBlockIds = availableBlockIdsForTheme(activeTheme);
+  const availableBlocks = blocks.filter((item) => allowedBlockIds.has(item.type));
+
+  const activeManifest = resolveThemeManifest(activeTheme);
+  const commonBlockIds = [...themeOwnedBlockIds("light")];
+  const activeThemeOwnedBlockIds =
+    activeTheme === "light"
+      ? []
+      : [...themeOwnedBlockIds(activeTheme)];
+
+  return NextResponse.json({
+    blocks: availableBlocks,
+    theme: activeTheme,
+    themeName: activeManifest.name,
+    commonBlockIds,
+    themeOwnedBlockIds: activeThemeOwnedBlockIds,
+  });
 }

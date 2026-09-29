@@ -1,0 +1,50 @@
+{
+  "id": "skonhet",
+  "name": "Skönhet",
+  "description": "Hair & nail studio direction: warm porcelain, deep plum ink and accent, blush surfaces, Instrument Serif display with italics and soft rounded shapes.",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "ink": "#2A1E26",
+      "muted": "#6E5F68",
+      "line": "#E8DCE0",
+      "paper": "#FBF7F5",
+      "surface": "#F4E8EA",
+      "white": "#FFFFFF",
+      "primary": "#6B2F4F",
+      "primaryDark": "#51213B",
+      "primarySoft": "#F3E1EA",
+      "success": "#3F6B55",
+      "forest": "#2A1E26",
+      "forestDeep": "#1E151B",
+      "gold": "#C9A27A"
+    },
+    "typography": {
+      "body": "\"Manrope Variable\", Manrope, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "display": "\"Instrument Serif\", \"Iowan Old Style\", Georgia, serif",
+      "displayWeight": "400",
+      "label": "\"Manrope Variable\", Manrope, ui-sans-serif, system-ui, sans-serif",
+      "headingWeight": "400",
+      "headingStretch": "normal",
+      "headingCase": "none"
+    },
+    "radius": {
+      "sm": "12px",
+      "md": "20px",
+      "lg": "32px",
+      "button": "999px"
+    },
+    "layout": {
+      "content": "720px",
+      "wide": "1200px",
+      "wrap": "1200px"
+    }
+  },
+  "components": {
+    "header": "skonhet",
+    "buttons": "pill",
+    "cards": "soft",
+    "hero": "split",
+    "footer": "dark"
+  }
+}

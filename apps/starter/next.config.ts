@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   // Compile the workspace theme/core TypeScript sources directly.
-  transpilePackages: ["@staark/core", "@staark/platform", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-gastfrihet", "@staark/theme-byra", "@staark/theme-webb"],
+  transpilePackages: ["@staark/core", "@staark/platform", "@staark/theme-kit", "@staark/theme-light", "@staark/theme-salong", "@staark/theme-skonhet", "@staark/theme-el", "@staark/theme-kreator", "@staark/theme-gastfrihet", "@staark/theme-byra", "@staark/theme-webb"],
   async headers() {
     return [{ source: "/:path*", headers: staarkSecurityHeaders() }];
   },

@@ -1,15 +1,18 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
-import { BLOCK_FIELDS, isScalarWrapper, validateBlock, type Field, type FieldError } from "@/lib/block-fields";
+import { blockFieldsForTheme, isScalarWrapper, validateBlock, type Field, type FieldError } from "@/lib/block-fields";
 import { MediaPicker } from "./MediaPicker";
 
 export { validateBlock };
 export type { FieldError };
 
 /** True if a block type has a generated form (otherwise the editor uses JSON). */
-export function hasFieldForm(type: string): boolean {
-  return Boolean(BLOCK_FIELDS[type]);
+export function hasFieldForm(
+  type: string,
+  themeId?: string,
+): boolean {
+  return Boolean(blockFieldsForTheme(themeId, type));
 }
 
 type Obj = Record<string, unknown>;
@@ -74,13 +77,15 @@ export function BlockFieldForm({
   value,
   onChange,
   errors,
+  themeId,
 }: {
   type: string;
   value: Obj;
   onChange: (next: Obj) => void;
   errors?: FieldError[];
+  themeId?: string;
 }) {
-  const fields = BLOCK_FIELDS[type];
+  const fields = blockFieldsForTheme(themeId, type);
   const [pickerCb, setPickerCb] = useState<((url: string) => void) | null>(null);
   if (!fields) return null;
 
@@ -122,6 +127,48 @@ function labelFor(field: Field, item: unknown, index: number): string {
   }
   if (tmpl === "{value}" && typeof item === "string" && item) return item;
   return `Item ${index + 1}`;
+}
+
+function formatTextValue(
+  value: string,
+  format?: Field["format"],
+): string {
+  const raw = value.trim();
+
+  if (!raw || !format) {
+    return raw;
+  }
+
+  // Keep custom values such as "Offert" untouched.
+  const numeric = raw
+    .replace(/^från\s+/i, "")
+    .replace(/\s*kr$/i, "")
+    .replace(/\s+/g, "");
+
+  if (!/^\d+(?:[,.]\d+)?$/.test(numeric)) {
+    return raw;
+  }
+
+  const parsed = Number(
+    numeric.replace(",", "."),
+  );
+
+  if (!Number.isFinite(parsed)) {
+    return raw;
+  }
+
+  const amount = new Intl.NumberFormat(
+    "sv-SE",
+    {
+      maximumFractionDigits: 2,
+    },
+  ).format(parsed);
+
+  if (format === "sek-from") {
+    return `från ${amount} kr`;
+  }
+
+  return `${amount} kr`;
 }
 
 function FieldInput({ field, value, onChange, error }: { field: Field; value: unknown; onChange: (v: unknown) => void; error?: string }) {
@@ -336,7 +383,24 @@ function FieldInput({ field, value, onChange, error }: { field: Field; value: un
       {field.type === "textarea" ? (
         <textarea id={id} value={String(value ?? "")} placeholder={field.placeholder} rows={3} onChange={(e) => onChange(e.target.value)} />
       ) : (
-        <input id={id} value={String(value ?? "")} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
+        <input
+          id={id}
+          value={String(value ?? "")}
+          placeholder={field.placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={(e) => {
+            if (!field.format) return;
+
+            const formatted = formatTextValue(
+              e.target.value,
+              field.format,
+            );
+
+            if (formatted !== e.target.value) {
+              onChange(formatted);
+            }
+          }}
+        />
       )}
       {field.help ? <div className="sa-field-hint">{field.help}</div> : null}
       {errorNode}

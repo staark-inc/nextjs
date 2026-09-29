@@ -46,3 +46,4 @@ export { SiteHeader, SiteFooter } from "./components/chrome";
 export { Container, Button, Eyebrow, siteCta } from "./components/primitives";
 export { Hero, Cards, LinkColumns, ProjectsShowcase, Freeform, Services, Process, Testimonials, Cta, Contact, LeadForm, BookingForm };
 export default lightTheme;
+export { default as lightManifest } from "./manifest";

@@ -4,10 +4,13 @@
   "description": "S-Hub Byrå — child theme of S-Hub Light for agencies and studios (case studies, team, stats, client logos). Bold editorial look.",
   "private": true,
   "type": "module",
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./manifest": "./src/manifest.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

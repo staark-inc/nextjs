@@ -36,3 +36,4 @@ export const byraRegistry: Record<string, ThemeDefinition> = {
 
 export { Stats, CaseStudies, Team, Logos };
 export default byraTheme;
+export { default as byraManifest } from "./manifest";

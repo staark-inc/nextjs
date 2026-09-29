@@ -1,5 +1,8 @@
 services:
   web:
+    environment:
+      STAARK_CONTENT_DIR: content/skonhet
+      STAARK_THEME: skonhet
     ports: !override []
     networks:
       - staark-network

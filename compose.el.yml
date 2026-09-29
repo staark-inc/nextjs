@@ -1,0 +1,5 @@
+services:
+  web:
+    environment:
+      STAARK_CONTENT_DIR: content/el
+      STAARK_THEME: el

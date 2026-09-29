@@ -5,6 +5,7 @@ import { BlockRenderer } from "@staark/theme-kit";
 import { content } from "@/lib/staark";
 import { resolveThemeRuntime } from "@/staark.config";
 import { StaarkImage } from "@/components/StaarkImage";
+import { hydrateVerticalPage } from "@/lib/vertical-content";
 
 type Params = { slug: string[] };
 
@@ -28,9 +29,11 @@ export default async function StaarkPage({ params }: { params: Promise<Params> }
   if (!page) notFound();
 
   const runtime = resolveThemeRuntime(site.theme.family);
+  const hydratedPage = await hydrateVerticalPage(site, page);
+
   return (
     <BlockRenderer
-      blocks={page.blocks}
+      blocks={hydratedPage.blocks}
       site={site}
       theme={runtime.theme}
       registry={runtime.registry}

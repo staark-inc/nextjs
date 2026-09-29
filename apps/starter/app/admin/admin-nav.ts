@@ -1,8 +1,11 @@
 import type { AdminFeature } from "@/lib/admin-features";
 import type { WebsiteType } from "@staark/core";
-import { resolveWebsiteProfile } from "@/lib/website-profile";
+import {
+  resolveClientNavigation,
+  resolveWebsiteProfile,
+} from "@/lib/website-profile";
 
-export type AdminNavGroup = "Overview" | "Leads" | "Website" | "Growth" | "System";
+export type AdminNavGroup = "Overview" | "Business" | "Website" | "Growth" | "System";
 
 export type AdminNavItem = {
   href: string;
@@ -19,7 +22,7 @@ export type AdminNavItem = {
 
 export const SEARCH_ICON = "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm5-2 5 5";
 
-export const adminNavGroups: AdminNavGroup[] = ["Overview", "Leads", "Website", "Growth", "System"];
+export const adminNavGroups: AdminNavGroup[] = ["Overview", "Business", "Website", "Growth", "System"];
 
 const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
@@ -37,7 +40,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     label: "Inbox",
     description: "Messages & forms",
     icon: "M4 4h16v16H4V4Zm0 3 8 6 8-6",
-    group: "Leads",
+    group: "Business",
     badge: "messages",
     keywords: "forms submissions messages enquiries leads contact",
   },
@@ -47,9 +50,18 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     label: "Bookings",
     description: "Booking requests",
     icon: "M4 6h16v14H4V6Zm0 4h16 M8 3v4 M16 3v4 M8 14h3 M13 14h3 M8 17h3",
-    group: "Leads",
+    group: "Business",
     badge: "bookings",
     keywords: "booking appointments calendar confirm decline reservations",
+  },
+  {
+    href: "/admin/services",
+    feature: "services",
+    label: "Services & prices",
+    description: "Treatments, duration & prices",
+    icon: "M5 5h14v14H5V5Zm3 4h8 M8 12h5 M8 15h7",
+    group: "Business",
+    keywords: "services prices treatments duration salon price list",
   },
   {
     href: "/admin/pages",
@@ -124,6 +136,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "restore history snapshot",
   },
   {
+    href: "/admin/logs",
+    feature: "system",
+    label: "Logs",
+    description: "Application events",
+    icon: "M4 4h16v16H4V4Zm4 5h8 M8 13h8 M8 17h5",
+    group: "System",
+    keywords: "logs events errors warnings runtime system technical",
+  },
+  {
     href: "/admin/site",
     feature: "settings",
     label: "Settings",
@@ -136,9 +157,27 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
 
 export function getAdminNavItems(websiteType: WebsiteType): AdminNavItem[] {
   const profile = resolveWebsiteProfile(websiteType);
+  const copy = resolveClientNavigation(websiteType);
+
   return BASE_ADMIN_NAV_ITEMS.map((item) => {
-    if (item.href !== "/admin/forms") return item;
-    return { ...item, description: profile.inboxDescription, keywords: profile.inboxKeywords };
+    if (item.href === "/admin/forms") {
+      return {
+        ...item,
+        label: copy.inboxLabel,
+        description: copy.inboxDescription,
+        keywords: profile.inboxKeywords,
+      };
+    }
+
+    if (item.href === "/admin/bookings") {
+      return {
+        ...item,
+        label: copy.bookingLabel,
+        description: copy.bookingDescription,
+      };
+    }
+
+    return item;
   });
 }
 

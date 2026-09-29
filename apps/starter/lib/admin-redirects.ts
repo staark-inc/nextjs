@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { readStateJson, writeStateJson } from "./storage";
+import { appendAdminLog } from "./admin-logs";
 
 export type RedirectStatus = 301 | 302;
 
@@ -213,6 +214,18 @@ export async function createRedirect(input: Partial<RedirectRule>): Promise<Redi
   const redirects = [...document.redirects, rule];
   assertValidRules(redirects);
   await writeDocument({ ...document, redirects });
+
+  await appendAdminLog({
+    area: "redirects",
+    action: "redirect.created",
+    message: `Redirect ${rule.from} → ${rule.to} created.`,
+    meta: {
+      from: rule.from,
+      to: rule.to,
+      status: rule.status,
+    },
+  });
+
   return rule;
 }
 
@@ -233,14 +246,54 @@ export async function updateRedirect(
 
   assertValidRules(redirects);
   await writeDocument({ ...document, redirects });
+
+  await appendAdminLog({
+    area: "redirects",
+    action: "redirect.updated",
+    message: `Redirect ${updated.from} was updated.`,
+    meta: {
+      from: updated.from,
+      to: updated.to,
+      status: updated.status,
+      enabled: updated.enabled,
+    },
+  });
+
   return updated;
 }
 
 export async function deleteRedirect(id: string): Promise<void> {
   const document = await readDocument();
-  const redirects = document.redirects.filter((rule) => rule.id !== id);
-  if (redirects.length === document.redirects.length) throw new Error("Redirect not found.");
-  await writeDocument({ ...document, redirects });
+  const removed = document.redirects.find(
+    (rule) => rule.id === id,
+  );
+
+  const redirects = document.redirects.filter(
+    (rule) => rule.id !== id,
+  );
+
+  if (redirects.length === document.redirects.length) {
+    throw new Error("Redirect not found.");
+  }
+
+  await writeDocument({
+    ...document,
+    redirects,
+  });
+
+  await appendAdminLog({
+    area: "redirects",
+    action: "redirect.deleted",
+    message: removed
+      ? `Redirect ${removed.from} → ${removed.to} deleted.`
+      : "Redirect deleted.",
+    meta: removed
+      ? {
+          from: removed.from,
+          to: removed.to,
+        }
+      : undefined,
+  });
 }
 
 export async function upsertRedirect(

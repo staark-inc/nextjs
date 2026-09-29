@@ -1,4 +1,5 @@
 import type { WebsiteType } from "@staark/core";
+import type { AdminFeature } from "@/lib/admin-features";
 
 export type WebsiteProfile = {
   type: WebsiteType;
@@ -86,3 +87,153 @@ export function normalizeWebsiteType(value: unknown): WebsiteType {
 export function resolveWebsiteProfile(value: unknown): WebsiteProfile {
   return WEBSITE_PROFILES[normalizeWebsiteType(value)];
 }
+
+/**
+ * Client-facing product modules.
+ *
+ * The platform may support many more admin capabilities internally, but client
+ * accounts only see the modules that make sense for their type of business.
+ *
+ * Manager accounts are intentionally not restricted by this list.
+ */
+const BASE_CLIENT_FEATURES: readonly AdminFeature[] = [
+  "dashboard",
+  "inbox",
+  "pages",
+  "media",
+  "themes",
+  "navigation",
+  "seo",
+  "redirects",
+  "backups",
+  "settings",
+];
+
+const FLEXIBLE_CLIENT_FEATURES: readonly AdminFeature[] = [
+  ...BASE_CLIENT_FEATURES,
+];
+
+export const CLIENT_PRODUCT_WEBSITE_TYPES = [
+  "salon",
+  "automotive",
+  "restaurant",
+  "custom",
+] as const;
+
+export type ClientProductWebsiteType =
+  (typeof CLIENT_PRODUCT_WEBSITE_TYPES)[number];
+
+const CLIENT_FEATURES_BY_PROFILE = {
+  // Legacy profiles remain readable for existing installations.
+  business: FLEXIBLE_CLIENT_FEATURES,
+
+  salon: [
+    ...BASE_CLIENT_FEATURES,
+    "booking",
+    "services",
+  ],
+
+  restaurant: [
+    ...BASE_CLIENT_FEATURES,
+    "booking",
+  ],
+
+  hotel: [
+    ...BASE_CLIENT_FEATURES,
+    "booking",
+  ],
+
+  automotive: [
+    ...BASE_CLIENT_FEATURES,
+    "booking",
+  ],
+
+  portfolio: FLEXIBLE_CLIENT_FEATURES,
+
+  custom: FLEXIBLE_CLIENT_FEATURES,
+} satisfies Record<WebsiteType, readonly AdminFeature[]>;
+
+type ClientNavigationCopy = {
+  inboxLabel: string;
+  inboxDescription: string;
+  bookingLabel: string;
+  bookingDescription: string;
+};
+
+const CLIENT_NAVIGATION_BY_PROFILE = {
+  business: {
+    inboxLabel: "Inbox",
+    inboxDescription: "Messages & enquiries",
+    bookingLabel: "Bookings",
+    bookingDescription: "Booking requests",
+  },
+
+  salon: {
+    inboxLabel: "Messages",
+    inboxDescription: "Client messages",
+    bookingLabel: "Appointments",
+    bookingDescription: "Client appointments",
+  },
+
+  restaurant: {
+    inboxLabel: "Messages",
+    inboxDescription: "Guest messages",
+    bookingLabel: "Reservations",
+    bookingDescription: "Table reservations",
+  },
+
+  hotel: {
+    inboxLabel: "Messages",
+    inboxDescription: "Guest messages",
+    bookingLabel: "Reservations",
+    bookingDescription: "Guest reservations",
+  },
+
+  automotive: {
+    inboxLabel: "Requests",
+    inboxDescription: "Customer enquiries",
+    bookingLabel: "Service requests",
+    bookingDescription: "Workshop requests",
+  },
+
+  portfolio: {
+    inboxLabel: "Enquiries",
+    inboxDescription: "Project enquiries",
+    bookingLabel: "Bookings",
+    bookingDescription: "Booking requests",
+  },
+
+  custom: {
+    inboxLabel: "Inbox",
+    inboxDescription: "Messages & enquiries",
+    bookingLabel: "Bookings",
+    bookingDescription: "Booking requests",
+  },
+} satisfies Record<WebsiteType, ClientNavigationCopy>;
+
+export function resolveClientFeatures(
+  value: unknown,
+  availableFeatures: readonly AdminFeature[] = [],
+): readonly AdminFeature[] {
+  const type = normalizeWebsiteType(value);
+  const result = [...CLIENT_FEATURES_BY_PROFILE[type]];
+
+  // Generic/custom installs may enable booking as an optional entitlement.
+  // Vertical products that require bookings already include it in their profile.
+  if (
+    (type === "business" || type === "portfolio" || type === "custom") &&
+    availableFeatures.includes("booking") &&
+    !result.includes("booking")
+  ) {
+    result.push("booking");
+  }
+
+  return result;
+}
+
+export function resolveClientNavigation(
+  value: unknown,
+): ClientNavigationCopy {
+  return CLIENT_NAVIGATION_BY_PROFILE[normalizeWebsiteType(value)];
+}
+

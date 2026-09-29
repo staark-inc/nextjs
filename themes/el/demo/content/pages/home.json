@@ -1,0 +1,218 @@
+{
+  "path": "/",
+  "title": "Startsida",
+  "seo": {
+    "title": "Norrsken El – elektriker i Uppsala",
+    "description": "Laddbox, elcentral och belysning. Auktoriserade elektriker med jour dygnet runt."
+  },
+  "updatedAt": "2026-09-28T10:00:00Z",
+  "blocks": [
+    {
+      "id": "jour",
+      "type": "emergencyBanner",
+      "props": {
+        "text": "Jour dygnet runt vid strömavbrott",
+        "note": "Auktoriserat elinstallationsföretag · F-skatt",
+        "mobileBar": {
+          "enabled": true,
+          "callLabel": "Ring",
+          "quoteLabel": "Begär offert",
+          "quoteHref": "#offert"
+        }
+      }
+    },
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Elektriker i Uppsala",
+        "heading": "El som är rätt dragen från början.",
+        "highlight": "rätt dragen",
+        "intro": "Laddbox, ny elcentral eller felsökning. Fast pris, ren arbetsplats och avdraget dras direkt på fakturan.",
+        "primaryCta": {
+          "label": "Begär kostnadsfri offert",
+          "href": "#offert"
+        },
+        "image": {
+          "src": "/el/hero.svg",
+          "alt": "Öppen elcentral med automatsäkringar"
+        },
+        "points": [
+          "Svar inom ett dygn",
+          "Fast pris",
+          "Garanti på arbetet"
+        ],
+        "authorization": "Auktoriserat elinstallationsföretag"
+      }
+    },
+    {
+      "id": "cred",
+      "type": "credentials",
+      "props": {
+        "items": [
+          {
+            "title": "Auktoriserad elinstallatör",
+            "text": "Behörighet enligt Elsäkerhetsverket"
+          },
+          {
+            "title": "Ansvarsförsäkring",
+            "text": "För allt arbete vi utför"
+          },
+          {
+            "title": "Egenkontroll",
+            "text": "Dokumentation efter varje jobb"
+          }
+        ],
+        "registration": "Registrerat elinstallationsföretag · Org.nr 556000-0000",
+        "verify": {
+          "label": "Kontrollera oss hos Elsäkerhetsverket",
+          "href": "https://www.elsakerhetsverket.se/"
+        }
+      }
+    },
+    {
+      "id": "tjanster",
+      "type": "services",
+      "props": {
+        "eyebrow": "Tjänster",
+        "heading": "Det här hjälper vi till med",
+        "columns": 3,
+        "items": [
+          {
+            "title": "Laddbox",
+            "icon": "/el/icons/laddbox.svg",
+            "description": "Installation av laddbox med lastbalansering. Grönt avdrag 50 %.",
+            "price": "från 12 900 kr efter avdrag"
+          },
+          {
+            "title": "Elcentral",
+            "icon": "/el/icons/elcentral.svg",
+            "description": "Byte till modern central med jordfelsbrytare och överspänningsskydd."
+          },
+          {
+            "title": "Belysning",
+            "icon": "/el/icons/belysning.svg",
+            "description": "Spotlights, trädgårdsbelysning och styrning via app."
+          },
+          {
+            "title": "Felsökning",
+            "icon": "/el/icons/felsokning.svg",
+            "description": "Säkringen som går, uttag utan ström, flimrande lampor.",
+            "price": "från 895 kr/tim"
+          },
+          {
+            "title": "Solceller & batteri",
+            "icon": "/el/icons/solceller.svg",
+            "description": "Anslutning, växelriktare och batterilager."
+          },
+          {
+            "title": "Uttag & brytare",
+            "icon": "/el/icons/uttag.svg",
+            "description": "Nya dragningar, fler uttag och utomhusuttag."
+          }
+        ]
+      }
+    },
+    {
+      "id": "avdrag",
+      "type": "deductionCalculator",
+      "props": {
+        "eyebrow": "Avdrag",
+        "heading": "Vad kostar det efter avdrag?",
+        "intro": "Laddbox, batterilager och solceller ger grönt avdrag på både arbete och material. Övrigt elarbete ger ROT på arbetskostnaden.",
+        "points": [
+          "Vi drar av direkt på fakturan",
+          "Vi sköter ansökan mot Skatteverket",
+          "Du betalar bara din del"
+        ],
+        "capPerPerson": 50000
+      }
+    },
+    {
+      "id": "process",
+      "type": "process",
+      "props": {
+        "eyebrow": "Så går det till",
+        "heading": "Från offert till egenkontroll",
+        "steps": [
+          {
+            "title": "Offert",
+            "description": "Beskriv jobbet eller boka hembesök. Svar inom ett dygn."
+          },
+          {
+            "title": "Fast pris",
+            "description": "Tydlig offert med avdraget uträknat."
+          },
+          {
+            "title": "Installation",
+            "description": "Vi skyddar golv och städar efter oss."
+          },
+          {
+            "title": "Egenkontroll",
+            "description": "Du får dokumentation och garanti."
+          }
+        ]
+      }
+    },
+    {
+      "id": "fragor",
+      "type": "faq",
+      "props": {
+        "eyebrow": "Frågor",
+        "heading": "Vanliga frågor",
+        "items": [
+          {
+            "question": "Får jag byta ett vägguttag själv?",
+            "answer": "Vissa enkla arbeten, som att byta ett befintligt vägguttag eller en strömbrytare, får du göra själv enligt Elsäkerhetsverkets regler. Nya dragningar och arbete i elcentralen ska göras av ett registrerat elinstallationsföretag."
+          },
+          {
+            "question": "Hur mycket får jag i avdrag för en laddbox?",
+            "answer": "Installation av laddpunkt ger skattereduktion för grön teknik: 50 % av arbete och material, högst 50 000 kr per person och år. Vi gör avdraget direkt på fakturan."
+          },
+          {
+            "question": "Räcker min huvudsäkring för en laddbox?",
+            "answer": "Oftast ja, med lastbalansering som sänker laddströmmen när huset drar mycket. Vi kontrollerar det innan vi lämnar offert."
+          },
+          {
+            "question": "Vad händer vid jour?",
+            "answer": "Ring oss dygnet runt vid strömavbrott eller fara. Vi felsöker på plats och säkrar anläggningen."
+          }
+        ]
+      }
+    },
+    {
+      "id": "offert",
+      "type": "quoteRequest",
+      "props": {
+        "eyebrow": "Offert",
+        "heading": "Berätta vad du behöver",
+        "intro": "Offert och hembesök är kostnadsfria.",
+        "areas": [
+          "Uppsala",
+          "Knivsta",
+          "Enköping",
+          "Östhammar",
+          "Tierp",
+          "Sigtuna"
+        ],
+        "formId": "el-offert",
+        "jobTypes": [
+          "Laddbox",
+          "Elcentral",
+          "Belysning",
+          "Felsökning",
+          "Solceller",
+          "Annat"
+        ],
+        "timings": [
+          "Inom 1–3 månader",
+          "Så snart som möjligt",
+          "Jag planerar bara"
+        ],
+        "submitLabel": "Skicka förfrågan",
+        "successMessage": "Tack! Vi återkommer inom ett dygn.",
+        "consent": "Vi använder uppgifterna bara för att svara på din förfrågan."
+      }
+    }
+  ]
+}

@@ -5,10 +5,13 @@ import { content } from "@/lib/staark";
 import { resolveThemeRuntime, SiteHeader, SiteFooter } from "@/staark.config";
 import "@staark/theme-light/styles.css";
 import "@staark/theme-salong/styles.css";
+import "@staark/theme-skonhet/styles.css";
+import "@staark/theme-el/styles.css";
 import "@staark/theme-gastfrihet/styles.css";
 import "@staark/theme-byra/styles.css";
 import "@staark/theme-webb/styles.css";
 
+import "@staark/theme-kreator/styles.css";
 /**
  * Public content is mutable at runtime through the ACP and persistent storage.
  * Never serve the build-time prerender after a container restart/recreate.

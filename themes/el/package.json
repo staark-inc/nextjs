@@ -1,0 +1,37 @@
+{
+  "name": "@staark/theme-el",
+  "version": "0.1.0",
+  "description": "S-Hub El — child theme of S-Hub Light for electricians: credentials, ROT and grön teknik calculator, FAQ, jour and stepwise quote requests.",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./admin": "./src/admin.ts",
+    "./styles.css": "./src/styles.css",
+    "./manifest": "./src/manifest.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@staark/core": "workspace:*",
+    "@staark/theme-kit": "workspace:*",
+    "@staark/theme-light": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

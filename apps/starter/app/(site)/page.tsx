@@ -5,6 +5,7 @@ import { BlockRenderer } from "@staark/theme-kit";
 import { content } from "@/lib/staark";
 import { resolveThemeRuntime } from "@/staark.config";
 import { StaarkImage } from "@/components/StaarkImage";
+import { hydrateVerticalPage } from "@/lib/vertical-content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [site, page] = await Promise.all([content.getSite(), content.getPage([])]);
@@ -17,9 +18,11 @@ export default async function HomePage() {
   if (!page) notFound();
 
   const runtime = resolveThemeRuntime(site.theme.family);
+  const hydratedPage = await hydrateVerticalPage(site, page);
+
   return (
     <BlockRenderer
-      blocks={page.blocks}
+      blocks={hydratedPage.blocks}
       site={site}
       theme={runtime.theme}
       registry={runtime.registry}

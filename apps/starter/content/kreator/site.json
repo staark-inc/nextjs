@@ -1,0 +1,59 @@
+{
+  "name": "Rendo",
+  "tagline": "Streamer CS2 din București",
+  "locale": "ro-RO",
+  "url": "https://rendo.example",
+  "theme": {
+    "family": "kreator",
+    "preset": "kreator"
+  },
+  "brand": {
+    "copyright": "© 2026 Rendo"
+  },
+  "contact": {
+    "email": "business@rendo.example"
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Coduri",
+        "href": "/#coduri"
+      },
+      {
+        "label": "Program",
+        "href": "/#program"
+      },
+      {
+        "label": "Setup",
+        "href": "/#setup"
+      },
+      {
+        "label": "Colaborări",
+        "href": "/#kontakt"
+      }
+    ],
+    "footer": [
+      {
+        "label": "Coduri",
+        "href": "/#coduri"
+      },
+      {
+        "label": "Setup",
+        "href": "/#setup"
+      },
+      {
+        "label": "Colaborări",
+        "href": "/#kontakt"
+      }
+    ],
+    "cta": {
+      "label": "Urmărește live",
+      "href": "https://example.com/kick"
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Rendo",
+    "defaultDescription": "Rendo, streamer CS2 din București. Program de stream, coduri la parteneri, setup și colaborări.",
+    "businessType": "Person"
+  }
+}

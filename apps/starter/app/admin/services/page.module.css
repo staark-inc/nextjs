@@ -1,0 +1,123 @@
+.groups {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.groupHeader {
+  align-items: end;
+}
+
+.groupTitle {
+  display: grid;
+  gap: 5px;
+  width: min(420px, 100%);
+}
+
+.groupTitle input {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--sa-ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 750;
+  outline: none;
+}
+
+.services {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 14px;
+}
+
+.service {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.5fr)
+    minmax(250px, 0.8fr);
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius-sm);
+  background: var(--sa-surface-blue);
+}
+
+.serviceMain,
+.serviceMeta {
+  display: grid;
+  gap: 10px;
+}
+
+.serviceMain {
+  grid-template-columns:
+    minmax(0, 0.8fr)
+    minmax(0, 1.2fr);
+}
+
+.serviceMeta {
+  grid-template-columns:
+    minmax(90px, 0.8fr)
+    minmax(100px, 1fr)
+    32px;
+  align-items: end;
+}
+
+.service :global(.sa-field) {
+  margin: 0;
+}
+
+.service label {
+  font-size: 10px;
+}
+
+.removeService {
+  display: grid;
+  width: 32px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--sa-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sa-muted);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.removeService:hover {
+  color: var(--sa-danger);
+  border-color: var(--sa-danger);
+}
+
+.bottomActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .service {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .serviceMain,
+  .serviceMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .removeService {
+    width: 100%;
+  }
+
+  .bottomActions {
+    flex-direction: column;
+  }
+
+  .bottomActions button {
+    width: 100%;
+  }
+}

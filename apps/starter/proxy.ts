@@ -5,8 +5,13 @@ import { findMatchingRedirect } from "@/lib/admin-redirects";
 import {
   canAccessAdminFeature,
   featureForAdminPath,
+  resolveAccessibleAdminFeatures,
   resolveAdminEntitlements,
 } from "@/lib/admin-features";
+import {
+  resolveClientFeatures,
+} from "@/lib/website-profile";
+import { readContentJson } from "@/lib/storage";
 import {
   ADMIN_LOGIN_PATH,
   isAdminSessionActive,
@@ -110,10 +115,69 @@ export async function proxy(req: NextRequest) {
 
   if (active) {
     const role = resolveAdminRole(session.role);
+
+    if (role === "client") {
+      const managerOnlyThemeRequest =
+        pathname.startsWith("/admin/themes/studio") ||
+        pathname === "/api/admin/themes" ||
+        pathname === "/api/admin/themes/activate" ||
+        pathname.startsWith("/api/admin/themes/studio");
+
+      if (managerOnlyThemeRequest) {
+        if (isApi) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error:
+                "This theme operation is available to Staark Manager only.",
+            },
+            { status: 403 },
+          );
+        }
+
+        return NextResponse.redirect(
+          new URL("/admin/themes", req.url),
+        );
+      }
+    }
     const feature = featureForAdminPath(pathname);
     const entitlements = resolveAdminEntitlements();
 
-    if (feature === null || canAccessAdminFeature(role, feature, entitlements)) {
+    let allowed = feature === null;
+
+    if (!allowed && feature) {
+      if (role === "manager") {
+        allowed = canAccessAdminFeature(
+          role,
+          feature,
+          entitlements,
+        );
+      } else {
+        let websiteType: unknown;
+
+        try {
+          const site = await readContentJson<{ websiteType?: unknown }>(
+            "site.json",
+          );
+          websiteType = site?.websiteType;
+        } catch {
+          // Fall back to the restrictive generic client profile.
+          websiteType = "business";
+        }
+
+        const availableFeatures =
+          resolveAccessibleAdminFeatures(role);
+
+        const clientFeatures = resolveClientFeatures(
+          websiteType,
+          availableFeatures,
+        );
+
+        allowed = clientFeatures.includes(feature);
+      }
+    }
+
+    if (allowed) {
       return res;
     }
 
@@ -125,7 +189,11 @@ export async function proxy(req: NextRequest) {
     }
 
     const dashboard = new URL("/admin", req.url);
-    dashboard.searchParams.set("denied", feature);
+
+    if (feature) {
+      dashboard.searchParams.set("denied", feature);
+    }
+
     return NextResponse.redirect(dashboard);
   }
 

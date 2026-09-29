@@ -35,3 +35,4 @@ export const webbRegistry: Record<string, ThemeDefinition> = {
 
 export { FeaturedProject, Pricing, ServiceAreas };
 export default webbTheme;
+export { default as webbManifest } from "./manifest";

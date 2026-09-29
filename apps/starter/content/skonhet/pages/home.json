@@ -1,0 +1,326 @@
+{
+  "path": "/",
+  "title": "Startsida",
+  "seo": {
+    "title": "Studio Lumi – hår & naglar på Södermalm",
+    "description": "Klippning, färg, gelé och fransar. Boka tid online hos Studio Lumi på Götgatan."
+  },
+  "updatedAt": "2026-09-28T10:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Hår · Naglar · Fransar",
+        "heading": "Ett lugnt rum",
+        "headingAccent": "för hår & naglar.",
+        "intro": "Studio Lumi är en liten salong på Södermalm med fyra stolar, bra kaffe och gott om tid för varje kund.",
+        "primaryCta": {
+          "label": "Boka tid",
+          "href": "#boka"
+        },
+        "secondaryCta": {
+          "label": "Se behandlingar",
+          "href": "#behandlingar"
+        },
+        "image": {
+          "src": "/skonhet/hero.svg",
+          "alt": "Nagellack, kam och blommor på en hylla i salongen"
+        },
+        "detailImage": {
+          "src": "/skonhet/detail.svg",
+          "alt": "Nagelfärger i en cirkel"
+        },
+        "badge": "−15 % första besöket",
+        "showVisit": true
+      }
+    },
+    {
+      "id": "meny",
+      "type": "serviceMenu",
+      "props": {
+        "eyebrow": "Behandlingar",
+        "heading": "Meny & priser",
+        "intro": "Alla priser inkluderar konsultation. Osäker på vad du ska välja? Skriv i bokningen så hjälper vi dig.",
+        "footnote": "Borttagning av gammal gelé ingår vid nytt set.",
+        "categories": [
+          {
+            "name": "Hår",
+            "items": [
+              {
+                "name": "Klippning, kort hår",
+                "description": "Inkl. tvätt och styling",
+                "duration": "45 min",
+                "price": "595 kr",
+                "bookable": true
+              },
+              {
+                "name": "Klippning, långt hår",
+                "description": "Inkl. tvätt och styling",
+                "duration": "60 min",
+                "price": "745 kr",
+                "bookable": true
+              },
+              {
+                "name": "Färg, utväxt",
+                "description": "Inkl. klippning",
+                "duration": "120 min",
+                "price": "från 1 395 kr",
+                "bookable": true
+              },
+              {
+                "name": "Balayage",
+                "description": "Frihandsslingor med toning",
+                "duration": "180 min",
+                "price": "från 2 195 kr",
+                "bookable": true
+              },
+              {
+                "name": "Herrklippning",
+                "duration": "30 min",
+                "price": "445 kr",
+                "bookable": true
+              }
+            ]
+          },
+          {
+            "name": "Naglar",
+            "note": "Vi använder HEMA-fria gelélack.",
+            "items": [
+              {
+                "name": "Gelémanikyr",
+                "description": "Formning, nagelband och gelélack",
+                "duration": "60 min",
+                "price": "595 kr",
+                "bookable": true
+              },
+              {
+                "name": "Gelé med nageldesign",
+                "description": "French, chrome eller egen idé",
+                "duration": "75 min",
+                "price": "695 kr",
+                "bookable": true
+              },
+              {
+                "name": "Förlängning, gelé",
+                "description": "Nytt set",
+                "duration": "90 min",
+                "price": "895 kr",
+                "bookable": true
+              },
+              {
+                "name": "Påfyllning",
+                "description": "Inom 4 veckor",
+                "duration": "75 min",
+                "price": "695 kr",
+                "bookable": true
+              },
+              {
+                "name": "Pedikyr med gelé",
+                "duration": "75 min",
+                "price": "695 kr",
+                "bookable": true
+              }
+            ]
+          },
+          {
+            "name": "Fransar & bryn",
+            "items": [
+              {
+                "name": "Fransförlängning, nytt set",
+                "description": "Classic eller volym",
+                "duration": "120 min",
+                "price": "1 095 kr",
+                "bookable": true
+              },
+              {
+                "name": "Fransar, påfyllning",
+                "description": "Inom 3 veckor",
+                "duration": "60 min",
+                "price": "595 kr",
+                "bookable": true
+              },
+              {
+                "name": "Bryn: form & färg",
+                "duration": "30 min",
+                "price": "395 kr",
+                "bookable": true
+              },
+              {
+                "name": "Lash lift",
+                "description": "Inkl. färg",
+                "duration": "60 min",
+                "price": "595 kr",
+                "bookable": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "team",
+      "type": "stylists",
+      "props": {
+        "eyebrow": "Teamet",
+        "heading": "Fyra stolar, fyra specialister",
+        "intro": "Välj den du brukar gå till, eller låt oss matcha dig.",
+        "people": [
+          {
+            "name": "Ella Berg",
+            "role": "Frisör · Färgspecialist",
+            "specialties": [
+              "Balayage",
+              "Blond"
+            ]
+          },
+          {
+            "name": "Noor Haddad",
+            "role": "Nagelterapeut",
+            "specialties": [
+              "Nageldesign",
+              "Chrome"
+            ]
+          },
+          {
+            "name": "Sofia Lind",
+            "role": "Frisör",
+            "specialties": [
+              "Kort hår",
+              "Herr"
+            ]
+          },
+          {
+            "name": "Mira Ek",
+            "role": "Frans- & brynstylist",
+            "specialties": [
+              "Volymfransar",
+              "Lash lift"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "look",
+      "type": "lookbook",
+      "props": {
+        "eyebrow": "Lookbook",
+        "heading": "Senaste jobben",
+        "items": [
+          {
+            "src": "/skonhet/har-balayage.svg",
+            "alt": "Honungsblond balayage i långt hår",
+            "category": "Hår",
+            "caption": "Balayage"
+          },
+          {
+            "src": "/skonhet/naglar-french.svg",
+            "alt": "Mjuk french på mandelformade naglar",
+            "category": "Naglar",
+            "caption": "Soft french"
+          },
+          {
+            "src": "/skonhet/har-plommon.svg",
+            "alt": "Mörk plommonton i halvlångt hår",
+            "category": "Hår",
+            "caption": "Plommon"
+          },
+          {
+            "src": "/skonhet/naglar-pastell.svg",
+            "alt": "Pastellnaglar i fem olika färger",
+            "category": "Naglar",
+            "caption": "Pastell mix"
+          },
+          {
+            "src": "/skonhet/naglar-chrome.svg",
+            "alt": "Chromenaglar i silver och lila",
+            "category": "Naglar",
+            "caption": "Chrome"
+          },
+          {
+            "src": "/skonhet/har-bob.svg",
+            "alt": "Rak bob i mörkbrunt",
+            "category": "Hår",
+            "caption": "Bob"
+          },
+          {
+            "src": "/skonhet/naglar-plommon.svg",
+            "alt": "Gelé i djup plommon",
+            "category": "Naglar",
+            "caption": "Plommon"
+          },
+          {
+            "src": "/skonhet/har-koppar.svg",
+            "alt": "Kopparton med mjuka vågor",
+            "category": "Hår",
+            "caption": "Koppar"
+          }
+        ],
+        "cta": {
+          "label": "Mer på Instagram",
+          "href": "https://instagram.com/"
+        }
+      }
+    },
+    {
+      "id": "omdomen",
+      "type": "testimonials",
+      "props": {
+        "eyebrow": "Omdömen",
+        "heading": "Det säger våra kunder",
+        "items": [
+          {
+            "quote": "Äntligen en salong där man inte känner sig stressad. Ella förstod exakt vilken blond jag ville ha.",
+            "author": "Kund, balayage"
+          },
+          {
+            "quote": "Mina gelénaglar håller i fyra veckor utan att lyfta. Noor är noggrann på riktigt.",
+            "author": "Kund, gelémanikyr"
+          },
+          {
+            "quote": "Snabb bokning och en tid som faktiskt höll. Kommer tillbaka.",
+            "author": "Kund, herrklippning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "boka",
+      "type": "bookingRequest",
+      "props": {
+        "eyebrow": "Boka",
+        "heading": "Boka din tid",
+        "intro": "Välj behandling och en tid som passar. Vi bekräftar inom några timmar.",
+        "formId": "skonhet-bokning",
+        "services": [
+          "Klippning",
+          "Färg / balayage",
+          "Gelémanikyr",
+          "Gelé med nageldesign",
+          "Förlängning / påfyllning",
+          "Fransar",
+          "Bryn",
+          "Pedikyr"
+        ],
+        "stylists": [
+          "Ella Berg",
+          "Noor Haddad",
+          "Sofia Lind",
+          "Mira Ek"
+        ],
+        "times": [
+          "10:00",
+          "11:30",
+          "13:00",
+          "14:30",
+          "16:00",
+          "17:30"
+        ],
+        "submitLabel": "Skicka bokningsförfrågan",
+        "successMessage": "Vi bekräftar din tid via e-post eller sms inom några timmar.",
+        "policy": "Avbokning senast 24 timmar innan. Senare avbokning debiteras med 50 %."
+      }
+    }
+  ]
+}

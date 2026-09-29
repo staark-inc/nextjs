@@ -10,6 +10,7 @@ import type { AdminFeature } from "@/lib/admin-features";
 import {
   WEBSITE_PROFILE_CHANGED_EVENT,
   normalizeWebsiteType,
+  resolveClientFeatures,
   resolveWebsiteProfile,
 } from "@/lib/website-profile";
 import LogoutLink from "./LogoutLink";
@@ -99,13 +100,42 @@ export default function AdminShell({ websiteType, children, siteName, username, 
   const [now, setNow] = useState(() => Date.now());
   const redirecting = useRef(false);
 
-  const profile = useMemo(() => resolveWebsiteProfile(activeWebsiteType), [activeWebsiteType]);
+  const profile = useMemo(
+    () => resolveWebsiteProfile(activeWebsiteType),
+    [activeWebsiteType],
+  );
+
+  const visibleFeatures = useMemo<AdminFeature[]>(() => {
+    if (role === "manager") return features;
+
+    return [
+      ...resolveClientFeatures(activeWebsiteType, features),
+    ];
+  }, [activeWebsiteType, features, role]);
+
   const navItems = useMemo(
     () =>
-      getAdminNavItems(activeWebsiteType).filter((item) =>
-        features.includes(item.feature),
-      ),
-    [activeWebsiteType, features],
+      getAdminNavItems(activeWebsiteType)
+        .filter((item) =>
+          visibleFeatures.includes(item.feature),
+        )
+        .map((item) =>
+          role === "client" &&
+          item.href === "/admin/themes"
+            ? {
+                ...item,
+                label: "Design",
+                description: "Colors & style",
+                keywords:
+                  "design colors typography style appearance",
+              }
+            : item,
+        ),
+    [
+      activeWebsiteType,
+      role,
+      visibleFeatures,
+    ],
   );
   const navGroups = useMemo(() => getAdminNavGroups(navItems), [navItems]);
 
@@ -304,7 +334,7 @@ export default function AdminShell({ websiteType, children, siteName, username, 
             <button className={styles.topSearch} type="button" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to">
               <AdminIcon d={SEARCH_ICON} size={16} />
             </button>
-            {features.includes("health") ? (
+            {visibleFeatures.includes("health") ? (
               <Link className={`sa-topbar__health ${healthTone}`} href="/admin/health" aria-label={`Site Health: ${healthLabel(health)}`}>
               <span className="sa-topbar__health-dot" aria-hidden="true" />
               {healthLabel(health)}
@@ -324,7 +354,13 @@ export default function AdminShell({ websiteType, children, siteName, username, 
         </main>
       </div>
 
-      {paletteOpen ? <CommandPalette websiteType={activeWebsiteType} features={features} onClose={() => setPaletteOpen(false)} /> : null}
+      {paletteOpen ? (
+        <CommandPalette
+          websiteType={activeWebsiteType}
+          features={visibleFeatures}
+          onClose={() => setPaletteOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

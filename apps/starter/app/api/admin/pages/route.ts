@@ -9,6 +9,10 @@ import {
 } from "@/lib/storage";
 import { resolveThemeRuntime } from "@/lib/theme-runtime";
 import { requireAuth } from "../guard";
+import {
+  themePageBlocksFor,
+  themePageTemplatesFor,
+} from "@/lib/theme-admin-registry";
 
 type NavigationLink = { label: string; href: string };
 type SiteFile = {
@@ -28,72 +32,98 @@ type PageTemplate = {
   theme?: string;
 };
 
-function templatesFor(theme: string): PageTemplate[] {
+function templatesFor(
+  theme: string,
+): PageTemplate[] {
   const base: PageTemplate[] = [
-    { id: "blank", label: "Blank page", description: "Start with an empty page and add blocks manually." },
-    { id: "standard", label: "Standard page", description: "Hero, services/content cards and a call to action." },
-    { id: "contact", label: "Contact page", description: "Contact introduction and contact form." },
+    {
+      id: "blank",
+      label: "Blank page",
+      description:
+        "Start with an empty page and add blocks manually.",
+    },
+    {
+      id: "standard",
+      label: "Standard page",
+      description:
+        "Hero, services/content cards and a call to action.",
+    },
+    {
+      id: "contact",
+      label: "Contact page",
+      description:
+        "Contact introduction and contact form.",
+    },
   ];
 
-  if (theme === "salong") {
-    base.push(
-      { id: "salong-prices", label: "Price page", description: "Hero, salon price list and booking call to action.", theme },
-      { id: "salong-gallery", label: "Gallery page", description: "Hero, salon gallery and booking call to action.", theme },
+  const themed =
+    themePageTemplatesFor(theme).map(
+      (template) => ({
+        id: template.id,
+        label: template.label,
+        description:
+          template.description,
+        theme,
+      }),
     );
-  }
-  if (theme === "gastfrihet") {
-    base.push(
-      { id: "gastfrihet-rooms", label: "Rooms page", description: "Hero, room cards, amenities and contact call to action.", theme },
-      { id: "gastfrihet-amenities", label: "Amenities page", description: "Hero, amenities and contact call to action.", theme },
-    );
-  }
-  return base;
+
+  return [
+    ...base,
+    ...themed,
+  ];
 }
 
 function block(id: string, type: string, props: Record<string, unknown>) {
   return { id, type, props };
 }
 
-function blocksFor(templateId: string, title: string) {
+function blocksFor(
+  theme: string,
+  templateId: string,
+  title: string,
+) {
   switch (templateId) {
     case "standard":
       return [
-        block("hero", "hero", { heading: title, intro: "Add a short introduction for this page." }),
-        block("services", "services", { heading: "What we offer", items: [] }),
-        block("cta", "cta", { heading: "Ready to continue?", intro: "Contact us and we will help you with the next step." }),
+        block("hero", "hero", {
+          heading: title,
+          intro:
+            "Add a short introduction for this page.",
+        }),
+        block("services", "services", {
+          heading: "What we offer",
+          items: [],
+        }),
+        block("cta", "cta", {
+          heading: "Ready to continue?",
+          intro:
+            "Contact us and we will help you with the next step.",
+        }),
       ];
+
     case "contact":
       return [
-        block("hero", "hero", { heading: title, intro: "Get in touch and we will respond as soon as possible." }),
-        block("contact", "contact", { heading: "Contact us", formId: "contact", submitLabel: "Send" }),
+        block("hero", "hero", {
+          heading: title,
+          intro:
+            "Get in touch and we will respond as soon as possible.",
+        }),
+        block("contact", "contact", {
+          heading: "Contact us",
+          formId: "contact",
+          submitLabel: "Send",
+        }),
       ];
-    case "salong-prices":
-      return [
-        block("hero", "hero", { heading: title, intro: "Explore our services and prices." }),
-        block("prices", "priceList", { heading: "Prices", groups: [] }),
-        block("cta", "cta", { heading: "Ready to book?", cta: { label: "Book now", href: "/kontakt" } }),
-      ];
-    case "salong-gallery":
-      return [
-        block("hero", "hero", { heading: title, intro: "A selection of our work." }),
-        block("gallery", "gallery", { heading: "Gallery", images: [] }),
-        block("cta", "cta", { heading: "Like what you see?", cta: { label: "Book now", href: "/kontakt" } }),
-      ];
-    case "gastfrihet-rooms":
-      return [
-        block("hero", "hero", { heading: title, intro: "Find the stay that suits you." }),
-        block("rooms", "rooms", { heading: "Rooms", rooms: [] }),
-        block("amenities", "amenities", { heading: "Amenities", items: [] }),
-        block("cta", "cta", { heading: "Plan your stay", cta: { label: "Contact us", href: "/kontakt" } }),
-      ];
-    case "gastfrihet-amenities":
-      return [
-        block("hero", "hero", { heading: title, intro: "Everything included in your stay." }),
-        block("amenities", "amenities", { heading: "Amenities", items: [] }),
-        block("cta", "cta", { heading: "Questions?", cta: { label: "Contact us", href: "/kontakt" } }),
-      ];
-    default:
+
+    case "blank":
       return [];
+
+    default:
+      return themePageBlocksFor(
+        theme,
+        templateId,
+        title,
+      );
   }
 }
 
@@ -182,7 +212,11 @@ export async function POST(req: Request) {
     path: pathname,
     title,
     seo: {},
-    blocks: blocksFor(templateId, title),
+    blocks: blocksFor(
+      theme,
+      templateId,
+      title,
+    ),
     updatedAt: new Date().toISOString(),
   };
 

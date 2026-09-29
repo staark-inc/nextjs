@@ -4,10 +4,13 @@
   "description": "S-Hub Webb — child theme of S-Hub Light in the Staark house style (staarkinc.com): featured project, productized pricing and local service areas.",
   "private": true,
   "type": "module",
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./manifest": "./src/manifest.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

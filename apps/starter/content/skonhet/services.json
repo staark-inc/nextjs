@@ -1,0 +1,197 @@
+{
+  "schema": "staark-salon-services/v1",
+  "version": 1,
+  "heading": "Meny & priser",
+  "intro": "Alla priser inkluderar konsultation. Osäker på vad du ska välja? Skriv i bokningen så hjälper vi dig.",
+  "categories": [
+    {
+      "id": "har",
+      "name": "Hår",
+      "description": "",
+      "services": [
+        {
+          "id": "klippning-kort-har",
+          "name": "Klippning, kort hår",
+          "description": "Inkl. tvätt och styling",
+          "duration": "45 min",
+          "price": "från 595 kr",
+          "bookable": true
+        },
+        {
+          "id": "klippning-langt-har",
+          "name": "Klippning, långt hår",
+          "description": "Inkl. tvätt och styling",
+          "duration": "60 min",
+          "price": "från 745 kr",
+          "bookable": true
+        },
+        {
+          "id": "farg-utvaxt",
+          "name": "Färg, utväxt",
+          "description": "Inkl. klippning",
+          "duration": "120 min",
+          "price": "från 1 395 kr",
+          "bookable": true
+        },
+        {
+          "id": "balayage",
+          "name": "Balayage",
+          "description": "Frihandsslingor med toning",
+          "duration": "180 min",
+          "price": "från 2 195 kr",
+          "bookable": true
+        },
+        {
+          "id": "herrklippning",
+          "name": "Herrklippning",
+          "description": "",
+          "duration": "30 min",
+          "price": "från 445 kr",
+          "bookable": true
+        }
+      ]
+    },
+    {
+      "id": "naglar",
+      "name": "Naglar",
+      "description": "Vi använder HEMA-fria gelélack.",
+      "services": [
+        {
+          "id": "gelemanikyr",
+          "name": "Gelémanikyr",
+          "description": "Formning, nagelband och gelélack",
+          "duration": "60 min",
+          "price": "från 595 kr",
+          "bookable": true
+        },
+        {
+          "id": "gele-med-nageldesign",
+          "name": "Gelé med nageldesign",
+          "description": "French, chrome eller egen idé",
+          "duration": "75 min",
+          "price": "från 695 kr",
+          "bookable": true
+        },
+        {
+          "id": "forlangning-gele",
+          "name": "Förlängning, gelé",
+          "description": "Nytt set",
+          "duration": "90 min",
+          "price": "från 895 kr",
+          "bookable": true
+        },
+        {
+          "id": "pafyllning",
+          "name": "Påfyllning",
+          "description": "Inom 4 veckor",
+          "duration": "75 min",
+          "price": "från 695 kr",
+          "bookable": true
+        },
+        {
+          "id": "pedikyr-med-gele",
+          "name": "Pedikyr med gelé",
+          "description": "",
+          "duration": "75 min",
+          "price": "från 695 kr",
+          "bookable": true
+        }
+      ]
+    },
+    {
+      "id": "fransar-bryn",
+      "name": "Fransar & bryn",
+      "description": "",
+      "services": [
+        {
+          "id": "fransforlangning-nytt-set",
+          "name": "Fransförlängning, nytt set",
+          "description": "Classic eller volym",
+          "duration": "120 min",
+          "price": "från 1 095 kr",
+          "bookable": true
+        },
+        {
+          "id": "fransar-pafyllning",
+          "name": "Fransar, påfyllning",
+          "description": "Inom 3 veckor",
+          "duration": "60 min",
+          "price": "från 595 kr",
+          "bookable": true
+        },
+        {
+          "id": "bryn-form-farg",
+          "name": "Bryn: form & färg",
+          "description": "",
+          "duration": "30 min",
+          "price": "från 395 kr",
+          "bookable": true
+        },
+        {
+          "id": "lash-lift",
+          "name": "Lash lift",
+          "description": "Inkl. färg",
+          "duration": "60 min",
+          "price": "från 595 kr",
+          "bookable": true
+        }
+      ]
+    },
+    {
+      "id": "ovrigt",
+      "name": "Övrigt",
+      "description": "",
+      "services": [
+        {
+          "id": "klippning",
+          "name": "Klippning",
+          "description": "",
+          "duration": "",
+          "price": "",
+          "bookable": true
+        },
+        {
+          "id": "farg-balayage",
+          "name": "Färg / balayage",
+          "description": "",
+          "duration": "",
+          "price": "",
+          "bookable": true
+        },
+        {
+          "id": "forlangning-pafyllning",
+          "name": "Förlängning / påfyllning",
+          "description": "",
+          "duration": "",
+          "price": "",
+          "bookable": true
+        },
+        {
+          "id": "fransar",
+          "name": "Fransar",
+          "description": "",
+          "duration": "",
+          "price": "",
+          "bookable": true
+        },
+        {
+          "id": "bryn",
+          "name": "Bryn",
+          "description": "",
+          "duration": "",
+          "price": "",
+          "bookable": true
+        },
+        {
+          "id": "pedikyr",
+          "name": "Pedikyr",
+          "description": "",
+          "duration": "",
+          "price": "",
+          "bookable": true
+        }
+      ]
+    }
+  ],
+  "updatedAt": "2026-09-28T00:00:00.000Z"
+}

@@ -1,0 +1,50 @@
+{
+  "id": "el",
+  "name": "El",
+  "description": "Electrician direction: cool off-white, near-black ink, signal-yellow accent with dark text, Space Grotesk headings over IBM Plex Sans.",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "ink": "#10161D",
+      "muted": "#56606A",
+      "line": "#D5DAD3",
+      "paper": "#F4F5F2",
+      "surface": "#E9ECE6",
+      "white": "#FFFFFF",
+      "primary": "#FFCC1A",
+      "primaryDark": "#E6B400",
+      "primarySoft": "#FFF4C7",
+      "success": "#1F7A4D",
+      "forest": "#10161D",
+      "forestDeep": "#0A0E13",
+      "gold": "#FFCC1A"
+    },
+    "typography": {
+      "body": "\"IBM Plex Sans Variable\", \"IBM Plex Sans\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "display": "\"Space Grotesk Variable\", \"Space Grotesk\", ui-sans-serif, system-ui, sans-serif",
+      "displayWeight": "700",
+      "label": "\"IBM Plex Sans Variable\", \"IBM Plex Sans\", ui-sans-serif, system-ui, sans-serif",
+      "headingWeight": "700",
+      "headingStretch": "normal",
+      "headingCase": "none"
+    },
+    "radius": {
+      "sm": "6px",
+      "md": "10px",
+      "lg": "16px",
+      "button": "10px"
+    },
+    "layout": {
+      "content": "740px",
+      "wide": "1240px",
+      "wrap": "1240px"
+    }
+  },
+  "components": {
+    "header": "el",
+    "buttons": "solid",
+    "cards": "el",
+    "hero": "split",
+    "footer": "deep"
+  }
+}

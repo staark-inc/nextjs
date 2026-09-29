@@ -21,6 +21,10 @@ export default function PageEditor() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [blockErrors, setBlockErrors] = useState<Record<string, FieldError[]>>({});
   const [templates, setTemplates] = useState<BlockTemplate[]>([]);
+  const [activeTheme, setActiveTheme] = useState("light");
+  const [activeThemeName, setActiveThemeName] = useState("Light");
+  const [commonBlockIds, setCommonBlockIds] = useState<string[]>([]);
+  const [themeOwnedBlockIds, setThemeOwnedBlockIds] = useState<string[]>([]);
   const [showPicker, setShowPicker] = useState(false);
   const [jsonBlocks, setJsonBlocks] = useState<Set<string>>(new Set());
 
@@ -56,7 +60,13 @@ export default function PageEditor() {
       });
     fetch("/api/admin/blocks")
       .then((r) => r.json())
-      .then((data) => setTemplates(data.blocks));
+      .then((data) => {
+        setTemplates(data.blocks ?? []);
+        setActiveTheme(data.theme ?? "light");
+        setActiveThemeName(data.themeName ?? data.theme ?? "Light");
+        setCommonBlockIds(data.commonBlockIds ?? []);
+        setThemeOwnedBlockIds(data.themeOwnedBlockIds ?? []);
+      });
   }, [file]);
 
   function updatePage(updated: PageData) {
@@ -129,7 +139,7 @@ export default function PageEditor() {
 
     // Validate required fields before saving; show errors inline instead of a generic failure.
     const bodyBlocks = (body as { blocks?: { id: string; type: string; props: Record<string, unknown> }[] }).blocks ?? [];
-    const errors = validateBlocks(bodyBlocks);
+    const errors = validateBlocks(bodyBlocks, activeTheme);
     setBlockErrors(errors);
     if (Object.keys(errors).length > 0) {
       const first = Object.keys(errors)[0]!;
@@ -162,6 +172,37 @@ export default function PageEditor() {
   }
 
   if (!page) return <p style={{ padding: 40 }}>Loading...</p>;
+
+  const commonIds = new Set(commonBlockIds);
+  const ownedIds = new Set(themeOwnedBlockIds);
+
+  const commonTemplates = templates.filter((t) =>
+    commonIds.size ? commonIds.has(t.type) : !ownedIds.has(t.type),
+  );
+
+  const themeTemplates = templates.filter(
+    (t) => ownedIds.has(t.type) && !commonIds.has(t.type),
+  );
+
+  const themeShortName =
+    activeThemeName.replace(/^S-Hub\s+/i, "").trim() ||
+    activeTheme;
+
+  const themeIcon =
+    ({
+      el: "⚡",
+      kreator: "🎥",
+      skonhet: "✨",
+      salong: "✂️",
+      gastfrihet: "🛏️",
+      byra: "◆",
+      webb: "💻",
+    } as Record<string, string>)[activeTheme] ?? "◆";
+
+  const isThemeOverride = (type: string) =>
+    activeTheme !== "light" &&
+    commonIds.has(type) &&
+    ownedIds.has(type);
 
   const seoTitleLen = (page.seo.title ?? "").length;
   const seoDescLen = (page.seo.description ?? "").length;
@@ -221,14 +262,49 @@ export default function PageEditor() {
                   <strong>Choose a block type</strong>
                   <button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => setShowPicker(false)}>&times;</button>
                 </div>
-                <div className="sa-block-picker__grid">
-                  {templates.map((t) => (
-                    <button key={t.type} className="sa-block-picker__item" onClick={() => addBlock(t)}>
-                      <div className="sa-block-picker__icon">{iconForType(t.icon)}</div>
-                      <div className="sa-block-picker__label">{t.label}</div>
-                      <div className="sa-block-picker__desc">{t.description}</div>
-                    </button>
-                  ))}
+                <div className="sa-block-picker__groups">
+                  <section className="sa-block-picker__group">
+                    <div className="sa-block-picker__group-title">
+                      <span>Common blocks</span>
+                      <small>Light foundation</small>
+                    </div>
+
+                    <div className="sa-block-picker__grid">
+                      {commonTemplates.map((t) => (
+                        <button key={t.type} className="sa-block-picker__item" onClick={() => addBlock(t)}>
+                          <div className="sa-block-picker__icon">{iconForType(t.icon)}</div>
+                          <div className="sa-block-picker__label-row">
+                            <div className="sa-block-picker__label">{t.label}</div>
+                            {isThemeOverride(t.type) ? (
+                              <span className="sa-block-picker__override">
+                                {themeIcon} {themeShortName}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="sa-block-picker__desc">{t.description}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  {themeTemplates.length > 0 ? (
+                    <section className="sa-block-picker__group">
+                      <div className="sa-block-picker__group-title sa-block-picker__group-title--theme">
+                        <span>{themeIcon} {themeShortName} blocks</span>
+                        <small>Theme specific</small>
+                      </div>
+
+                      <div className="sa-block-picker__grid">
+                        {themeTemplates.map((t) => (
+                          <button key={t.type} className="sa-block-picker__item sa-block-picker__item--theme" onClick={() => addBlock(t)}>
+                            <div className="sa-block-picker__icon">{iconForType(t.icon)}</div>
+                            <div className="sa-block-picker__label">{t.label}</div>
+                            <div className="sa-block-picker__desc">{t.description}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
                 </div>
               </div>
             )}
@@ -266,10 +342,11 @@ export default function PageEditor() {
                           )}
                         </select>
                       </div>
-                      {hasFieldForm(block.type) && !jsonBlocks.has(block.id) ? (
+                      {hasFieldForm(block.type, activeTheme) && !jsonBlocks.has(block.id) ? (
                         <>
                           <BlockFieldForm
                             type={block.type}
+                            themeId={activeTheme}
                             value={block.props}
                             errors={blockErrors[block.id]}
                             onChange={(props) => setBlockProps(block.id, props)}
@@ -294,7 +371,7 @@ export default function PageEditor() {
                             rows={14}
                             spellCheck={false}
                           />
-                          {hasFieldForm(block.type) ? (
+                          {hasFieldForm(block.type, activeTheme) ? (
                             <button
                               type="button"
                               className="sa-btn sa-btn--ghost sa-btn--sm"

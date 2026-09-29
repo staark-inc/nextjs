@@ -19,7 +19,9 @@ import {
 
 export const THEME_STUDIO_SCHEMA = "staark-theme/v1" as const;
 export const THEME_STUDIO_VERSION = 1 as const;
-export const BUILT_IN_THEME_IDS = ["light", "salong", "gastfrihet", "byra", "webb"] as const;
+export const BUILT_IN_THEME_IDS = ["light", "salong", "skonhet", "gastfrihet", "byra", "webb",
+  "kreator",
+] as const;
 
 export type BuiltInThemeId = (typeof BUILT_IN_THEME_IDS)[number];
 

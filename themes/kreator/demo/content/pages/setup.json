@@ -1,0 +1,116 @@
+{
+  "path": "/setup",
+  "title": "Setup",
+  "seo": {
+    "description": "Setup-ul complet al lui Rendo și setările din CS2."
+  },
+  "updatedAt": "2026-09-29T10:00:00Z",
+  "blocks": [
+    {
+      "id": "setup",
+      "type": "gearSetup",
+      "props": {
+        "eyebrow": "Setup",
+        "heading": "Configul meu",
+        "intro": "Ce folosesc pe stream și setările din joc.",
+        "image": {
+          "src": "/kreator/setup.svg",
+          "alt": "Ilustrație cu biroul de gaming: monitor, tastatură, mouse și microfon"
+        },
+        "groups": [
+          {
+            "title": "PC",
+            "items": [
+              {
+                "label": "CPU",
+                "name": "Ryzen 7 7800X3D"
+              },
+              {
+                "label": "GPU",
+                "name": "GeForce RTX 4070 Super"
+              },
+              {
+                "label": "RAM",
+                "name": "32 GB DDR5-6000"
+              }
+            ]
+          },
+          {
+            "title": "Periferice",
+            "items": [
+              {
+                "label": "Monitor",
+                "name": "24,5\" 360 Hz",
+                "spec": "TN, 1920×1080"
+              },
+              {
+                "label": "Mouse",
+                "name": "Wireless, 60 g",
+                "href": "https://example.com/voltaj/mouse"
+              },
+              {
+                "label": "Tastatură",
+                "name": "TKL cu switch-uri magnetice",
+                "href": "https://example.com/voltaj/tastatura"
+              },
+              {
+                "label": "Mousepad",
+                "name": "XL, control"
+              }
+            ]
+          },
+          {
+            "title": "Audio & stream",
+            "items": [
+              {
+                "label": "Căști",
+                "name": "Închise, cu fir"
+              },
+              {
+                "label": "Microfon",
+                "name": "Dinamic XLR",
+                "spec": "prin interfață audio"
+              },
+              {
+                "label": "Cameră",
+                "name": "4K webcam"
+              }
+            ]
+          }
+        ],
+        "settingsTitle": "Setări CS2",
+        "settings": [
+          {
+            "label": "DPI",
+            "value": "800"
+          },
+          {
+            "label": "Sens",
+            "value": "1.05"
+          },
+          {
+            "label": "eDPI",
+            "value": "840"
+          },
+          {
+            "label": "Zoom sens",
+            "value": "1.00"
+          },
+          {
+            "label": "Rezoluție",
+            "value": "1280×960 stretched"
+          },
+          {
+            "label": "Hz",
+            "value": "360"
+          }
+        ],
+        "configCode": {
+          "label": "Crosshair",
+          "code": "CSGO-XqT4h-2ZbPa-wn7cE-LpA9V-JyRkD"
+        },
+        "linkNote": "Unele linkuri sunt afiliate."
+      }
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 import type { ThemeDefinition } from "@staark/theme-kit";
 import lightTheme from "@staark/theme-light";
 import salongTheme, { salongRegistry } from "@staark/theme-salong";
+import skonhetTheme, { skonhetRegistry } from "@staark/theme-skonhet";
+import elTheme, { elRegistry } from "@staark/theme-el";
+import kreatorTheme, { kreatorRegistry } from "@staark/theme-kreator";
 import gastfrihetTheme, { gastfrihetRegistry } from "@staark/theme-gastfrihet";
 import byraTheme, { byraRegistry } from "@staark/theme-byra";
 import webbTheme, { webbRegistry } from "@staark/theme-webb";
@@ -27,6 +30,30 @@ const THEMES: Record<string, ThemeRuntime> = {
     description: "Salon theme with price lists and gallery sections.",
     theme: salongTheme,
     registry: salongRegistry,
+  },
+  skonhet: {
+    id: "skonhet",
+    name: skonhetTheme.name,
+    description:
+      "Hair & nail studio theme with service menu, stylists, lookbook and booking requests.",
+    theme: skonhetTheme,
+    registry: skonhetRegistry,
+  },
+  el: {
+    id: "el",
+    name: elTheme.name,
+    description:
+      "Electrician theme with credentials, deduction calculator, FAQ, emergency banner and quote requests.",
+    theme: elTheme,
+    registry: elRegistry,
+  },
+  kreator: {
+    id: "kreator",
+    name: kreatorTheme.name,
+    description:
+      "Streamer and creator theme with partner codes, stream schedule, gear, videos and socials.",
+    theme: kreatorTheme,
+    registry: kreatorRegistry,
   },
   gastfrihet: {
     id: "gastfrihet",

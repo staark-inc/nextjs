@@ -1,0 +1,427 @@
+{
+  "path": "/",
+  "title": "Acasă",
+  "seo": {
+    "title": "Rendo – streamer CS2",
+    "description": "Live pe Kick și YouTube, coduri de reducere la parteneri, setup și program de stream."
+  },
+  "updatedAt": "2026-09-29T10:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Streamer CS2 · București",
+        "heading": "Rendo",
+        "intro": "Ranked, turnee și mult trash talk. Live aproape în fiecare seară, cu comunitatea pe Discord.",
+        "avatar": {
+          "src": "/kreator/avatar.svg",
+          "alt": "Ilustrație cu Rendo purtând căști"
+        },
+        "status": "Live pe Kick",
+        "statusLive": true,
+        "platforms": [
+          {
+            "href": "https://example.com/kick",
+            "platform": "kick",
+            "label": "Kick",
+            "note": "Live acum"
+          },
+          {
+            "href": "https://example.com/youtube",
+            "platform": "youtube",
+            "label": "YouTube",
+            "note": "Videoclipuri noi marți"
+          }
+        ],
+        "stats": [
+          {
+            "value": "184k",
+            "label": "abonați YouTube"
+          },
+          {
+            "value": "62k",
+            "label": "urmăritori Kick"
+          },
+          {
+            "value": "9,8k",
+            "label": "pe Discord"
+          }
+        ],
+        "code": {
+          "label": "Nu uita de codul",
+          "code": "RENDO",
+          "note": "Merge la toți partenerii de mai jos, unde nu scrie alt cod.",
+          "copyLabel": "Copiază",
+          "copiedLabel": "Copiat!"
+        }
+      }
+    },
+    {
+      "id": "coduri",
+      "type": "partnerCodes",
+      "props": {
+        "eyebrow": "Coduri",
+        "heading": "Reduceri de la parteneri",
+        "intro": "Folosește codurile la checkout. Mă ajuți să fac stream-uri mai bune.",
+        "partners": [
+          {
+            "name": "Voltaj Periferice",
+            "category": "Periferice",
+            "offer": "−15 % la mouse-uri și căști",
+            "description": "Magazinul de unde îmi iau tot setup-ul de gaming.",
+            "code": "RENDO15",
+            "href": "https://example.com/voltaj",
+            "featured": true
+          },
+          {
+            "name": "PixelForge PC",
+            "category": "Hardware",
+            "offer": "−8 % la componente",
+            "code": "RENDO",
+            "href": "https://example.com/pixelforge"
+          },
+          {
+            "name": "Nordic Fuel",
+            "category": "Nutriție",
+            "offer": "−30 % la prima comandă",
+            "code": "RENDO30",
+            "href": "https://example.com/nordicfuel"
+          },
+          {
+            "name": "SkinMarket",
+            "category": "Skin-uri",
+            "offer": "+5 % bonus la depunere",
+            "description": "Cumpără și vinde skin-uri CS2.",
+            "code": "RENDO5",
+            "href": "https://example.com/skinmarket"
+          },
+          {
+            "name": "Arena League",
+            "category": "Platforme",
+            "offer": "7 zile Premium gratuit",
+            "description": "Meciuri 5v5 cu anti-cheat.",
+            "href": "https://example.com/arena"
+          }
+        ],
+        "disclosure": "Reclamă: linkuri afiliate. Primesc un comision când cumperi prin ele, prețul pentru tine rămâne același."
+      }
+    },
+    {
+      "id": "program",
+      "type": "streamSchedule",
+      "props": {
+        "eyebrow": "Program",
+        "heading": "Când sunt live",
+        "intro": "Stream-urile încep de obicei la ora 20. Anunț schimbările pe Discord.",
+        "timeZone": "Europe/Bucharest",
+        "timeZoneLabel": "Orele sunt ora României.",
+        "todayLabel": "azi",
+        "offLabel": "Pauză",
+        "days": [
+          {
+            "day": "Luni",
+            "time": "20:00–00:00",
+            "title": "Ranked FACEIT",
+            "platform": "Kick"
+          },
+          {
+            "day": "Marți",
+            "time": "19:00–22:00",
+            "title": "Video nou + reacții",
+            "platform": "YouTube"
+          },
+          {
+            "day": "Miercuri",
+            "time": "20:00–00:00",
+            "title": "Premier cu viewerii",
+            "platform": "Kick"
+          },
+          {
+            "day": "Joi",
+            "off": true
+          },
+          {
+            "day": "Vineri",
+            "time": "20:00–02:00",
+            "title": "Turneu comunitate",
+            "platform": "Kick"
+          },
+          {
+            "day": "Sâmbătă",
+            "time": "16:00–22:00",
+            "title": "Coaching & demo review",
+            "platform": "Kick"
+          },
+          {
+            "day": "Duminică",
+            "off": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "video",
+      "type": "videoGrid",
+      "props": {
+        "eyebrow": "Video",
+        "heading": "Ultimele videoclipuri",
+        "cta": {
+          "label": "Tot canalul",
+          "href": "https://example.com/youtube"
+        },
+        "videos": [
+          {
+            "title": "Am jucat 24 de ore doar pe Dust2",
+            "href": "https://example.com/video-1",
+            "thumbnail": "/kreator/video-1.svg",
+            "duration": "28:14",
+            "meta": "212k vizualizări · acum 4 zile",
+            "platform": "youtube"
+          },
+          {
+            "title": "Cel mai bun clutch din 2026 (1v5)",
+            "href": "https://example.com/video-3",
+            "thumbnail": "/kreator/video-3.svg",
+            "duration": "9:02",
+            "meta": "98k vizualizări · acum 1 săptămână",
+            "platform": "youtube"
+          },
+          {
+            "title": "Setup tour: tot ce folosesc",
+            "href": "https://example.com/video-4",
+            "thumbnail": "/kreator/video-4.svg",
+            "duration": "14:47",
+            "meta": "64k vizualizări · acum 2 săptămâni",
+            "platform": "youtube"
+          },
+          {
+            "title": "Noaptea în care am jucat cu abonații",
+            "href": "https://example.com/video-2",
+            "thumbnail": "/kreator/video-2.svg",
+            "duration": "3:12:40",
+            "meta": "Stream integral · acum 3 săptămâni",
+            "platform": "youtube"
+          },
+          {
+            "title": "Smoke-uri noi pe Mirage",
+            "href": "https://example.com/video-5",
+            "thumbnail": "/kreator/video-5.svg",
+            "duration": "11:30",
+            "meta": "51k vizualizări · acum 3 săptămâni",
+            "platform": "youtube"
+          },
+          {
+            "title": "Am câștigat turneul comunității",
+            "href": "https://example.com/video-6",
+            "thumbnail": "/kreator/video-6.svg",
+            "duration": "22:08",
+            "meta": "47k vizualizări · acum o lună",
+            "platform": "youtube"
+          }
+        ]
+      }
+    },
+    {
+      "id": "setup",
+      "type": "gearSetup",
+      "props": {
+        "eyebrow": "Setup",
+        "heading": "Configul meu",
+        "intro": "Ce folosesc pe stream și setările din joc.",
+        "image": {
+          "src": "/kreator/setup.svg",
+          "alt": "Ilustrație cu biroul de gaming: monitor, tastatură, mouse și microfon"
+        },
+        "groups": [
+          {
+            "title": "PC",
+            "items": [
+              {
+                "label": "CPU",
+                "name": "Ryzen 7 7800X3D"
+              },
+              {
+                "label": "GPU",
+                "name": "GeForce RTX 4070 Super"
+              },
+              {
+                "label": "RAM",
+                "name": "32 GB DDR5-6000"
+              }
+            ]
+          },
+          {
+            "title": "Periferice",
+            "items": [
+              {
+                "label": "Monitor",
+                "name": "24,5\" 360 Hz",
+                "spec": "TN, 1920×1080"
+              },
+              {
+                "label": "Mouse",
+                "name": "Wireless, 60 g",
+                "href": "https://example.com/voltaj/mouse"
+              },
+              {
+                "label": "Tastatură",
+                "name": "TKL cu switch-uri magnetice",
+                "href": "https://example.com/voltaj/tastatura"
+              },
+              {
+                "label": "Mousepad",
+                "name": "XL, control"
+              }
+            ]
+          },
+          {
+            "title": "Audio & stream",
+            "items": [
+              {
+                "label": "Căști",
+                "name": "Închise, cu fir"
+              },
+              {
+                "label": "Microfon",
+                "name": "Dinamic XLR",
+                "spec": "prin interfață audio"
+              },
+              {
+                "label": "Cameră",
+                "name": "4K webcam"
+              }
+            ]
+          }
+        ],
+        "settingsTitle": "Setări CS2",
+        "settings": [
+          {
+            "label": "DPI",
+            "value": "800"
+          },
+          {
+            "label": "Sens",
+            "value": "1.05"
+          },
+          {
+            "label": "eDPI",
+            "value": "840"
+          },
+          {
+            "label": "Zoom sens",
+            "value": "1.00"
+          },
+          {
+            "label": "Rezoluție",
+            "value": "1280×960 stretched"
+          },
+          {
+            "label": "Hz",
+            "value": "360"
+          }
+        ],
+        "configCode": {
+          "label": "Crosshair",
+          "code": "CSGO-XqT4h-2ZbPa-wn7cE-LpA9V-JyRkD"
+        },
+        "linkNote": "Unele linkuri sunt afiliate."
+      }
+    },
+    {
+      "id": "social",
+      "type": "socialLinks",
+      "props": {
+        "eyebrow": "Social",
+        "heading": "Mă găsești aici",
+        "intro": "Clipuri zilnice pe TikTok, anunțuri pe Discord.",
+        "links": [
+          {
+            "href": "https://example.com/kick",
+            "platform": "kick",
+            "handle": "/rendo",
+            "count": 62000,
+            "countLabel": "urmăritori",
+            "note": "LIVE"
+          },
+          {
+            "href": "https://example.com/youtube",
+            "platform": "youtube",
+            "handle": "@rendo",
+            "count": 184000,
+            "countLabel": "abonați"
+          },
+          {
+            "href": "https://example.com/tiktok",
+            "platform": "tiktok",
+            "handle": "@rendo.cs",
+            "count": 341000,
+            "countLabel": "urmăritori"
+          },
+          {
+            "href": "https://example.com/instagram",
+            "platform": "instagram",
+            "handle": "@rendo",
+            "count": 58000,
+            "countLabel": "urmăritori"
+          },
+          {
+            "href": "https://example.com/x",
+            "platform": "x",
+            "handle": "@rendo_cs",
+            "count": 21500,
+            "countLabel": "urmăritori"
+          },
+          {
+            "href": "https://example.com/discord",
+            "platform": "discord",
+            "label": "Discord",
+            "handle": "Comunitatea Rendo",
+            "count": 9800,
+            "countLabel": "membri"
+          },
+          {
+            "href": "ts3server://ts.rendo.example",
+            "label": "TeamSpeak",
+            "handle": "ts.rendo.example"
+          }
+        ]
+      }
+    },
+    {
+      "id": "colaborari",
+      "type": "contact",
+      "props": {
+        "eyebrow": "Colaborări",
+        "heading": "Hai să lucrăm împreună",
+        "intro": "Sponsorizări, integrări în video și evenimente. Îți răspund în 2–3 zile lucrătoare.",
+        "formId": "kreator-business",
+        "submitLabel": "Trimite",
+        "successMessage": "Mersi! Revin în 2–3 zile lucrătoare.",
+        "fields": [
+          {
+            "name": "name",
+            "label": "Nume",
+            "required": true
+          },
+          {
+            "name": "email",
+            "label": "E-mail",
+            "type": "email",
+            "required": true
+          },
+          {
+            "name": "company",
+            "label": "Companie / brand"
+          },
+          {
+            "name": "message",
+            "label": "Despre colaborare",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      }
+    }
+  ]
+}

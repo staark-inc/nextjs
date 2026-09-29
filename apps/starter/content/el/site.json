@@ -1,0 +1,76 @@
+{
+  "name": "Norrsken El",
+  "tagline": "Elinstallationer, laddbox och solceller i Uppsala",
+  "locale": "sv-SE",
+  "url": "https://norrskenel.example",
+  "theme": {
+    "family": "el",
+    "preset": "el"
+  },
+  "brand": {
+    "copyright": "© 2026 Norrsken El AB"
+  },
+  "contact": {
+    "email": "hej@norrskenel.example",
+    "phone": "018-400 12 34",
+    "address": {
+      "street": "Kungsgatan 70",
+      "postalCode": "753 18",
+      "city": "Uppsala",
+      "country": "SE"
+    },
+    "openingHours": [
+      {
+        "days": "Vardagar",
+        "hours": "07–16"
+      },
+      {
+        "days": "Jour",
+        "hours": "Dygnet runt"
+      }
+    ]
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Avdrag",
+        "href": "/#avdrag"
+      },
+      {
+        "label": "Frågor",
+        "href": "/#fragor"
+      },
+      {
+        "label": "Offert",
+        "href": "/#offert"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "footer": [
+      {
+        "label": "Avdrag",
+        "href": "/#avdrag"
+      },
+      {
+        "label": "Begär offert",
+        "href": "/#offert"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "cta": {
+      "label": "Begär offert",
+      "href": "/#offert"
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Norrsken El",
+    "defaultDescription": "Auktoriserad elektriker i Uppsala. Laddbox, elcentral, belysning och solceller med ROT- eller grönt avdrag direkt på fakturan.",
+    "businessType": "Electrician"
+  }
+}

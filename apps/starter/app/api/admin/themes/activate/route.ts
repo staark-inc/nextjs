@@ -3,10 +3,11 @@ import { revalidatePath } from "next/cache";
 import { readSite, readSiteTheme, writeSite } from "@/lib/admin-theme";
 import { getThemeRuntime, resolveThemeRuntime } from "@/lib/theme-runtime";
 import { evaluateThemeCompatibility, scanThemeBlockUsage } from "@/lib/theme-compatibility";
-import { requireAuth } from "../../guard";
+import { requireManager } from "../../guard";
+import { appendAdminLog } from "@/lib/admin-logs";
 
 export async function POST(req: Request) {
-  const blocked = await requireAuth();
+  const blocked = await requireManager();
   if (blocked) return blocked;
 
   const { theme, preset } = (await req.json()) as { theme: string; preset?: string };
@@ -60,6 +61,17 @@ export async function POST(req: Request) {
   site.theme = nextTheme;
   await writeSite(site);
   revalidatePath("/", "layout");
+
+  await appendAdminLog({
+    area: "theme",
+    action: "theme.activated",
+    message: `Theme "${runtime.id}" was activated.`,
+    meta: {
+      theme: runtime.id,
+      preset: selectedPreset,
+      previousTheme: currentFamily,
+    },
+  });
 
   return NextResponse.json({
     ok: true,

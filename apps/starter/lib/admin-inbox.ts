@@ -1,4 +1,8 @@
-import { SubmissionKindSchema, inferSubmissionKind, type SubmissionKind } from "@staark/core";
+import {
+  SubmissionKindSchema,
+  inferSubmissionKind,
+  type SubmissionKind,
+} from "@staark/core";
 import {
   readStateJson,
   readStateText,
@@ -6,15 +10,16 @@ import {
   writeStateText,
 } from "./storage";
 
-export type InboxStatus = "new" | "read" | "replied" | "archived";
-export type BookingStatus = "pending" | "confirmed" | "declined";
-export type LeadStage =
+export type InboxStatus =
   | "new"
-  | "contacted"
-  | "qualified"
-  | "offer_sent"
-  | "won"
-  | "lost";
+  | "read"
+  | "replied"
+  | "archived";
+
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "declined";
 
 export type InboxActivity = {
   at: string;
@@ -32,18 +37,12 @@ export type InboxSubmission = {
   meta?: Record<string, string>;
   status: InboxStatus;
   bookingStatus?: BookingStatus;
-  leadStage?: LeadStage;
-  followUpAt?: string;
-  internalNote?: string;
   activity: InboxActivity[];
 };
 
 type InboxState = {
   status?: InboxStatus;
   bookingStatus?: BookingStatus;
-  leadStage?: LeadStage;
-  followUpAt?: string;
-  internalNote?: string;
   activity?: InboxActivity[];
 };
 
@@ -53,26 +52,52 @@ function submissionId(index: number): string {
   return `SFS-${String(index + 1).padStart(5, "0")}`;
 }
 
+/**
+ * CRM existed briefly in the starter admin.
+ * Keep old state files readable, but do not surface historical
+ * pipeline/follow-up noise in the CMS.
+ */
+function visibleActivity(entry: InboxActivity): boolean {
+  return !(
+    /^Lead stage:/i.test(entry.message) ||
+    /^Follow-up /i.test(entry.message) ||
+    /^Internal note /i.test(entry.message)
+  );
+}
 
 async function readState(): Promise<InboxStateFile> {
   try {
-    const parsed = await readStateJson<unknown>("inbox-state.json");
-    return parsed && typeof parsed === "object" ? (parsed as InboxStateFile) : {};
+    const parsed = await readStateJson<unknown>(
+      "inbox-state.json",
+    );
+
+    return parsed && typeof parsed === "object"
+      ? (parsed as InboxStateFile)
+      : {};
   } catch {
     return {};
   }
 }
 
-async function writeState(state: InboxStateFile): Promise<void> {
+async function writeState(
+  state: InboxStateFile,
+): Promise<void> {
   await writeStateJson("inbox-state.json", state);
 }
 
-export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
+export async function listInboxSubmissions():
+Promise<InboxSubmission[]> {
   let lines: string[] = [];
+
   try {
     const raw = await readStateText("submissions.jsonl");
+
     if (raw === null) return [];
-    lines = raw.trim().split("\n").filter(Boolean);
+
+    lines = raw
+      .trim()
+      .split("\n")
+      .filter(Boolean);
   } catch {
     return [];
   }
@@ -90,42 +115,83 @@ export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
         receivedAt?: unknown;
         meta?: unknown;
       };
+
       const id = submissionId(index);
-      const fields = raw.fields && typeof raw.fields === "object" ? (raw.fields as Record<string, unknown>) : {};
-      const formId = typeof raw.formId === "string" ? raw.formId : "form";
-      const kindResult = SubmissionKindSchema.safeParse(raw.kind);
-      const kind = kindResult.success ? kindResult.data : inferSubmissionKind(formId, fields);
-      const receivedAt = typeof raw.receivedAt === "string" ? raw.receivedAt : new Date(0).toISOString();
+
+      const fields =
+        raw.fields && typeof raw.fields === "object"
+          ? (raw.fields as Record<string, unknown>)
+          : {};
+
+      const formId =
+        typeof raw.formId === "string"
+          ? raw.formId
+          : "form";
+
+      const kindResult =
+        SubmissionKindSchema.safeParse(raw.kind);
+
+      const kind = kindResult.success
+        ? kindResult.data
+        : inferSubmissionKind(formId, fields);
+
+      const receivedAt =
+        typeof raw.receivedAt === "string"
+          ? raw.receivedAt
+          : new Date(0).toISOString();
+
       const saved = state[id] ?? {};
-      const activity = saved.activity?.length
-        ? saved.activity
-        : [{ at: receivedAt, actor: "system", message: "Submission received" }];
+
+      const savedActivity =
+        saved.activity?.filter(visibleActivity) ?? [];
+
+      const activity = savedActivity.length
+        ? savedActivity
+        : [
+            {
+              at: receivedAt,
+              actor: "system",
+              message: "Submission received",
+            },
+          ];
 
       submissions.push({
         id,
         formId,
         kind,
         fields,
-        pageUrl: typeof raw.pageUrl === "string" ? raw.pageUrl : undefined,
+        pageUrl:
+          typeof raw.pageUrl === "string"
+            ? raw.pageUrl
+            : undefined,
         receivedAt,
-        meta: raw.meta && typeof raw.meta === "object" ? (raw.meta as Record<string, string>) : undefined,
+        meta:
+          raw.meta && typeof raw.meta === "object"
+            ? (raw.meta as Record<string, string>)
+            : undefined,
         status: saved.status ?? "new",
-        bookingStatus: kind === "booking" ? (saved.bookingStatus ?? "pending") : undefined,
-        leadStage: kind === "lead" ? (saved.leadStage ?? "new") : undefined,
-        followUpAt: kind === "lead" ? saved.followUpAt : undefined,
-        internalNote: kind === "lead" ? saved.internalNote : undefined,
+        bookingStatus:
+          kind === "booking"
+            ? saved.bookingStatus ?? "pending"
+            : undefined,
         activity,
       });
     } catch {
-      // Skip malformed local fixture lines instead of breaking the whole inbox.
+      // One malformed submission must not break the inbox.
     }
   }
 
   return submissions.reverse();
 }
 
-export async function getInboxSubmission(id: string): Promise<InboxSubmission | null> {
-  return (await listInboxSubmissions()).find((item) => item.id === id) ?? null;
+export async function getInboxSubmission(
+  id: string,
+): Promise<InboxSubmission | null> {
+  return (
+    (await listInboxSubmissions()).find(
+      (item) => item.id === id,
+    ) ?? null
+  );
 }
 
 export async function updateInboxSubmission(
@@ -133,9 +199,6 @@ export async function updateInboxSubmission(
   patch: {
     status?: InboxStatus;
     bookingStatus?: BookingStatus;
-    leadStage?: LeadStage;
-    followUpAt?: string | null;
-    internalNote?: string | null;
     activityMessage?: string;
   },
 ): Promise<InboxSubmission | null> {
@@ -144,73 +207,74 @@ export async function updateInboxSubmission(
 
   const state = await readState();
   const previous = state[id] ?? {};
-  const activity = previous.activity?.length
-    ? [...previous.activity]
-    : [{ at: current.receivedAt, actor: "system", message: "Submission received" }];
 
-  if (patch.status && patch.status !== current.status) {
-    activity.push({ at: new Date().toISOString(), actor: "admin", message: `Status: ${current.status} → ${patch.status}` });
-  }
-  if (patch.bookingStatus && patch.bookingStatus !== current.bookingStatus) {
-    activity.push({ at: new Date().toISOString(), actor: "admin", message: `Booking: ${current.bookingStatus ?? "pending"} → ${patch.bookingStatus}` });
-  }
+  const activity =
+    previous.activity?.filter(visibleActivity) ?? [];
 
-  if (
-    current.kind === "lead" &&
-    patch.leadStage &&
-    patch.leadStage !== current.leadStage
-  ) {
+  if (!activity.length) {
     activity.push({
-      at: new Date().toISOString(),
-      actor: "admin",
-      message: `Lead stage: ${current.leadStage ?? "new"} → ${patch.leadStage}`,
+      at: current.receivedAt,
+      actor: "system",
+      message: "Submission received",
     });
   }
 
   if (
-    current.kind === "lead" &&
-    patch.followUpAt !== undefined &&
-    patch.followUpAt !== (current.followUpAt ?? null)
+    patch.status &&
+    patch.status !== current.status
   ) {
     activity.push({
       at: new Date().toISOString(),
       actor: "admin",
-      message: patch.followUpAt
-        ? `Follow-up set for ${patch.followUpAt}`
-        : "Follow-up cleared",
+      message:
+        `Status: ${current.status} → ${patch.status}`,
     });
   }
 
   if (
-    current.kind === "lead" &&
-    patch.internalNote !== undefined &&
-    patch.internalNote !== (current.internalNote ?? null)
+    patch.bookingStatus &&
+    patch.bookingStatus !== current.bookingStatus
   ) {
     activity.push({
       at: new Date().toISOString(),
       actor: "admin",
-      message: patch.internalNote ? "Internal note updated" : "Internal note cleared",
+      message:
+        `Booking: ${
+          current.bookingStatus ?? "pending"
+        } → ${patch.bookingStatus}`,
     });
   }
 
   if (patch.activityMessage?.trim()) {
-    activity.push({ at: new Date().toISOString(), actor: "admin", message: patch.activityMessage.trim().slice(0, 500) });
+    activity.push({
+      at: new Date().toISOString(),
+      actor: "admin",
+      message: patch.activityMessage
+        .trim()
+        .slice(0, 500),
+    });
   }
 
+  // Rebuild the record instead of spreading the old state.
+  // This drops legacy CRM keys when an item is next updated.
   state[id] = {
-    ...previous,
-    ...(patch.status ? { status: patch.status } : {}),
-    ...(patch.bookingStatus ? { bookingStatus: patch.bookingStatus } : {}),
-    ...(patch.leadStage ? { leadStage: patch.leadStage } : {}),
-    ...(patch.followUpAt !== undefined
-      ? { followUpAt: patch.followUpAt ?? undefined }
-      : {}),
-    ...(patch.internalNote !== undefined
-      ? { internalNote: patch.internalNote ?? undefined }
-      : {}),
+    ...(patch.status
+      ? { status: patch.status }
+      : previous.status
+        ? { status: previous.status }
+        : {}),
+
+    ...(patch.bookingStatus
+      ? { bookingStatus: patch.bookingStatus }
+      : previous.bookingStatus
+        ? { bookingStatus: previous.bookingStatus }
+        : {}),
+
     activity,
   };
+
   await writeState(state);
+
   return getInboxSubmission(id);
 }
 

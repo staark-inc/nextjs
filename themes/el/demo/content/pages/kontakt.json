@@ -1,0 +1,48 @@
+{
+  "path": "/kontakt",
+  "title": "Kontakt",
+  "seo": {
+    "description": "Kontakta Norrsken El eller begär offert."
+  },
+  "updatedAt": "2026-09-28T10:00:00Z",
+  "blocks": [
+    {
+      "id": "jour",
+      "type": "emergencyBanner",
+      "props": {
+        "text": "Jour dygnet runt vid strömavbrott",
+        "mobileBar": {
+          "enabled": true,
+          "quoteHref": "#offert"
+        }
+      }
+    },
+    {
+      "id": "offert",
+      "type": "quoteRequest",
+      "props": {
+        "eyebrow": "Kontakt",
+        "heading": "Begär offert",
+        "intro": "Fyll i formuläret eller ring oss.",
+        "areas": [
+          "Uppsala",
+          "Knivsta",
+          "Enköping",
+          "Östhammar",
+          "Tierp",
+          "Sigtuna"
+        ],
+        "formId": "el-offert",
+        "jobTypes": [
+          "Laddbox",
+          "Elcentral",
+          "Belysning",
+          "Felsökning",
+          "Solceller",
+          "Annat"
+        ],
+        "successMessage": "Tack! Vi återkommer inom ett dygn."
+      }
+    }
+  ]
+}

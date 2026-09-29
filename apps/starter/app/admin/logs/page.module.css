@@ -1,0 +1,52 @@
+.level {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.level_info {
+  color: var(--sa-primary);
+  background: var(--sa-surface-blue);
+}
+
+.level_warning {
+  color: var(--sa-warning);
+  background: var(--sa-warning-soft);
+}
+
+.level_error {
+  color: var(--sa-danger);
+  background: var(--sa-danger-soft);
+}
+
+.message {
+  min-width: 280px;
+  max-width: 620px;
+}
+
+.message details {
+  margin-top: 6px;
+}
+
+.message summary {
+  cursor: pointer;
+  color: var(--sa-primary);
+  font-size: 11px;
+}
+
+.message pre {
+  max-width: 520px;
+  margin: 8px 0 0;
+  padding: 10px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--sa-surface-blue);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

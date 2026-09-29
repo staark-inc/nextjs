@@ -1,0 +1,77 @@
+{
+  "name": "Studio Lumi",
+  "tagline": "Hår & naglar på Södermalm",
+  "locale": "sv-SE",
+  "url": "https://studiolumi.example",
+  "theme": {
+    "family": "skonhet",
+    "preset": "skonhet"
+  },
+  "brand": {
+    "copyright": "© 2026 Studio Lumi"
+  },
+  "contact": {
+    "email": "hej@studiolumi.example",
+    "phone": "08-640 12 34",
+    "address": {
+      "street": "Götgatan 48",
+      "postalCode": "118 26",
+      "city": "Stockholm",
+      "country": "SE"
+    },
+    "openingHours": [
+      {
+        "days": "Mån–Fre",
+        "hours": "10–19"
+      },
+      {
+        "days": "Lör",
+        "hours": "10–16"
+      }
+    ]
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Behandlingar",
+        "href": "/#behandlingar"
+      },
+      {
+        "label": "Team",
+        "href": "/#team"
+      },
+      {
+        "label": "Lookbook",
+        "href": "/#lookbook"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "footer": [
+      {
+        "label": "Behandlingar",
+        "href": "/#behandlingar"
+      },
+      {
+        "label": "Boka tid",
+        "href": "/#boka"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "cta": {
+      "label": "Boka tid",
+      "href": "/#boka"
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Studio Lumi",
+    "defaultDescription": "Klippning, färg, gelé och fransar på Södermalm. Boka tid online hos Studio Lumi.",
+    "businessType": "BeautySalon"
+  },
+  "websiteType": "salon"
+}

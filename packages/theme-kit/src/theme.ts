@@ -57,6 +57,24 @@ export type ThemeDefinition = {
   sections: Record<string, SectionComponent<any>>;
 };
 
+/**
+ * Theme Block Architecture v1
+ *
+ * A theme owns the business/presentation blocks listed here. A child theme may
+ * inherit generic blocks from its parent, but blocks belonging to sibling
+ * themes are never considered available.
+ *
+ * `dataSources` declares business data owned by the vertical. The host decides
+ * how those sources are hydrated; the theme only declares the contract.
+ */
+export type ThemeManifest = {
+  id: string;
+  name: string;
+  parentId?: string;
+  blocks: readonly string[];
+  dataSources?: Readonly<Record<string, string>>;
+};
+
 /** camelCase / nested token key → CSS custom property name: primaryDark → --sk-color-primary-dark. */
 function cssVarName(group: string, key: string): string {
   const kebab = key.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();

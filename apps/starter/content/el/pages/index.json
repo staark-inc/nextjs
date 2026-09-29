@@ -1,0 +1,48 @@
+{
+  "path": "/",
+  "title": "Elservice",
+  "seo": {
+    "title": "Elservice",
+    "description": "Professionell elservice, installation och offertförfrågan."
+  },
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "heading": "Trygg elservice för hem och företag",
+        "intro": "Installation, felsökning och service med tydlig väg från fråga till offert."
+      }
+    },
+    {
+      "id": "cred",
+      "type": "credentials",
+      "props": {
+        "items": []
+      }
+    },
+    {
+      "id": "avdrag",
+      "type": "deductionCalculator",
+      "props": {
+        "heading": "Vad kostar det efter avdrag?"
+      }
+    },
+    {
+      "id": "fragor",
+      "type": "faq",
+      "props": {
+        "heading": "Vanliga frågor",
+        "items": []
+      }
+    },
+    {
+      "id": "offert",
+      "type": "quoteRequest",
+      "props": {
+        "heading": "Begär offert",
+        "formId": "el-offert"
+      }
+    }
+  ]
+}

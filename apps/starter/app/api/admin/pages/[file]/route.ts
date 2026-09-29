@@ -68,9 +68,13 @@ export async function PUT(req: Request, ctx: Ctx) {
     );
   }
 
-  // Required-field validation for the active block editors.
+  // Required-field validation for the active theme's block editors.
   const blocks = parsedPage.data.blocks;
-  const fieldErrors = validateBlocks(blocks);
+  const siteForTheme = await readContentJson<{
+    theme?: { family?: string };
+  }>("site.json");
+  const activeTheme = siteForTheme?.theme?.family ?? "light";
+  const fieldErrors = validateBlocks(blocks, activeTheme);
   if (Object.keys(fieldErrors).length > 0) {
     return NextResponse.json({ error: "Some blocks are missing required fields.", fieldErrors }, { status: 422 });
   }

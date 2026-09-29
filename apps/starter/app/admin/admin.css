@@ -1211,6 +1211,7 @@ body :where(a, button, input, select, textarea):focus-visible {
 }
 
 .sa-theme-editor {
+  margin-top: 20px;
   overflow: hidden;
   border: 1px solid var(--sa-line);
   border-radius: var(--sa-radius);
@@ -4257,5 +4258,95 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   .sa-mail-settings__send .sa-btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+
+/* Theme Block Architecture — grouped block picker */
+
+.sa-block-picker__groups {
+  display: grid;
+  gap: 28px;
+}
+
+.sa-block-picker__group {
+  display: grid;
+  gap: 12px;
+}
+
+.sa-block-picker__group + .sa-block-picker__group {
+  padding-top: 24px;
+  border-top: 1px solid var(--sa-border);
+}
+
+.sa-block-picker__group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--sa-text);
+}
+
+.sa-block-picker__group-title small {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--sa-muted);
+}
+
+.sa-block-picker__group-title--theme {
+  color: var(--sa-primary);
+}
+
+.sa-block-picker__label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.sa-block-picker__override {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--sa-border);
+  border-radius: 999px;
+  background: var(--sa-primary-soft);
+  color: var(--sa-primary);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.sa-block-picker__item--theme {
+  position: relative;
+}
+
+.sa-block-picker__item--theme::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--sa-primary) 24%,
+    transparent
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .sa-block-picker__group-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
   }
 }

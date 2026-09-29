@@ -9,6 +9,7 @@ export const ADMIN_FEATURES = [
   "seo",
   "settings",
   "booking",
+  "services",
   "themes",
   "redirects",
   "health",
@@ -35,6 +36,7 @@ export const ADMIN_FEATURE_REGISTRY: Record<AdminFeature, AdminFeatureDefinition
 
   // Optional client capability. The dedicated Bookings UI is added later.
   booking: { label: "Bookings", access: "entitlement" },
+  services: { label: "Services", access: "core" },
 
   // Technical platform capabilities belong to Staark Manager.
   themes: { label: "Themes", access: "manager" },
@@ -104,6 +106,8 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
 
 const PAGE_FEATURES: Array<[string, AdminFeature]> = [
   ["/admin/forms", "inbox"],
+  ["/admin/bookings", "booking"],
+  ["/admin/services", "services"],
   ["/admin/pages", "pages"],
   ["/admin/media", "media"],
   ["/admin/navigation", "navigation"],
@@ -117,6 +121,7 @@ const PAGE_FEATURES: Array<[string, AdminFeature]> = [
 
 const API_FEATURES: Array<[string, AdminFeature]> = [
   ["/api/admin/forms", "inbox"],
+  ["/api/admin/services", "services"],
   ["/api/admin/blocks", "pages"],
   ["/api/admin/pages", "pages"],
   ["/api/admin/media", "media"],

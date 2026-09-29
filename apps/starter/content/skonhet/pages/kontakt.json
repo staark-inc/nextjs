@@ -1,0 +1,38 @@
+{
+  "path": "/kontakt",
+  "title": "Kontakt",
+  "seo": {
+    "description": "Hitta till Studio Lumi på Götgatan eller boka tid online."
+  },
+  "updatedAt": "2026-09-28T10:00:00Z",
+  "blocks": [
+    {
+      "id": "boka",
+      "type": "bookingRequest",
+      "props": {
+        "eyebrow": "Kontakt",
+        "heading": "Hitta hit eller boka",
+        "intro": "Vi ligger två minuter från T-bana Medborgarplatsen.",
+        "formId": "skonhet-bokning",
+        "services": [
+          "Klippning",
+          "Färg / balayage",
+          "Gelémanikyr",
+          "Gelé med nageldesign",
+          "Förlängning / påfyllning",
+          "Fransar",
+          "Bryn",
+          "Pedikyr"
+        ],
+        "stylists": [
+          "Ella Berg",
+          "Noor Haddad",
+          "Sofia Lind",
+          "Mira Ek"
+        ],
+        "successMessage": "Vi bekräftar din tid via e-post eller sms inom några timmar.",
+        "policy": "Avbokning senast 24 timmar innan."
+      }
+    }
+  ]
+}

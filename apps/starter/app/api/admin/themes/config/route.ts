@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin-theme";
 import { resolveThemeRuntime } from "@/lib/theme-runtime";
 import { requireAuth } from "../../guard";
+import { appendAdminLog } from "@/lib/admin-logs";
 
 export async function GET() {
   const blocked = await requireAuth();
@@ -62,6 +63,19 @@ export async function PUT(req: Request) {
   // JSON.stringify omits undefined values, so reset really removes old overrides.
   await writeSite(site);
   revalidatePath("/", "layout");
+
+  await appendAdminLog({
+    area: "theme",
+    action: "design.updated",
+    message: "Active website design settings were updated.",
+    meta: {
+      theme,
+      preset,
+      changedPreset: previous.preset !== preset,
+      overrideGroups: Object.keys(overrides).length,
+      componentOverrides: Object.keys(components).length,
+    },
+  });
 
   return NextResponse.json({
     ok: true,

@@ -32,3 +32,4 @@ export const salongRegistry: Record<string, ThemeDefinition> = {
 
 export { PriceList, Gallery };
 export default salongTheme;
+export { default as salongManifest } from "./manifest";

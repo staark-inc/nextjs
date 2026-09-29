@@ -1,3 +1,19 @@
+import {
+  skonhetBlockFields,
+  skonhetHeroFields,
+  skonhetRequiredFields,
+} from "@staark/theme-skonhet/admin";
+
+import {
+  elBlockFields,
+  elHeroFields,
+  elRequiredFields,
+} from "@staark/theme-el/admin";
+import {
+  kreatorBlockFields,
+  kreatorHeroFields,
+  kreatorRequiredFields,
+} from "@staark/theme-kreator/admin";
 /**
  * Field descriptors for the block editor. They turn each block type's props into
  * a proper form (text, textarea, number, toggle, select, image, link, repeatable
@@ -19,6 +35,8 @@ export interface Field {
   options?: (string | number | { label: string; value: string | number })[];
   min?: number;
   max?: number;
+  /** Optional admin-side input formatting. */
+  format?: "sek" | "sek-from";
   /** array: per-item heading; "{field}" is replaced by that item field's value. */
   itemLabel?: string;
   /** array item fields, or object sub-fields. */
@@ -430,6 +448,72 @@ export const REQUIRED_FIELDS: Record<string, string[]> = {
   serviceAreas: ["heading"],
 };
 
+/**
+ * Theme-owned editor descriptors.
+ *
+ * The active theme owns its extra fields. Sibling theme fields never leak into
+ * the editor, which keeps Theme Block Architecture v1 genuinely isolated.
+ */
+const THEME_BLOCK_FIELDS: Record<string, Record<string, Field[]>> = {
+  skonhet:
+    skonhetBlockFields as unknown as Record<string, Field[]>,
+  el:
+    elBlockFields as unknown as Record<string, Field[]>,
+  kreator:
+    kreatorBlockFields as unknown as Record<string, Field[]>,
+};
+
+const THEME_HERO_FIELDS: Record<string, Field[]> = {
+  skonhet:
+    skonhetHeroFields as unknown as Field[],
+  el:
+    elHeroFields as unknown as Field[],
+  kreator:
+    kreatorHeroFields as unknown as Field[],
+};
+
+const THEME_REQUIRED_FIELDS: Record<string, Record<string, string[]>> = {
+  skonhet: skonhetRequiredFields,
+  el: elRequiredFields,
+  kreator: kreatorRequiredFields,
+};
+
+export function blockFieldsForTheme(
+  themeId: string | undefined,
+  type: string,
+): Field[] | undefined {
+  const base = BLOCK_FIELDS[type];
+  const themed = themeId
+    ? THEME_BLOCK_FIELDS[themeId]?.[type]
+    : undefined;
+
+  if (type === "hero") {
+    const extra = themeId
+      ? THEME_HERO_FIELDS[themeId] ?? []
+      : [];
+
+    return base
+      ? [...base, ...extra]
+      : extra.length
+        ? extra
+        : undefined;
+  }
+
+  return themed ?? base;
+}
+
+export function requiredFieldsForTheme(
+  themeId: string | undefined,
+  type: string,
+): string[] | undefined {
+  return (
+    (themeId
+      ? THEME_REQUIRED_FIELDS[themeId]?.[type]
+      : undefined) ??
+    REQUIRED_FIELDS[type]
+  );
+}
+
 export interface FieldError {
   /** Top-level field name, so the editor can show the error inline. */
   field: string;
@@ -441,10 +525,14 @@ function isEmpty(v: unknown): boolean {
 }
 
 /** Validate a block's props against its required fields. Empty array = valid. */
-export function validateBlock(type: string, props: Record<string, unknown> | undefined): FieldError[] {
-  const required = REQUIRED_FIELDS[type];
+export function validateBlock(
+  type: string,
+  props: Record<string, unknown> | undefined,
+  themeId?: string,
+): FieldError[] {
+  const required = requiredFieldsForTheme(themeId, type);
   if (!required) return [];
-  const fields = BLOCK_FIELDS[type] ?? [];
+  const fields = blockFieldsForTheme(themeId, type) ?? [];
   const errors: FieldError[] = [];
   for (const name of required) {
     if (isEmpty(props?.[name])) {
@@ -456,10 +544,13 @@ export function validateBlock(type: string, props: Record<string, unknown> | und
 }
 
 /** Validate every block on a page. Returns errors keyed by block id. */
-export function validateBlocks(blocks: { id: string; type: string; props: Record<string, unknown> }[]): Record<string, FieldError[]> {
+export function validateBlocks(
+  blocks: { id: string; type: string; props: Record<string, unknown> }[],
+  themeId?: string,
+): Record<string, FieldError[]> {
   const out: Record<string, FieldError[]> = {};
   for (const block of blocks) {
-    const errs = validateBlock(block.type, block.props);
+    const errs = validateBlock(block.type, block.props, themeId);
     if (errs.length) out[block.id] = errs;
   }
   return out;

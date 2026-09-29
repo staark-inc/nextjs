@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { readSite, readSiteTheme } from "@/lib/admin-theme";
 import { listThemeRuntimes, resolveThemeRuntime } from "@/lib/theme-runtime";
 import { evaluateThemeCompatibility, scanThemeBlockUsage } from "@/lib/theme-compatibility";
-import { requireAuth } from "../guard";
+import { requireManager } from "../guard";
 
 type ThemeInfo = {
   id: string;
@@ -14,7 +14,7 @@ type ThemeInfo = {
 };
 
 export async function GET() {
-  const blocked = await requireAuth();
+  const blocked = await requireManager();
   if (blocked) return blocked;
 
   const site = await readSite();

@@ -1,0 +1,51 @@
+{
+  "id": "kreator",
+  "name": "Kreatör",
+  "description": "Streamer & creator direction: near-black stage, warm off-white text, electric lime accent used as a fill, Unbounded display over Onest, JetBrains Mono for codes, soft rounded cards.",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "ink": "#F4F2EE",
+      "muted": "#A4A7AF",
+      "line": "#2A2D35",
+      "paper": "#0D0E12",
+      "surface": "#16181E",
+      "white": "#FFFFFF",
+      "primary": "#C8F53D",
+      "primaryDark": "#B2DE22",
+      "primarySoft": "#1D2410",
+      "success": "#57D98A",
+      "forest": "#121318",
+      "forestDeep": "#08090B",
+      "gold": "#FFB547",
+      "live": "#FF4D5E"
+    },
+    "typography": {
+      "body": "\"Onest Variable\", Onest, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "display": "\"Unbounded Variable\", Unbounded, ui-sans-serif, system-ui, sans-serif",
+      "displayWeight": "700",
+      "label": "\"JetBrains Mono Variable\", \"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, monospace",
+      "headingWeight": "700",
+      "headingStretch": "normal",
+      "headingCase": "none"
+    },
+    "radius": {
+      "sm": "8px",
+      "md": "14px",
+      "lg": "22px",
+      "button": "12px"
+    },
+    "layout": {
+      "content": "720px",
+      "wide": "1180px",
+      "wrap": "1180px"
+    }
+  },
+  "components": {
+    "header": "kreator",
+    "buttons": "solid",
+    "cards": "kreator",
+    "hero": "split",
+    "footer": "deep"
+  }
+}

@@ -33,3 +33,4 @@ export const gastfrihetRegistry: Record<string, ThemeDefinition> = {
 
 export { Rooms, Amenities };
 export default gastfrihetTheme;
+export { default as gastfrihetManifest } from "./manifest";
