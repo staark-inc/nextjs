@@ -49,6 +49,10 @@ export type PostgresAdminPageSummary = {
   navigationLabel?: string;
 };
 
+export type PostgresAdminDeletedPageSummary = PostgresAdminPageSummary & {
+  deletedAt: string;
+};
+
 export type PostgresAdminRevisionSummary = {
   id: string;
   file: string;
@@ -215,6 +219,272 @@ function replaceNavigationPath(
   });
 }
 
+type DeletedNavigationLinkPlacement = {
+  index: number;
+  link: {
+    label: string;
+    href: string;
+  };
+};
+
+type DeletedNavigationColumnPlacement = {
+  columnIndex: number;
+  links: DeletedNavigationLinkPlacement[];
+};
+
+type DeletedNavigationContext = {
+  version: 1;
+  primary: DeletedNavigationLinkPlacement[];
+  footer: DeletedNavigationLinkPlacement[];
+  footerColumns: DeletedNavigationColumnPlacement[];
+  cta: {
+    label: string;
+    href: string;
+  } | null;
+};
+
+function captureLinkPlacements(
+  links: Array<{ label: string; href: string }>,
+  pathname: string,
+): DeletedNavigationLinkPlacement[] {
+  return links.flatMap((link, index) =>
+    link.href === pathname
+      ? [{ index, link: { ...link } }]
+      : [],
+  );
+}
+
+function captureDeletedNavigationContext(
+  settings: SiteSettings,
+  pathname: string,
+): DeletedNavigationContext {
+  return {
+    version: 1,
+    primary: captureLinkPlacements(
+      settings.navigation.primary,
+      pathname,
+    ),
+    footer: captureLinkPlacements(
+      settings.navigation.footer,
+      pathname,
+    ),
+    footerColumns:
+      settings.navigation.footerColumns.flatMap(
+        (column, columnIndex) => {
+          const links = captureLinkPlacements(
+            column.links,
+            pathname,
+          );
+
+          return links.length > 0
+            ? [{ columnIndex, links }]
+            : [];
+        },
+      ),
+    cta:
+      settings.navigation.cta?.href === pathname
+        ? { ...settings.navigation.cta }
+        : null,
+  };
+}
+
+function isNavigationLink(
+  value: unknown,
+): value is { label: string; href: string } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.label === "string" &&
+    typeof record.href === "string"
+  );
+}
+
+function parseLinkPlacements(
+  value: unknown,
+): DeletedNavigationLinkPlacement[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (
+      !item ||
+      typeof item !== "object" ||
+      Array.isArray(item)
+    ) {
+      return [];
+    }
+
+    const record = item as Record<string, unknown>;
+    if (
+      typeof record.index !== "number" ||
+      !Number.isInteger(record.index) ||
+      record.index < 0 ||
+      !isNavigationLink(record.link)
+    ) {
+      return [];
+    }
+
+    return [{
+      index: record.index,
+      link: record.link,
+    }];
+  });
+}
+
+function parseDeletedNavigationContext(
+  value: unknown,
+): DeletedNavigationContext | null {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  if (record.version !== 1) return null;
+
+  const rawColumns = Array.isArray(record.footerColumns)
+    ? record.footerColumns
+    : [];
+
+  const footerColumns =
+    rawColumns.flatMap((item) => {
+      if (
+        !item ||
+        typeof item !== "object" ||
+        Array.isArray(item)
+      ) {
+        return [];
+      }
+
+      const column =
+        item as Record<string, unknown>;
+
+      if (
+        typeof column.columnIndex !== "number" ||
+        !Number.isInteger(column.columnIndex) ||
+        column.columnIndex < 0
+      ) {
+        return [];
+      }
+
+      const links =
+        parseLinkPlacements(column.links);
+
+      return links.length > 0
+        ? [{
+            columnIndex: column.columnIndex,
+            links,
+          }]
+        : [];
+    });
+
+  return {
+    version: 1,
+    primary: parseLinkPlacements(record.primary),
+    footer: parseLinkPlacements(record.footer),
+    footerColumns,
+    cta: isNavigationLink(record.cta)
+      ? record.cta
+      : null,
+  };
+}
+
+function restoreLinkPlacements(
+  current: Array<{ label: string; href: string }>,
+  pathname: string,
+  placements: DeletedNavigationLinkPlacement[],
+): Array<{ label: string; href: string }> {
+  const next = current.filter(
+    (link) => link.href !== pathname,
+  );
+
+  for (
+    const placement of [...placements].sort(
+      (a, b) => a.index - b.index,
+    )
+  ) {
+    const index = Math.min(
+      placement.index,
+      next.length,
+    );
+
+    next.splice(index, 0, {
+      ...placement.link,
+      href: pathname,
+    });
+  }
+
+  return next;
+}
+
+function restoreDeletedNavigationContext(
+  settings: SiteSettings,
+  pathname: string,
+  rawContext: unknown,
+): SiteSettings {
+  const context =
+    parseDeletedNavigationContext(rawContext);
+
+  if (!context) return settings;
+
+  const footerColumns =
+    settings.navigation.footerColumns.map(
+      (column, columnIndex) => {
+        const placement =
+          context.footerColumns.find(
+            (item) =>
+              item.columnIndex === columnIndex,
+          );
+
+        if (!placement) return column;
+
+        return {
+          ...column,
+          links: restoreLinkPlacements(
+            column.links,
+            pathname,
+            placement.links,
+          ),
+        };
+      },
+    );
+
+  const currentCta = settings.navigation.cta;
+
+  const restoredCta =
+    context.cta &&
+    (!currentCta || currentCta.href === pathname)
+      ? {
+          ...context.cta,
+          href: pathname,
+        }
+      : currentCta;
+
+  return SiteSettingsSchema.parse({
+    ...settings,
+    navigation: {
+      ...settings.navigation,
+      primary: restoreLinkPlacements(
+        settings.navigation.primary,
+        pathname,
+        context.primary,
+      ),
+      footer: restoreLinkPlacements(
+        settings.navigation.footer,
+        pathname,
+        context.footer,
+      ),
+      footerColumns,
+      cta: restoredCta,
+    },
+  });
+}
+
 async function assertPathAvailable(
   repositories: RepositorySet,
   siteId: string,
@@ -260,27 +530,43 @@ export async function getPostgresAdminSiteSettings(): Promise<SiteSettings> {
 export async function listPostgresAdminPages(): Promise<{
   site: SiteSettings;
   pages: PostgresAdminPageSummary[];
+  deletedPages: PostgresAdminDeletedPageSummary[];
 }> {
   const repositories = createPostgresRepositories();
   const site = await requireSite(repositories);
-  const records = await repositories.pages.list(site.id);
+  const records = await repositories.pages.list(site.id, {
+    includeDeleted: true,
+  });
   const primary = site.settings.navigation.primary;
   const footer = site.settings.navigation.footer;
 
+  const summaryFor = (record: PageRecord): PostgresAdminPageSummary => ({
+    // `file` remains the API/UI compatibility key. In PostgreSQL mode it is
+    // the stable Page UUID rather than a JSON filename.
+    file: record.id,
+    path: record.page.path,
+    title: record.page.title,
+    inPrimary: primary.some((link) => link.href === record.page.path),
+    inFooter: footer.some((link) => link.href === record.page.path),
+    navigationLabel:
+      primary.find((link) => link.href === record.page.path)?.label ??
+      footer.find((link) => link.href === record.page.path)?.label,
+  });
+
   return {
     site: site.settings,
-    pages: records.map((record) => ({
-      // `file` is kept as the API/UI compatibility key during PHASE 5. In
-      // PostgreSQL mode it is the stable Page UUID, not a JSON filename.
-      file: record.id,
-      path: record.page.path,
-      title: record.page.title,
-      inPrimary: primary.some((link) => link.href === record.page.path),
-      inFooter: footer.some((link) => link.href === record.page.path),
-      navigationLabel:
-        primary.find((link) => link.href === record.page.path)?.label ??
-        footer.find((link) => link.href === record.page.path)?.label,
-    })),
+    pages: records
+      .filter((record) => !record.deletedAt)
+      .map(summaryFor),
+    deletedPages: records
+      .filter(
+        (record): record is PageRecord & { deletedAt: string } =>
+          Boolean(record.deletedAt),
+      )
+      .map((record) => ({
+        ...summaryFor(record),
+        deletedAt: record.deletedAt,
+      })),
   };
 }
 
@@ -415,13 +701,92 @@ export async function deletePostgresAdminPage(
       page: current.page,
     });
 
-    const deleted = await repositories.pages.softDelete(site.id, pageId);
+    const deletedContext =
+      captureDeletedNavigationContext(
+        site.settings,
+        current.page.path,
+      );
+
+    const deleted = await repositories.pages.softDelete(
+      site.id,
+      pageId,
+      undefined,
+      deletedContext,
+    );
     if (!deleted) throw new AdminPageNotFoundError();
 
-    const settings = withoutNavigationPath(site.settings, current.page.path);
+    const settings = withoutNavigationPath(
+      site.settings,
+      current.page.path,
+    );
     await repositories.sites.upsertByKey({ key: site.key, settings });
 
     return deleted;
+  });
+}
+
+export async function restorePostgresAdminPage(
+  pageId: string,
+): Promise<PageRecord | null> {
+  if (!isPageId(pageId)) return null;
+
+  return withPostgresTransaction(async (repositories) => {
+    const site = await requireSite(repositories);
+
+    const current = await repositories.pages.findById(
+      site.id,
+      pageId,
+      { includeDeleted: true },
+    );
+
+    if (!current || !current.deletedAt) {
+      return null;
+    }
+
+    // Re-check the destination before reviving the page so a redirect or
+    // another active page cannot silently make the restored URL ambiguous.
+    await assertPathAvailable(
+      repositories,
+      site.id,
+      current.page.path,
+      pageId,
+    );
+
+    await repositories.revisions.create({
+      siteId: site.id,
+      pageId,
+      reason: "before-restore",
+      page: current.page,
+    });
+
+    const restored = await repositories.pages.replace(
+      site.id,
+      pageId,
+      current.page,
+    );
+
+    if (!restored) {
+      throw new AdminPageNotFoundError();
+    }
+
+    const settings =
+      restoreDeletedNavigationContext(
+        site.settings,
+        restored.page.path,
+        current.deletedContext,
+      );
+
+    if (
+      JSON.stringify(settings) !==
+      JSON.stringify(site.settings)
+    ) {
+      await repositories.sites.upsertByKey({
+        key: site.key,
+        settings,
+      });
+    }
+
+    return restored;
   });
 }
 

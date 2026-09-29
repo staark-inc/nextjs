@@ -167,9 +167,14 @@ export async function GET() {
 
   if (adminPagesUsePostgres()) {
     try {
-      const { site, pages } = await listPostgresAdminPages();
+      const { site, pages, deletedPages } = await listPostgresAdminPages();
       const theme = resolveThemeRuntime(site.theme.family ?? "light").id;
-      return NextResponse.json({ pages, theme, templates: templatesFor(theme) });
+      return NextResponse.json({
+        pages,
+        deletedPages,
+        theme,
+        templates: templatesFor(theme),
+      });
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message || "Could not load PostgreSQL pages." },
@@ -200,7 +205,12 @@ export async function GET() {
     }),
   );
   const theme = resolveThemeRuntime(site.theme?.family).id;
-  return NextResponse.json({ pages, theme, templates: templatesFor(theme) });
+  return NextResponse.json({
+    pages,
+    deletedPages: [],
+    theme,
+    templates: templatesFor(theme),
+  });
 }
 
 export async function POST(req: Request) {

@@ -7,6 +7,7 @@ export type PageRecord = {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  deletedContext?: unknown;
 };
 
 export type PageReadOptions = {
@@ -31,5 +32,6 @@ export interface PageRepository {
     siteId: string,
     pageId: string,
     deletedAt?: Date,
+    deletedContext?: unknown,
   ): Promise<PageRecord | null>;
 }

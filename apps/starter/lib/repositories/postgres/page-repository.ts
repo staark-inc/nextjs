@@ -18,6 +18,7 @@ type PageRow = {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  deletedContext: unknown;
   blocks: Array<{
     id: string;
     type: string;
@@ -50,6 +51,7 @@ function mapPage(row: PageRow): PageRecord {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     deletedAt: row.deletedAt?.toISOString() ?? null,
+    deletedContext: row.deletedContext,
   };
 }
 
@@ -144,6 +146,7 @@ export class PostgresPageRepository implements PageRepository {
         title: page.title,
         seo: toPrismaJson(page.seo),
         deletedAt: null,
+        deletedContext: toPrismaJson({}),
         blocks: {
           deleteMany: {},
           create: blockCreates(page),
@@ -174,6 +177,7 @@ export class PostgresPageRepository implements PageRepository {
         title: page.title,
         seo: toPrismaJson(page.seo),
         deletedAt: null,
+        deletedContext: toPrismaJson({}),
         blocks: {
           deleteMany: {},
           create: blockCreates(page),
@@ -189,6 +193,7 @@ export class PostgresPageRepository implements PageRepository {
     siteId: string,
     pageId: string,
     deletedAt = new Date(),
+    deletedContext: unknown = {},
   ): Promise<PageRecord | null> {
     const existing = await this.db.page.findFirst({
       where: { id: pageId, siteId },
@@ -198,7 +203,10 @@ export class PostgresPageRepository implements PageRepository {
 
     const row = await this.db.page.update({
       where: { id: pageId },
-      data: { deletedAt },
+      data: {
+        deletedAt,
+        deletedContext: toPrismaJson(deletedContext),
+      },
       include: { blocks: orderedBlocks },
     });
 

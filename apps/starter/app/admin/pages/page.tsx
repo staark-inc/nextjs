@@ -11,6 +11,10 @@ type PageEntry = {
   navigationLabel?: string;
 };
 
+type DeletedPageEntry = PageEntry & {
+  deletedAt: string;
+};
+
 type PageTemplate = {
   id: string;
   label: string;
@@ -20,12 +24,17 @@ type PageTemplate = {
 
 type PagesPayload = {
   pages: PageEntry[];
+  deletedPages: DeletedPageEntry[];
   theme: string;
   templates: PageTemplate[];
 };
 
 export default function PagesIndex() {
   const [pages, setPages] = useState<PageEntry[]>([]);
+  const [deletedPages, setDeletedPages] =
+    useState<DeletedPageEntry[]>([]);
+  const [restoring, setRestoring] =
+    useState<string | null>(null);
   const [theme, setTheme] = useState("light");
   const [templates, setTemplates] = useState<PageTemplate[]>([]);
   const [newPath, setNewPath] = useState("");
@@ -50,6 +59,7 @@ export default function PagesIndex() {
     }
     const data = await res.json() as PagesPayload;
     setPages(data.pages ?? []);
+    setDeletedPages(data.deletedPages ?? []);
     setTheme(data.theme ?? "light");
     setTemplates(data.templates ?? []);
     if (!(data.templates ?? []).some((template) => template.id === templateId)) {
@@ -101,6 +111,42 @@ export default function PagesIndex() {
     }
   }
 
+  async function restorePage(
+    file: string,
+    title: string,
+  ) {
+    if (!confirm(`Restore "${title}"?`)) return;
+
+    setRestoring(file);
+
+    try {
+      const res = await fetch(
+        `/api/admin/pages/${file}/restore`,
+        { method: "POST" },
+      );
+
+      const data = await res
+        .json()
+        .catch(() => ({})) as {
+          error?: string;
+        };
+
+      if (!res.ok) {
+        showToast(
+          data.error ??
+            "Could not restore the page.",
+          false,
+        );
+        return;
+      }
+
+      showToast("Page restored.", true);
+      await load();
+    } finally {
+      setRestoring(null);
+    }
+  }
+
   return (
     <>
       <div className="sa-page-header">
@@ -142,6 +188,58 @@ export default function PagesIndex() {
           ))}
         </ul>
       </div>
+
+      {deletedPages.length > 0 ? (
+        <div className="sa-card sa-pages-card">
+          <div className="sa-card__header sa-card__header--row">
+            <div>
+              <p className="sa-card__eyebrow">Trash</p>
+              <h2>Deleted pages</h2>
+            </div>
+
+            <span className="sa-note">
+              Soft-deleted pages can be restored.
+            </span>
+          </div>
+
+          <ul className="sa-page-list sa-page-list--managed">
+            {deletedPages.map((page) => (
+              <li key={page.file}>
+                <div className="sa-page-list__main">
+                  <strong>{page.title}</strong>
+
+                  <div className="sa-path">
+                    {page.path}
+                  </div>
+
+                  <div className="sa-page-badges">
+                    <span className="sa-badge sa-badge--muted">
+                      Deleted
+                    </span>
+                  </div>
+                </div>
+
+                <div className="sa-page-list__actions">
+                  <button
+                    className="sa-btn sa-btn--ghost sa-btn--sm"
+                    disabled={restoring === page.file}
+                    onClick={() =>
+                      void restorePage(
+                        page.file,
+                        page.title,
+                      )
+                    }
+                  >
+                    {restoring === page.file
+                      ? "Restoring…"
+                      : "Restore"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="sa-card">
         <div className="sa-card__header">
