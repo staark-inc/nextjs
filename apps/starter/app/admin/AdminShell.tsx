@@ -30,6 +30,7 @@ type AdminShellProps = {
   features: AdminFeature[];
   entitlements: AdminFeature[];
   sessionExpiresAt: number;
+  initialNow: number;
   initialStatus: AdminShellStatus;
   development: boolean;
 };
@@ -92,13 +93,13 @@ function NavBadges({ item, status }: { item: AdminNavItem; status: AdminShellSta
   return null;
 }
 
-export default function AdminShell({ websiteType, children, siteName, username, role, features, entitlements, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
+export default function AdminShell({ websiteType, children, siteName, username, role, features, entitlements, sessionExpiresAt, initialNow, initialStatus, development }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeWebsiteType, setActiveWebsiteType] = useState<WebsiteType>(websiteType);
   const [status, setStatus] = useState<AdminShellStatus>(initialStatus);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(initialNow);
   const redirecting = useRef(false);
 
   const profile = useMemo(

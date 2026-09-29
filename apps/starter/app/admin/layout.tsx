@@ -54,9 +54,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const status =
     await peekAdminShellStatus();
 
+  const initialNow = Date.now();
+
   const sessionExpiresAt =
     adminSessionExpiresAt(session) ??
-    Date.now();
+    initialNow;
 
   return (
     <AdminShell
@@ -67,6 +69,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       features={features}
       entitlements={entitlements}
       sessionExpiresAt={sessionExpiresAt}
+      initialNow={initialNow}
       initialStatus={status}
       development={process.env.NODE_ENV !== "production"}
     >
