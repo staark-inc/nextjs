@@ -76,6 +76,30 @@ services:
       # If STAARK_BIND_HOST=0.0.0.0, also set STAARK_TRUST_PROXY=0.
       - "${STAARK_BIND_HOST:-127.0.0.1}:3000:3000"
 
+
+  # Storage Architecture v2 foundation.
+  # Opt-in during migration so existing fixture/S3 deployments keep working unchanged.
+  # Start only the database with:
+  #   docker compose --profile database up -d db
+  db:
+    image: postgres:17-alpine
+    profiles: ["database"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-staark}
+      POSTGRES_USER: ${POSTGRES_USER:-staark}
+      # Local-only default. Set a strong value anywhere beyond local development.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staark-local-dev}
+    volumes:
+      - staark-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # Uncomment for automatic HTTPS on your domain (edit Caddyfile with your domain).
   # caddy:
   #   image: caddy:2
@@ -89,5 +113,6 @@ services:
 
 volumes:
   staark-data:
+  staark-postgres-data:
   # caddy-data:
   # caddy-config:

@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A customer website / tenant.
+///
+/// `settings` is a transitional JSONB envelope for mutable site.json fields that
+/// are not yet normalized (theme selection/overrides, brand, contact, navigation,
+/// site SEO, etc.). Repository code owns the mapping; application code must not
+/// read this JSON directly.
+model Site {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique(map: "sites_key_key") @db.VarChar(100)
+  name      String   @db.VarChar(200)
+  settings  Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  pages Page[]
+
+  @@map("sites")
+}
+
+/// A routable page owned by one Site.
+model Page {
+  id        String   @id @default(uuid()) @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  path      String   @db.VarChar(1024)
+  title     String   @db.VarChar(300)
+  seo       Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  site      Site           @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "pages_site_id_fkey")
+  blocks    PageBlock[]
+  revisions PageRevision[]
+
+  // The second unique key lets child rows enforce siteId + pageId together,
+  // preventing a tenant id from being paired with another site's page.
+  @@unique([siteId, id], map: "pages_site_id_id_key")
+  @@unique([siteId, path], map: "pages_site_id_path_key")
+  @@index([siteId], map: "pages_site_id_idx")
+  @@index([siteId, deletedAt], map: "pages_site_id_deleted_at_idx")
+  @@map("pages")
+}
+
+/// A block instance within a page.
+///
+/// `id` deliberately preserves the existing block id from JSON. IDs such as
+/// "hero" occur on many pages, so the primary key is (pageId, id), not id alone.
+model PageBlock {
+  siteId   String @map("site_id") @db.Uuid
+  pageId   String @map("page_id") @db.Uuid
+  id       String @db.VarChar(160)
+  type     String @db.VarChar(160)
+  position Int
+  props    Json   @default("{}") @db.JsonB
+
+  page Page @relation(fields: [siteId, pageId], references: [siteId, id], onDelete: Cascade, map: "page_blocks_site_id_page_id_fkey")
+
+  @@id([pageId, id], map: "page_blocks_pkey")
+  @@index([siteId, pageId, position], map: "page_blocks_site_id_page_id_position_idx")
+  @@map("page_blocks")
+}
+
+/// Immutable page history.
+///
+/// `snapshot` stores the complete domain page (including ordered blocks) so a
+/// restore does not depend on today's block schema. The repository is
+/// responsible for hashing, deduplication and retention (currently max 50/page).
+model PageRevision {
+  id        String   @id @default(uuid()) @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  pageId    String   @map("page_id") @db.Uuid
+  reason    String   @db.VarChar(80)
+  checksum  String   @db.Char(64)
+  snapshot  Json     @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  page Page @relation(fields: [siteId, pageId], references: [siteId, id], onDelete: Cascade, map: "page_revisions_site_id_page_id_fkey")
+
+  @@index([siteId, pageId, createdAt], map: "page_revisions_site_id_page_id_created_at_idx")
+  @@map("page_revisions")
+}
