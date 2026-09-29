@@ -89,6 +89,26 @@ export function resolveWebsiteProfile(value: unknown): WebsiteProfile {
 }
 
 /**
+ * Website profiles that currently have a real editable services catalog.
+ *
+ * Keep this aligned with the storage/domain implementation. Do not expose the
+ * module for another vertical until that vertical has a supported catalog.
+ */
+export const SERVICES_CATALOG_WEBSITE_TYPES = [
+  "salon",
+] as const satisfies readonly WebsiteType[];
+
+export function supportsServicesCatalog(
+  value: unknown,
+): boolean {
+  const type = normalizeWebsiteType(value);
+
+  return (
+    SERVICES_CATALOG_WEBSITE_TYPES as readonly WebsiteType[]
+  ).includes(type);
+}
+
+/**
  * Client-facing product modules.
  *
  * The platform may support many more admin capabilities internally, but client

@@ -3,6 +3,7 @@ import type { WebsiteType } from "@staark/core";
 import {
   resolveClientNavigation,
   resolveWebsiteProfile,
+  supportsServicesCatalog,
 } from "@/lib/website-profile";
 
 export type AdminNavGroup = "Overview" | "Business" | "Website" | "Growth" | "System";
@@ -159,7 +160,13 @@ export function getAdminNavItems(websiteType: WebsiteType): AdminNavItem[] {
   const profile = resolveWebsiteProfile(websiteType);
   const copy = resolveClientNavigation(websiteType);
 
-  return BASE_ADMIN_NAV_ITEMS.map((item) => {
+  return BASE_ADMIN_NAV_ITEMS
+    .filter(
+      (item) =>
+        item.feature !== "services" ||
+        supportsServicesCatalog(websiteType),
+    )
+    .map((item) => {
     if (item.href === "/admin/forms") {
       return {
         ...item,

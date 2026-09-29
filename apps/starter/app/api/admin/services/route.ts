@@ -5,30 +5,44 @@ import {
   writeSalonServices,
   type SalonServicesDocument,
 } from "@/lib/admin-salon-services";
-import { readContentJson } from "@/lib/storage";
+import { readAdminSiteSettings } from "@/lib/admin-site-settings";
+import { supportsServicesCatalog } from "@/lib/website-profile";
 import { requireAuth } from "../guard";
 import { appendAdminLog } from "@/lib/admin-logs";
 
 export const runtime = "nodejs";
 
-async function assertSalon():
+async function assertServicesCatalog():
 Promise<NextResponse | null> {
-  const site =
-    await readContentJson<{
-      websiteType?: unknown;
-    }>("site.json");
+  try {
+    const site =
+      await readAdminSiteSettings();
 
-  if (site?.websiteType !== "salon") {
+    if (
+      !supportsServicesCatalog(
+        site.websiteType,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Services & prices is not available for this website type.",
+        },
+        { status: 404 },
+      );
+    }
+
+    return null;
+  } catch (error) {
     return NextResponse.json(
       {
         error:
-          "Services & prices is only available for Salon websites.",
+          (error as Error).message ||
+          "Could not resolve website type.",
       },
-      { status: 404 },
+      { status: 500 },
     );
   }
-
-  return null;
 }
 
 export async function GET() {
@@ -36,7 +50,7 @@ export async function GET() {
   if (blocked) return blocked;
 
   const wrongProfile =
-    await assertSalon();
+    await assertServicesCatalog();
 
   if (wrongProfile) {
     return wrongProfile;
@@ -64,7 +78,7 @@ export async function PUT(
   if (blocked) return blocked;
 
   const wrongProfile =
-    await assertSalon();
+    await assertServicesCatalog();
 
   if (wrongProfile) {
     return wrongProfile;
