@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import {
+  AdminPageNotFoundError,
+  adminPagesUsePostgres,
+  listPostgresAdminPageRevisions,
+} from "@/lib/admin-page-postgres";
 import { listPageRevisions } from "@/lib/admin-revisions";
 import { requireAuth } from "../../../guard";
 
@@ -10,11 +15,14 @@ export async function GET(_req: Request, ctx: Ctx) {
 
   try {
     const { file } = await ctx.params;
-    return NextResponse.json({ revisions: await listPageRevisions(file) });
+    const revisions = adminPagesUsePostgres()
+      ? await listPostgresAdminPageRevisions(file)
+      : await listPageRevisions(file);
+    return NextResponse.json({ revisions });
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || "Could not load revisions." },
-      { status: 400 },
+      { status: error instanceof AdminPageNotFoundError ? 404 : 400 },
     );
   }
 }

@@ -90,8 +90,8 @@ export default function PagesIndex() {
     setCreating(false);
   }
 
-  async function deletePage(file: string) {
-    if (!confirm(`Delete ${file}? The page is also removed from site navigation.`)) return;
+  async function deletePage(file: string, title: string) {
+    if (!confirm(`Delete \"${title}\"? The page is also removed from site navigation.`)) return;
     const res = await fetch(`/api/admin/pages/${file}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Page deleted and navigation cleaned up.", true);
@@ -118,7 +118,7 @@ export default function PagesIndex() {
       <div className="sa-card sa-pages-card">
         <div className="sa-card__header sa-card__header--row">
           <div><p className="sa-card__eyebrow">Existing pages</p><h2>{pages.length} pages</h2></div>
-          <span className="sa-note">Navigation badges reflect <code>site.json</code>.</span>
+          <span className="sa-note">Navigation badges reflect the active site settings.</span>
         </div>
         <ul className="sa-page-list sa-page-list--managed">
           {pages.map((page) => (
@@ -136,7 +136,7 @@ export default function PagesIndex() {
               <div className="sa-page-list__actions">
                 <a href={page.path} target="_blank" rel="noopener noreferrer" className="sa-btn sa-btn--ghost sa-btn--sm">View</a>
                 <a href={`/admin/pages/${page.file}`} className="sa-btn sa-btn--ghost sa-btn--sm">Edit</a>
-                <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => void deletePage(page.file)}>Delete</button>
+                <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => void deletePage(page.file, page.title)}>Delete</button>
               </div>
             </li>
           ))}

@@ -214,7 +214,7 @@ export default function PageEditor() {
         <span>/</span>
         <a href="/admin/pages">Pages</a>
         <span>/</span>
-        <span>{file}</span>
+        <span>{page.title}</span>
       </div>
 
       <h1 className="sa-h1">{page.title}</h1>

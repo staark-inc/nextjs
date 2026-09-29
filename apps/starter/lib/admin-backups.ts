@@ -12,6 +12,18 @@ import {
 const BACKUP_SCHEMA = "staark-backup/v1" as const;
 const BACKUP_PREFIX = stateStoragePath("backups");
 
+function assertBackupRuntimeCompatible(
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  if (env.STAARK_DATA_SOURCE?.trim().toLowerCase() !== "postgres") return;
+
+  throw new Error(
+    "Backup & Restore v1 is disabled while STAARK_DATA_SOURCE=postgres. " +
+      "PostgreSQL-backed Site/Pages are not included in legacy backup packages yet. " +
+      "Create a PostgreSQL snapshot/export before recovery operations.",
+  );
+}
+
 const ALLOWED_SCOPES = new Set([
   "content",
   ".staark/themes",
@@ -293,6 +305,8 @@ export async function createBackup(
   label = "Manual backup",
   includeUploads = true,
 ): Promise<BackupSummary> {
+  assertBackupRuntimeCompatible();
+
   // A backup must snapshot the runtime source of truth. Fixture deployments
   // materialize their packaged seed first; Hub deployments must not invent
   // local content just because a recovery point was requested.
@@ -428,6 +442,8 @@ export async function restoreBackup(id: string): Promise<{
   restored: BackupSummary;
   safetyBackup: BackupSummary;
 }> {
+  assertBackupRuntimeCompatible();
+
   // readBackup fully validates every scope/file before we create or delete anything.
   const pkg = await readBackup(id);
 

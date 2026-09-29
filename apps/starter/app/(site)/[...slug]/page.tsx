@@ -9,13 +9,6 @@ import { hydrateVerticalPage } from "@/lib/vertical-content";
 
 type Params = { slug: string[] };
 
-export async function generateStaticParams(): Promise<Params[]> {
-  const pages = await content.getPages();
-  return pages
-    .filter((p) => p.path !== "/")
-    .map((p) => ({ slug: p.path.slice(1).split("/") }));
-}
-
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
   const [site, page] = await Promise.all([content.getSite(), content.getPage(slug)]);

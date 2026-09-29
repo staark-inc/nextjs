@@ -65,7 +65,7 @@ export default function RevisionsPage() {
       <div className="sa-breadcrumb">
         <a href="/admin">Dashboard</a><span>/</span>
         <a href="/admin/pages">Pages</a><span>/</span>
-        <a href={`/admin/pages/${file}`}>{file}</a><span>/</span>
+        <a href={`/admin/pages/${file}`}>Page</a><span>/</span>
         <span>History</span>
       </div>
 
