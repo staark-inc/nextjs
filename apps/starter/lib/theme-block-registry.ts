@@ -1,5 +1,7 @@
 import type { BlockDefinition } from "@staark/theme-kit";
 import { skonhetBlockDefinitions } from "@staark/theme-skonhet/blocks";
+import { elBlockDefinitions } from "@staark/theme-el/blocks";
+import { kreatorBlockDefinitions } from "@staark/theme-kreator/blocks";
 
 /**
  * Blocks v2 integration point for the starter application.
@@ -14,6 +16,8 @@ const THEME_BLOCK_DEFINITIONS: Record<
   readonly BlockDefinition[]
 > = {
   skonhet: skonhetBlockDefinitions,
+  el: elBlockDefinitions,
+  kreator: kreatorBlockDefinitions,
 };
 
 export function themeBlockDefinitionsFor(
