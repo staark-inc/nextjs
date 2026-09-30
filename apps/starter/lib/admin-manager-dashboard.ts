@@ -2,6 +2,8 @@ import { listBackupTimes } from "./admin-backups";
 import { listMediaFiles } from "./admin-media";
 import { listRedirects } from "./admin-redirects";
 import { runSiteHealth } from "./admin-site-health";
+import { resolvePublicContentConfig } from "./content-source";
+import { createPostgresRepositories } from "./repositories";
 import {
   contentStoragePath,
   contentStoragePrefix,
@@ -110,6 +112,12 @@ function pageCount(
 }
 
 function deploymentSource(): string {
+  const config = resolvePublicContentConfig();
+
+  if (config.source === "postgres") {
+    return "postgres";
+  }
+
   const explicit =
     process.env.STAARK_CONTENT_SOURCE?.trim();
 
@@ -125,30 +133,66 @@ function deploymentSource(): string {
   return "local";
 }
 
+async function loadManagerContent(): Promise<{
+  site: ManagerSite | null;
+  pages: number;
+  contentPrefix: string;
+}> {
+  const config = resolvePublicContentConfig();
+
+  if (config.source === "postgres") {
+    const repositories = createPostgresRepositories();
+    const siteRecord =
+      await repositories.sites.findByKey(config.siteKey);
+
+    if (!siteRecord) {
+      throw new Error(
+        `No PostgreSQL Site exists for STAARK_SITE_KEY="${config.siteKey}".`,
+      );
+    }
+
+    const pages =
+      await repositories.pages.list(siteRecord.id);
+
+    return {
+      site:
+        siteRecord.settings as unknown as ManagerSite,
+      pages: pages.length,
+      contentPrefix: `site:${config.siteKey}`,
+    };
+  }
+
+  const [site, pageEntries] = await Promise.all([
+    readContentJson<ManagerSite>("site.json"),
+    listContent("pages"),
+  ]);
+
+  return {
+    site,
+    pages: pageCount(pageEntries),
+    contentPrefix: contentStoragePrefix(),
+  };
+}
+
 export async function loadManagerDashboard():
 Promise<ManagerDashboardData> {
   const [
-    site,
+    content,
     health,
-    pageEntries,
     media,
     redirects,
     backups,
   ] = await Promise.all([
     safe(
-      () =>
-        readContentJson<ManagerSite>(
-          "site.json",
-        ),
-      null,
+      loadManagerContent,
+      {
+        site: null,
+        pages: 0,
+        contentPrefix: "",
+      },
     ),
 
     safe(runSiteHealth, null),
-
-    safe(
-      () => listContent("pages"),
-      [],
-    ),
 
     safe(listMediaFiles, []),
 
@@ -162,6 +206,8 @@ Promise<ManagerDashboardData> {
       [],
     ),
   ]);
+
+  const site = content.site;
 
   const healthStatus: ManagerHealthStatus =
     !health
@@ -221,7 +267,7 @@ Promise<ManagerDashboardData> {
     },
 
     content: {
-      pages: pageCount(pageEntries),
+      pages: content.pages,
       media: media.length,
       redirects: redirects.redirects.length,
     },
@@ -252,7 +298,7 @@ Promise<ManagerDashboardData> {
       source: deploymentSource(),
 
       contentPrefix:
-        contentStoragePrefix(),
+        content.contentPrefix,
 
       nodeVersion:
         process.version,

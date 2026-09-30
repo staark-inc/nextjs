@@ -55,22 +55,38 @@ export const Hero: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) =
             ) : null}
             <h1 className="sk-el-hero__title">{heading}</h1>
             {p.intro ? <p className="sk-el-hero__intro">{p.intro}</p> : null}
-            <div className="sk-el-hero__actions">
-              <a className="sk-btn sk-btn--primary sk-el-btn" href={primary.href}>
-                {primary.label}
-              </a>
-              {p.secondaryCta ? (
-                <a className="sk-el-btn sk-el-btn--on-dark" href={p.secondaryCta.href}>
-                  {p.secondaryCta.href.startsWith("tel:") ? <PhoneIcon /> : null}
-                  {p.secondaryCta.label}
-                </a>
-              ) : p.showPhone && phone ? (
-                <a className="sk-el-btn sk-el-btn--on-dark" href={telHref(phone)}>
-                  <PhoneIcon />
-                  {phone}
-                </a>
-              ) : null}
-            </div>
+            {primary || p.secondaryCta || (p.showPhone && phone) ? (
+              <div className="sk-el-hero__actions">
+                {primary ? (
+                  <a
+                    className="sk-btn sk-btn--primary sk-el-btn"
+                    href={primary.href}
+                  >
+                    {primary.label}
+                  </a>
+                ) : null}
+
+                {p.secondaryCta ? (
+                  <a
+                    className="sk-el-btn sk-el-btn--on-dark"
+                    href={p.secondaryCta.href}
+                  >
+                    {p.secondaryCta.href.startsWith("tel:") ? (
+                      <PhoneIcon />
+                    ) : null}
+                    {p.secondaryCta.label}
+                  </a>
+                ) : p.showPhone && phone ? (
+                  <a
+                    className="sk-el-btn sk-el-btn--on-dark"
+                    href={telHref(phone)}
+                  >
+                    <PhoneIcon />
+                    {phone}
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
             {p.points.length ? (
               <ul className="sk-el-hero__points">
                 {p.points.map((point) => (

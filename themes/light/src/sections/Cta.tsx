@@ -19,9 +19,11 @@ export const Cta: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) =>
             <h2>{p.heading}</h2>
             {p.intro ? <p>{p.intro}</p> : null}
           </div>
-          <Button href={cta.href} ctx={ctx}>
-            {cta.label}
-          </Button>
+          {cta ? (
+            <Button href={cta.href} ctx={ctx}>
+              {cta.label}
+            </Button>
+          ) : null}
         </div>
       </Container>
     </section>

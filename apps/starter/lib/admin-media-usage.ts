@@ -1,4 +1,6 @@
 import path from "node:path";
+import { resolvePublicContentConfig } from "./content-source";
+import { createPostgresRepositories } from "./repositories";
 import {
   contentStoragePath,
   listContent,
@@ -87,37 +89,103 @@ function scanValue(
 }
 
 export async function buildMediaUsageIndex(): Promise<MediaUsageIndex> {
-  const root = contentStoragePath();
-  const prefix = `${root}/`;
-  const files = (await listContent(""))
-    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
-    .filter((relative) => Boolean(relative) && relative.endsWith(".json"))
-    .sort();
-
   const index: MediaUsageIndex = {};
   const seen = new Set<string>();
+  const config = resolvePublicContentConfig();
 
-  for (const source of files) {
-    try {
-      const document = await readContentJson<Record<string, unknown>>(source);
-      if (!document) continue;
-      const info = sourceInfo(source, document);
+  if (config.source === "postgres") {
+    const repositories = createPostgresRepositories();
+    const site = await repositories.sites.findByKey(config.siteKey);
 
+    if (!site) {
+      throw new Error(
+        `No PostgreSQL Site exists for STAARK_SITE_KEY="${config.siteKey}".`,
+      );
+    }
+
+    const pages = await repositories.pages.list(site.id);
+
+    const documents: Array<{
+      source: string;
+      label: string;
+      href: string;
+      document: Record<string, unknown>;
+    }> = [
+      {
+        source: "site",
+        label: `Site settings · ${site.settings.name}`,
+        href: "/admin/site",
+        document: site.settings as unknown as Record<string, unknown>,
+      },
+      ...pages.map((record) => ({
+        source: `page:${record.id}`,
+        label: record.page.title,
+        href: `/admin/pages/${encodeURIComponent(record.id)}`,
+        document: record.page as unknown as Record<string, unknown>,
+      })),
+    ];
+
+    for (const item of documents) {
       scanValue(
-        document,
+        item.document,
         [],
-        { source, label: info.label, ...(info.href ? { href: info.href } : {}) },
+        {
+          source: item.source,
+          label: item.label,
+          href: item.href,
+        },
         index,
         seen,
       );
-    } catch {
-      // A malformed content object should not make the media library unusable.
+    }
+  } else {
+    const root = contentStoragePath();
+    const prefix = `${root}/`;
+
+    const files = (await listContent(""))
+      .map((entry) =>
+        entry.path.startsWith(prefix)
+          ? entry.path.slice(prefix.length)
+          : "",
+      )
+      .filter(
+        (relative) =>
+          Boolean(relative) &&
+          relative.endsWith(".json"),
+      )
+      .sort();
+
+    for (const source of files) {
+      try {
+        const document =
+          await readContentJson<Record<string, unknown>>(source);
+
+        if (!document) continue;
+
+        const info = sourceInfo(source, document);
+
+        scanValue(
+          document,
+          [],
+          {
+            source,
+            label: info.label,
+            ...(info.href ? { href: info.href } : {}),
+          },
+          index,
+          seen,
+        );
+      } catch {
+        // A malformed content object should not make the media library unusable.
+      }
     }
   }
 
   for (const references of Object.values(index)) {
     references.sort((a, b) =>
-      `${a.source}:${a.field}`.localeCompare(`${b.source}:${b.field}`),
+      `${a.source}:${a.field}`.localeCompare(
+        `${b.source}:${b.field}`,
+      ),
     );
   }
 

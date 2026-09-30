@@ -33,7 +33,7 @@ export const optionalLinkSchema = z.preprocess(
   linkSchema.optional(),
 );
 
-/** Resolve the site's primary CTA, used by hero and CTA sections when none is given. */
+/** Resolve the site's primary CTA when one is actually configured. */
 export function siteCta(site: SiteSettings) {
-  return site.navigation.cta ?? { label: "Kontakta oss", href: "/kontakt" };
+  return site.navigation.cta;
 }
