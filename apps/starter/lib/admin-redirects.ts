@@ -13,6 +13,7 @@ import {
 import { readStateJson, writeStateJson } from "./storage";
 import { appendAdminLog } from "./admin-logs";
 import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
 import {
   createPostgresRepositories,
   withPostgresTransaction,
@@ -49,21 +50,11 @@ export function adminRedirectsUsePostgres(
   return resolvePublicContentConfig(env).source === "postgres";
 }
 
-function postgresSiteKey(): string {
-  const config = resolvePublicContentConfig();
-  if (config.source !== "postgres" || !config.siteKey) {
-    throw new Error(
-      "PostgreSQL Redirects requires STAARK_DATA_SOURCE=postgres and STAARK_SITE_KEY.",
-    );
-  }
-  return config.siteKey;
-}
-
 async function requirePostgresSite(repositories: RepositorySet) {
-  const key = postgresSiteKey();
+  const key = await requireAdminSiteKey();
   const site = await repositories.sites.findByKey(key);
   if (!site) {
-    throw new Error(`No PostgreSQL Site exists for STAARK_SITE_KEY="${key}".`);
+    throw new Error(`No PostgreSQL Site exists for resolved tenant "${key}".`);
   }
   return site;
 }

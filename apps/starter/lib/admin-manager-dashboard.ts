@@ -3,6 +3,7 @@ import { listMediaFiles } from "./admin-media";
 import { listRedirects } from "./admin-redirects";
 import { runSiteHealth } from "./admin-site-health";
 import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
 import { createPostgresRepositories } from "./repositories";
 import {
   contentStoragePath,
@@ -142,12 +143,13 @@ async function loadManagerContent(): Promise<{
 
   if (config.source === "postgres") {
     const repositories = createPostgresRepositories();
+    const siteKey = await requireAdminSiteKey();
     const siteRecord =
-      await repositories.sites.findByKey(config.siteKey);
+      await repositories.sites.findByKey(siteKey);
 
     if (!siteRecord) {
       throw new Error(
-        `No PostgreSQL Site exists for STAARK_SITE_KEY="${config.siteKey}".`,
+        `No PostgreSQL Site exists for resolved tenant "${siteKey}".`,
       );
     }
 
@@ -158,7 +160,7 @@ async function loadManagerContent(): Promise<{
       site:
         siteRecord.settings as unknown as ManagerSite,
       pages: pages.length,
-      contentPrefix: `site:${config.siteKey}`,
+      contentPrefix: `site:${siteKey}`,
     };
   }
 

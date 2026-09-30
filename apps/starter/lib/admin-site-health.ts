@@ -4,6 +4,7 @@ import { listMediaFiles } from "./admin-media";
 import { buildMediaUsageIndex } from "./admin-media-usage";
 import { listRedirects, type RedirectRule } from "./admin-redirects";
 import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
 import { createPostgresRepositories } from "./repositories";
 import {
   contentStoragePath,
@@ -151,11 +152,12 @@ async function readHealthSite(): Promise<JsonObject> {
 
   if (config.source === "postgres") {
     const repositories = createPostgresRepositories();
-    const site = await repositories.sites.findByKey(config.siteKey);
+    const siteKey = await requireAdminSiteKey();
+    const site = await repositories.sites.findByKey(siteKey);
 
     if (!site) {
       throw new Error(
-        `No PostgreSQL Site exists for STAARK_SITE_KEY="${config.siteKey}".`,
+        `No PostgreSQL Site exists for resolved tenant "${siteKey}".`,
       );
     }
 
@@ -176,11 +178,12 @@ async function readPages(issues: HealthIssue[]): Promise<PageRecord[]> {
   if (config.source === "postgres") {
     try {
       const repositories = createPostgresRepositories();
-      const site = await repositories.sites.findByKey(config.siteKey);
+      const siteKey = await requireAdminSiteKey();
+      const site = await repositories.sites.findByKey(siteKey);
 
       if (!site) {
         throw new Error(
-          `No PostgreSQL Site exists for STAARK_SITE_KEY="${config.siteKey}".`,
+          `No PostgreSQL Site exists for resolved tenant "${siteKey}".`,
         );
       }
 

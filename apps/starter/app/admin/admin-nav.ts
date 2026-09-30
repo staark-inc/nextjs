@@ -146,6 +146,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "logs events errors warnings runtime system technical",
   },
   {
+    href: "/admin/plan",
+    feature: "plan",
+    label: "Plan & usage",
+    description: "Package & limits",
+    icon: "M4 5h16v14H4V5Zm0 4h16 M8 14h3 M14 14h2 M8 17h8",
+    group: "System",
+    keywords: "plan package subscription billing price storage limits usage",
+  },
+  {
     href: "/admin/site",
     feature: "settings",
     label: "Settings",

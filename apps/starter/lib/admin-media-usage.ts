@@ -1,5 +1,6 @@
 import path from "node:path";
 import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
 import { createPostgresRepositories } from "./repositories";
 import {
   contentStoragePath,
@@ -95,11 +96,12 @@ export async function buildMediaUsageIndex(): Promise<MediaUsageIndex> {
 
   if (config.source === "postgres") {
     const repositories = createPostgresRepositories();
-    const site = await repositories.sites.findByKey(config.siteKey);
+    const siteKey = await requireAdminSiteKey();
+    const site = await repositories.sites.findByKey(siteKey);
 
     if (!site) {
       throw new Error(
-        `No PostgreSQL Site exists for STAARK_SITE_KEY="${config.siteKey}".`,
+        `No PostgreSQL Site exists for resolved tenant "${siteKey}".`,
       );
     }
 

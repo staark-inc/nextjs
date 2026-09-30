@@ -7,6 +7,7 @@ import {
 } from "@staark/core";
 
 import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
 import {
   preparePostgresPageDestinationRedirect,
   upsertPostgresRedirectWithRepositories,
@@ -76,21 +77,11 @@ function isPageId(value: string): boolean {
   );
 }
 
-function siteKey(): string {
-  const config = resolvePublicContentConfig();
-  if (config.source !== "postgres" || !config.siteKey) {
-    throw new Error(
-      "PostgreSQL Admin Pages requires STAARK_DATA_SOURCE=postgres and STAARK_SITE_KEY.",
-    );
-  }
-  return config.siteKey;
-}
-
 async function requireSite(repositories: RepositorySet): Promise<SiteRecord> {
-  const key = siteKey();
+  const key = await requireAdminSiteKey();
   const site = await repositories.sites.findByKey(key);
   if (!site) {
-    throw new Error(`No PostgreSQL Site exists for STAARK_SITE_KEY="${key}".`);
+    throw new Error(`No PostgreSQL Site exists for resolved tenant "${key}".`);
   }
   return site;
 }

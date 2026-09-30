@@ -9,6 +9,7 @@ export const ADMIN_FEATURES = [
   "design",
   "seo",
   "settings",
+  "plan",
   "booking",
   "services",
   "themes",
@@ -35,6 +36,7 @@ export const ADMIN_FEATURE_REGISTRY: Record<AdminFeature, AdminFeatureDefinition
   design: { label: "Design", access: "core" },
   seo: { label: "SEO", access: "core" },
   settings: { label: "Settings", access: "core" },
+  plan: { label: "Plan & usage", access: "core" },
 
   // Optional client capability. The dedicated Bookings UI is added later.
   booking: { label: "Bookings", access: "entitlement" },
@@ -120,6 +122,7 @@ const PAGE_FEATURES: Array<[string, AdminFeature]> = [
   ["/admin/health", "health"],
   ["/admin/backups", "backups"],
   ["/admin/site", "settings"],
+  ["/admin/plan", "plan"],
 ];
 
 const API_FEATURES: Array<[string, AdminFeature]> = [
