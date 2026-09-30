@@ -21,6 +21,40 @@ import { BookingForm } from "./sections/BookingForm";
 export const lightTheme: ThemeDefinition = {
   id: "light",
   name: "S-Hub Light",
+
+  componentVariants: {
+    header: [
+      "glass",
+      "solid",
+      "minimal",
+      "transparent",
+    ],
+    buttons: [
+      "solid",
+      "pill",
+      "outline",
+      "soft",
+    ],
+    cards: [
+      "soft",
+      "outlined",
+      "elevated",
+      "flat",
+    ],
+    hero: [
+      "split",
+      "offer",
+      "centered",
+      "editorial",
+    ],
+    footer: [
+      "dark",
+      "deep",
+      "light",
+      "minimal",
+    ],
+  },
+
   presets: {
     scandinavian: scandinavian as ThemeDefinition["presets"][string],
     "local-business": localBusiness as ThemeDefinition["presets"][string],

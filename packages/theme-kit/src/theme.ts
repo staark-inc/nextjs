@@ -52,6 +52,14 @@ export type ThemeDefinition = {
   name: string;
   /** parentId lets a child theme inherit its parent's section registry. */
   parentId?: string;
+  /**
+   * Visual variants implemented by this theme.
+   *
+   * Preset component values are also considered supported automatically.
+   * This list exposes additional variants to Admin without requiring a
+   * preset to use every possible variant.
+   */
+  componentVariants?: Readonly<Record<string, readonly string[]>>;
   presets: Record<string, Preset>;
   defaultPreset: string;
   sections: Record<string, SectionComponent<any>>;
