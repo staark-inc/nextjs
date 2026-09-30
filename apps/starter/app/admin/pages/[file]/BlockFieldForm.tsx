@@ -7,13 +7,6 @@ import { MediaPicker } from "./MediaPicker";
 export { validateBlock };
 export type { FieldError };
 
-/** True if a block type has a generated form (otherwise the editor uses JSON). */
-export function hasFieldForm(
-  type: string,
-  themeId?: string,
-): boolean {
-  return Boolean(blockFieldsForTheme(themeId, type));
-}
 
 type Obj = Record<string, unknown>;
 

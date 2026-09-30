@@ -138,25 +138,17 @@ export default function FormsPage() {
 
   return (
     <>
-      <div className="sa-breadcrumb">
-        <Link href="/admin">
-          Dashboard
-        </Link>
-        <span>/</span>
-        <span>Messages</span>
-      </div>
+      <section className="sa-page-header">
+        <div>
+          <span className="sa-page-eyebrow">Business</span>
+          <h1 className="sa-h1">Messages</h1>
+          <p className="sa-subtitle">Read and reply to enquiries from your
+        website.</p>
+        </div>
+      </section>
 
-      <h1 className="sa-h1">
-        Messages
-      </h1>
-
-      <p className="sa-subtitle">
-        Read and reply to enquiries from your
-        website.
-      </p>
-
-      <div className="sa-stats">
-        <div className="sa-stat">
+      <div className="sa-stats sa-stats--dashboard">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">
             Total
           </div>
@@ -168,7 +160,7 @@ export default function FormsPage() {
           </div>
         </div>
 
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">
             Open
           </div>
@@ -180,7 +172,7 @@ export default function FormsPage() {
           </div>
         </div>
 
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">
             Today
           </div>
@@ -192,7 +184,7 @@ export default function FormsPage() {
           </div>
         </div>
 
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">
             Forms
           </div>

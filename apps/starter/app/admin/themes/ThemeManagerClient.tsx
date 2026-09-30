@@ -57,7 +57,7 @@ function humanize(value: string): string {
     .replace(/^./, (letter) => letter.toUpperCase());
 }
 
-function orderedKeys(record: Record<string, string> | undefined, preferred: string[]): string[] {
+function orderedKeys(record: Record<string, unknown> | undefined, preferred: string[]): string[] {
   const keys = Object.keys(record ?? {});
   return [...preferred.filter((key) => keys.includes(key)), ...keys.filter((key) => !preferred.includes(key)).sort()];
 }

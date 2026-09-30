@@ -1,10 +1,21 @@
 import { listInboxSubmissions, type InboxSubmission } from "@/lib/admin-inbox";
 import { listMediaFiles } from "@/lib/admin-media";
 import { listPageRevisions } from "@/lib/admin-revisions";
+import {
+  listAdminContentPages,
+  readAdminSiteSettings,
+} from "@/lib/admin-site-settings";
+import {
+  adminPagesUsePostgres,
+  listPostgresAdminPageRevisions,
+} from "@/lib/admin-page-postgres";
+import {
+  normalizeWebsiteType,
+} from "@/lib/website-profile";
+import type { WebsiteType } from "@staark/core";
 import { listBackupTimes } from "@/lib/admin-backups";
 import { peekAdminShellStatus } from "@/lib/admin-shell-status";
 import { readStudioTheme } from "@/lib/theme-studio";
-import { contentStoragePath, listContent, readContentJson } from "@/lib/storage";
 import {
   dailyCounts,
   describeInboxActivity,
@@ -37,6 +48,7 @@ export type DashboardPage = SeoPage & { updatedAt: string; score: number; issues
 export type DashboardData = {
   siteName: string;
   locale: string;
+  websiteType: WebsiteType;
   tasks: DashboardTask[];
   /** Tasks beyond the ones shown, e.g. older unread messages. */
   moreTasks: { messages: number; bookings: number };
@@ -100,41 +112,62 @@ function bookingWhen(item: InboxSubmission): string {
 }
 
 async function loadPages(): Promise<DashboardPage[]> {
-  const prefix = `${contentStoragePath("pages")}/`;
-  const entries = (await listContent("pages"))
-    .map((entry) => ({ entry, file: entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "" }))
-    .filter(({ file }) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
-    .sort((a, b) => a.file.localeCompare(b.file));
+  const entries = await listAdminContentPages();
 
-  return Promise.all(
-    entries.map(async ({ entry, file }) => {
-      const fallbackPath = `/${file.replace(/\.json$/i, "")}`;
-      let page: SeoPage & { updatedAt: string; blockTypes: string[] };
-      try {
-        const data = await readContentJson<Record<string, unknown>>(`pages/${file}`);
-        if (!data) throw new Error("Page object is missing.");
-        const seo =
-          data.seo && typeof data.seo === "object" && !Array.isArray(data.seo) ? (data.seo as Record<string, unknown>) : {};
-        page = {
-          file,
-          path: typeof data.path === "string" ? data.path : fallbackPath,
-          title: typeof data.title === "string" ? data.title : file.replace(/\.json$/i, ""),
-          seoTitle: typeof seo.title === "string" ? seo.title : "",
-          seoDescription: typeof seo.description === "string" ? seo.description : "",
-          noindex: seo.noindex === true,
-          updatedAt:
-            typeof data.updatedAt === "string" ? data.updatedAt : entry.mtime > 0 ? new Date(entry.mtime).toISOString() : "",
-          blockTypes: Array.isArray(data.blocks)
-            ? data.blocks
-                .map((block) => (block && typeof block === "object" && typeof (block as { type?: unknown }).type === "string" ? (block as { type: string }).type : ""))
-                .filter(Boolean)
-            : [],
-        };
-      } catch {
-        page = { file, path: fallbackPath, title: file.replace(/\.json$/i, ""), seoTitle: "", seoDescription: "", noindex: false, updatedAt: "", blockTypes: [] };
-      }
-      return { ...page, score: seoScore(page), issues: seoIssues(page) };
-    }),
+  return entries
+    .map(({ file, page }) => {
+      const seo = page.seo ?? {};
+
+      const normalized: SeoPage & {
+        updatedAt: string;
+        blockTypes: string[];
+      } = {
+        file,
+        path: page.path,
+        title: page.title,
+        seoTitle:
+          typeof seo.title === "string"
+            ? seo.title
+            : "",
+        seoDescription:
+          typeof seo.description === "string"
+            ? seo.description
+            : "",
+        noindex: seo.noindex === true,
+        updatedAt:
+          typeof page.updatedAt === "string"
+            ? page.updatedAt
+            : "",
+        blockTypes: page.blocks.map(
+          (block) => block.type,
+        ),
+      };
+
+      return {
+        ...normalized,
+        score: seoScore(normalized),
+        issues: seoIssues(normalized),
+      };
+    })
+    .sort((a, b) =>
+      a.path.localeCompare(b.path),
+    );
+}
+
+async function loadRecentPageRevisions(
+  page: DashboardPage,
+) {
+  if (adminPagesUsePostgres()) {
+    return (
+      await listPostgresAdminPageRevisions(
+        page.file,
+      )
+    ).slice(0, 3);
+  }
+
+  return listPageRevisions(
+    page.file,
+    { limit: 3 },
   );
 }
 
@@ -148,10 +181,16 @@ async function safe<T>(load: () => Promise<T>, fallback: T): Promise<T> {
 
 export async function loadDashboard(): Promise<DashboardData> {
   const now = Date.now();
-  const site = await readContentJson<DashboardSite>("site.json");
-  if (!site) throw new Error("Site settings not found in storage.");
 
-  const [pages, inbox, media, backups, shell] = await Promise.all([
+  const [
+    site,
+    pages,
+    inbox,
+    media,
+    backups,
+    shell,
+  ] = await Promise.all([
+    readAdminSiteSettings(),
     loadPages(),
     safe(listInboxSubmissions, []),
     safe(listMediaFiles, []),
@@ -160,11 +199,22 @@ export async function loadDashboard(): Promise<DashboardData> {
   ]);
 
   const revisions = (
-    await Promise.all(pages.map((page) => safe(() => listPageRevisions(page.file, { limit: 3 }), [])))
+    await Promise.all(
+      pages.map((page) =>
+        safe(
+          () =>
+            loadRecentPageRevisions(page),
+          [],
+        ),
+      ),
+    )
   ).flat();
 
   // ---- Design ----------------------------------------------------------
-  const theme = process.env.STAARK_THEME?.trim() || "salong";
+  const theme =
+    site.theme?.family?.trim() ||
+    process.env.STAARK_THEME?.trim() ||
+    "light";
   const preset = site.theme?.preset ?? "default";
   const studio = site.theme?.studio && typeof site.theme.studio === "object" ? site.theme.studio : null;
   const studioId = typeof studio?.id === "string" && /^[a-z0-9-]+$/.test(studio.id) ? studio.id : "";
@@ -298,7 +348,9 @@ export async function loadDashboard(): Promise<DashboardData> {
       events.push({
         id: `inbox:${item.id}:${index}`,
         at: entry.at,
-        kind: "inbox",
+        kind: item.bookingStatus
+          ? "booking"
+          : "inbox",
         text,
         href: `/admin/forms/${item.id}`,
       });
@@ -342,6 +394,10 @@ export async function loadDashboard(): Promise<DashboardData> {
   return {
     siteName: site.name?.trim() || "Your website",
     locale: site.locale || "en-GB",
+    websiteType:
+      normalizeWebsiteType(
+        site.websiteType,
+      ),
     tasks: sortTasks(tasks),
     moreTasks: {
       messages: Math.max(0, newMessages.length - MAX_MESSAGE_TASKS),

@@ -128,32 +128,31 @@ export default function BookingsPage() {
 
   return (
     <>
-      <div className="sa-breadcrumb">
-        <Link href="/admin">Dashboard</Link>
-        <span>/</span>
-        <span>Bookings</span>
-      </div>
+      <section className="sa-page-header">
+        <div>
+          <span className="sa-page-eyebrow">Business</span>
+          <h1 className="sa-h1">Bookings</h1>
+          <p className="sa-subtitle">Confirm or decline booking requests from the website.</p>
+        </div>
+      </section>
 
-      <h1 className="sa-h1">Bookings</h1>
-      <p className="sa-subtitle">Confirm or decline booking requests from the website.</p>
-
-      <div className="sa-stats">
-        <div className="sa-stat">
+      <div className="sa-stats sa-stats--dashboard">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Waiting</div>
           <div className="sa-stat__value">{counts.pending}</div>
           <div className="sa-stat__desc">Need an answer</div>
         </div>
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Upcoming</div>
           <div className="sa-stat__value">{upcoming}</div>
           <div className="sa-stat__desc">Confirmed, from today</div>
         </div>
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Confirmed</div>
           <div className="sa-stat__value">{counts.confirmed}</div>
           <div className="sa-stat__desc">All time</div>
         </div>
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Declined</div>
           <div className="sa-stat__value">{counts.declined}</div>
           <div className="sa-stat__desc">All time</div>

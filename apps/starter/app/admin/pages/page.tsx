@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type PageEntry = {
@@ -30,6 +32,7 @@ type PagesPayload = {
 };
 
 export default function PagesIndex() {
+  const router = useRouter();
   const [pages, setPages] = useState<PageEntry[]>([]);
   const [deletedPages, setDeletedPages] =
     useState<DeletedPageEntry[]>([]);
@@ -93,7 +96,7 @@ export default function PagesIndex() {
     });
     const data = await res.json().catch(() => ({})) as { error?: string; file?: string };
     if (res.ok && data.file) {
-      window.location.href = `/admin/pages/${data.file}`;
+      router.push(`/admin/pages/${data.file}`);
       return;
     }
     showToast(data.error ?? "Failed to create page.", false);
@@ -170,7 +173,7 @@ export default function PagesIndex() {
           {pages.map((page) => (
             <li key={page.file}>
               <div className="sa-page-list__main">
-                <a href={`/admin/pages/${page.file}`}>{page.title}</a>
+                <Link href={`/admin/pages/${page.file}`}>{page.title}</Link>
                 <div className="sa-path">{page.path}</div>
                 <div className="sa-page-badges">
                   {page.inPrimary ? <span className="sa-badge sa-badge--primary">Main navigation</span> : null}
@@ -181,7 +184,7 @@ export default function PagesIndex() {
               </div>
               <div className="sa-page-list__actions">
                 <a href={page.path} target="_blank" rel="noopener noreferrer" className="sa-btn sa-btn--ghost sa-btn--sm">View</a>
-                <a href={`/admin/pages/${page.file}`} className="sa-btn sa-btn--ghost sa-btn--sm">Edit</a>
+                <Link href={`/admin/pages/${page.file}`} className="sa-btn sa-btn--ghost sa-btn--sm">Edit</Link>
                 <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => void deletePage(page.file, page.title)}>Delete</button>
               </div>
             </li>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveAdminRole } from "@staark/platform/server";
 import { readSite, readSiteTheme } from "@/lib/admin-theme";
 import { resolveThemeRuntime } from "@/lib/theme-runtime";
 import {
@@ -7,6 +8,12 @@ import {
   resolveThemeManifest,
 } from "@/lib/theme-manifests";
 import { requireAuth } from "../guard";
+import { getSession, isSessionActive } from "@/lib/auth";
+import { resolveAdminEntitlements } from "@/lib/admin-features";
+import {
+  normalizeWebsiteType,
+  resolveClientFeatures,
+} from "@/lib/website-profile";
 import {
   themeBlockTemplatesFor,
 } from "@/lib/theme-admin-registry";
@@ -231,7 +238,7 @@ const BASE_BLOCKS: BlockTemplate[] = [
   {
     type: "contact",
     label: "Contact form",
-    description: "Contact or booking form with customizable fields.",
+    description: "Contact form with customizable fields.",
     icon: "mail",
     template: {
       eyebrow: "Contact",
@@ -306,7 +313,20 @@ export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
+  const session = await getSession();
+  const role = isSessionActive(session)
+    ? resolveAdminRole(session.role)
+    : "client";
+
   const site = await readSite();
+  const websiteType = normalizeWebsiteType(site.websiteType);
+  const productFeatures = new Set(
+    resolveClientFeatures(
+      websiteType,
+      resolveAdminEntitlements(),
+    ),
+  );
+
   const activeTheme = resolveThemeRuntime(readSiteTheme(site).family).id;
   const blocks = [
     ...BASE_BLOCKS,
@@ -314,7 +334,21 @@ export async function GET() {
   ];
 
   const allowedBlockIds = availableBlockIdsForTheme(activeTheme);
-  const availableBlocks = blocks.filter((item) => allowedBlockIds.has(item.type));
+
+  const availableBlocks = blocks.filter((item) => {
+    if (!allowedBlockIds.has(item.type)) return false;
+
+    // Booking blocks are only offered when the site's product profile
+    // actually supports bookings. Existing page blocks are not touched.
+    if (
+      item.type === "bookingForm" &&
+      !productFeatures.has("booking")
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 
   const activeManifest = resolveThemeManifest(activeTheme);
   const commonBlockIds = [...themeOwnedBlockIds("light")];
@@ -326,6 +360,8 @@ export async function GET() {
   return NextResponse.json({
     blocks: availableBlocks,
     theme: activeTheme,
+    websiteType,
+    advancedEditing: role === "manager",
     themeName: activeManifest.name,
     commonBlockIds,
     themeOwnedBlockIds: activeThemeOwnedBlockIds,

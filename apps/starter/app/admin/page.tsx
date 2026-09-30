@@ -12,10 +12,6 @@ import {
   resolveAccessibleAdminFeatures,
 } from "@/lib/admin-features";
 import {
-  readContentJson,
-} from "@/lib/storage";
-import {
-  normalizeWebsiteType,
   resolveClientFeatures,
 } from "@/lib/website-profile";
 import ClientDashboard from "./ClientDashboard";
@@ -57,21 +53,11 @@ export default async function AdminDashboard() {
   // Business-oriented dashboard.
   // ----------------------------------------------------------
 
-  const [data, site] =
-    await Promise.all([
-      loadDashboard(),
-
-      readContentJson<{
-        websiteType?: unknown;
-      }>("site.json").catch(
-        () => null,
-      ),
-    ]);
+  const data =
+    await loadDashboard();
 
   const websiteType =
-    normalizeWebsiteType(
-      site?.websiteType,
-    );
+    data.websiteType;
 
   const availableFeatures =
     resolveAccessibleAdminFeatures(
