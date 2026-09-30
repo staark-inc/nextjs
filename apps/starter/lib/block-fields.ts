@@ -1,7 +1,6 @@
 import {
-  skonhetBlockFields,
+  skonhetBlockDefinitions,
   skonhetHeroFields,
-  skonhetRequiredFields,
 } from "@staark/theme-skonhet/admin";
 
 import {
@@ -454,9 +453,22 @@ export const REQUIRED_FIELDS: Record<string, string[]> = {
  * The active theme owns its extra fields. Sibling theme fields never leak into
  * the editor, which keeps Theme Block Architecture v1 genuinely isolated.
  */
+const SKONHET_BLOCK_FIELDS = Object.fromEntries(
+  skonhetBlockDefinitions.map((definition) => [
+    definition.type,
+    [...definition.fields] as unknown as Field[],
+  ]),
+) as Record<string, Field[]>;
+
+const SKONHET_REQUIRED_FIELDS = Object.fromEntries(
+  skonhetBlockDefinitions.map((definition) => [
+    definition.type,
+    [...definition.required],
+  ]),
+) as Record<string, string[]>;
+
 const THEME_BLOCK_FIELDS: Record<string, Record<string, Field[]>> = {
-  skonhet:
-    skonhetBlockFields as unknown as Record<string, Field[]>,
+  skonhet: SKONHET_BLOCK_FIELDS,
   el:
     elBlockFields as unknown as Record<string, Field[]>,
   kreator:
@@ -473,7 +485,7 @@ const THEME_HERO_FIELDS: Record<string, Field[]> = {
 };
 
 const THEME_REQUIRED_FIELDS: Record<string, Record<string, string[]>> = {
-  skonhet: skonhetRequiredFields,
+  skonhet: SKONHET_REQUIRED_FIELDS,
   el: elRequiredFields,
   kreator: kreatorRequiredFields,
 };

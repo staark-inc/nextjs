@@ -1,5 +1,7 @@
+import { blockDefinitionToLegacyTemplate } from "@staark/theme-kit";
+
 import {
-  skonhetBlockTemplates,
+  skonhetBlockDefinitions,
   skonhetPageTemplates,
 } from "@staark/theme-skonhet/admin";
 
@@ -151,8 +153,9 @@ const SALONG_PAGES: ThemePageTemplate[] = [
  * Source of truth lives inside the theme package.
  * ======================================================== */
 
-const SKONHET_BLOCKS =
-  skonhetBlockTemplates as unknown as ThemeBlockTemplate[];
+const SKONHET_BLOCKS = skonhetBlockDefinitions.map(
+  blockDefinitionToLegacyTemplate,
+) as ThemeBlockTemplate[];
 
 const SKONHET_PAGES =
   skonhetPageTemplates as unknown as ThemePageTemplate[];

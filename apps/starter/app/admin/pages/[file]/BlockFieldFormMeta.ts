@@ -10,7 +10,7 @@ export function hasFieldForm(
   type: string,
   themeId?: string,
 ): boolean {
-  return Boolean(
-    blockFieldsForTheme(themeId, type),
-  );
+  const fields = blockFieldsForTheme(themeId, type);
+
+  return Boolean(fields?.length);
 }
