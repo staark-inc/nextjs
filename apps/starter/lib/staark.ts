@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { cache } from "react";
+import { headers } from "next/headers";
 import {
   normalizePath,
   type Page,
@@ -17,6 +18,7 @@ import {
   type RepositorySet,
 } from "./repositories";
 import { ensureLocalContentSeed } from "./storage";
+import { resolveTenantContext } from "./tenant-context";
 
 const baseContent = createStaarkContent();
 export const publicContentConfig = resolvePublicContentConfig();
@@ -79,22 +81,48 @@ async function withConfiguredFallback<T>(
   }
 }
 
-const postgresSiteRecord = cache(async () => {
-  const site = await repositories().sites.findByKey(publicContentConfig.siteKey);
+const requestTenant = cache(async () => {
+  let host: string | null = null;
+  let forwardedHost: string | null = null;
+
+  try {
+    const requestHeaders = await headers();
+    host = requestHeaders.get("host");
+    forwardedHost = requestHeaders.get("x-forwarded-host");
+  } catch {
+    // Build-time/one-shot jobs may not have a request context. In that case
+    // resolveTenantContext can still use the explicit STAARK_SITE_KEY fallback.
+  }
+
+  return resolveTenantContext({ host, forwardedHost });
+});
+
+const postgresSiteKey = cache(async (): Promise<string> => {
+  const tenant = await requestTenant();
+  if (tenant) return tenant.siteKey;
+
+  throw new Error(
+    "No PostgreSQL tenant could be resolved from the request hostname. " +
+      "For local/dev use, set STAARK_SITE_KEY or enable the tenant fallback.",
+  );
+});
+
+const postgresSiteRecord = cache(async (siteKey: string) => {
+  const site = await repositories().sites.findByKey(siteKey);
   if (!site) {
-    throw new Error(
-      `No PostgreSQL Site exists for STAARK_SITE_KEY="${publicContentConfig.siteKey}".`,
-    );
+    throw new Error(`No PostgreSQL Site exists for site key="${siteKey}".`);
   }
   return site;
 });
 
 const postgresSite = cache(async (): Promise<SiteSettings> => {
-  return (await postgresSiteRecord()).settings;
+  const siteKey = await postgresSiteKey();
+  return (await postgresSiteRecord(siteKey)).settings;
 });
 
 const postgresPages = cache(async (): Promise<PageSummary[]> => {
-  const site = await postgresSiteRecord();
+  const siteKey = await postgresSiteKey();
+  const site = await postgresSiteRecord(siteKey);
   const pages = await repositories().pages.list(site.id);
 
   return pages.map(({ page }) => ({
@@ -105,7 +133,8 @@ const postgresPages = cache(async (): Promise<PageSummary[]> => {
 });
 
 const postgresPage = cache(async (pagePath: string): Promise<Page | null> => {
-  const site = await postgresSiteRecord();
+  const siteKey = await postgresSiteKey();
+  const site = await postgresSiteRecord(siteKey);
   const record = await repositories().pages.findByPath(site.id, pagePath);
   return record?.page ?? null;
 });
@@ -119,12 +148,8 @@ async function submitPostgresForm(
   submission: Parameters<StaarkContent["submitForm"]>[0],
 ): Promise<void> {
   const repo = repositories();
-  const site = await repo.sites.findByKey(publicContentConfig.siteKey);
-  if (!site) {
-    throw new Error(
-      `No PostgreSQL Site exists for STAARK_SITE_KEY="${publicContentConfig.siteKey}".`,
-    );
-  }
+  const siteKey = await postgresSiteKey();
+  const site = await postgresSiteRecord(siteKey);
 
   const receivedAt = new Date().toISOString();
   await repo.submissions.create({

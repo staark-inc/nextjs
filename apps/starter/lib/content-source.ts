@@ -8,8 +8,11 @@ export type PublicContentConfig = {
   source: StaarkDataSource;
   fallback: StaarkDataFallback;
   /**
-   * Stable Storage v2 site key. This is intentionally NOT STAARK_SITE_ID,
-   * which already belongs to the Hub pairing protocol.
+   * Optional development/local fallback site key.
+   *
+   * Production PostgreSQL reads resolve the tenant from the request hostname.
+   * This remains intentionally separate from STAARK_SITE_ID, which belongs to
+   * the Hub pairing protocol.
    */
   siteKey: string;
 };
@@ -64,13 +67,6 @@ export function resolvePublicContentConfig(
     "none",
   );
   const siteKey = normalizeSiteKey(env.STAARK_SITE_KEY);
-
-  if (source === "postgres" && !siteKey) {
-    throw new Error(
-      "STAARK_DATA_SOURCE=postgres requires STAARK_SITE_KEY. " +
-        "Use the same stable key that was passed to the legacy importer.",
-    );
-  }
 
   return { source, fallback, siteKey };
 }

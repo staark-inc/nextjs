@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import {
   PageSchema,
   SiteSettingsSchema,
@@ -6,6 +7,7 @@ import {
 } from "@staark/core";
 
 import { resolvePublicContentConfig } from "./content-source";
+import { resolveTenantContext } from "./tenant-context";
 import {
   createPostgresRepositories,
   withPostgresTransaction,
@@ -31,20 +33,36 @@ export function adminSiteSettingsUsePostgres(
   return resolvePublicContentConfig(env).source === "postgres";
 }
 
-function postgresSiteKey(): string {
+async function postgresSiteKey(): Promise<string> {
   const config = resolvePublicContentConfig();
-  if (config.source !== "postgres" || !config.siteKey) {
+  if (config.source !== "postgres") {
     throw new Error(
-      "PostgreSQL Admin Site Settings requires STAARK_DATA_SOURCE=postgres and STAARK_SITE_KEY.",
+      "PostgreSQL Admin Site Settings requires STAARK_DATA_SOURCE=postgres.",
     );
   }
-  return config.siteKey;
+
+  try {
+    const requestHeaders = await headers();
+    const tenant = await resolveTenantContext({
+      host: requestHeaders.get("host"),
+      forwardedHost: requestHeaders.get("x-forwarded-host"),
+    });
+    if (tenant) return tenant.siteKey;
+  } catch {
+    // Build jobs and one-shot scripts may not have request context.
+  }
+
+  if (config.siteKey) return config.siteKey;
+
+  throw new Error(
+    "No PostgreSQL admin tenant could be resolved from the request hostname.",
+  );
 }
 
 async function requirePostgresSite(
   repositories: RepositorySet,
 ): Promise<SiteRecord> {
-  const key = postgresSiteKey();
+  const key = await postgresSiteKey();
   const site = await repositories.sites.findByKey(key);
   if (!site) {
     throw new Error(`No PostgreSQL Site exists for STAARK_SITE_KEY="${key}".`);

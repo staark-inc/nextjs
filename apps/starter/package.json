@@ -17,9 +17,13 @@
     "db:import:legacy": "tsx scripts/import-legacy-content.ts",
     "db:import:redirects": "tsx scripts/import-legacy-redirects.ts",
     "db:import:submissions": "tsx scripts/import-legacy-submissions.ts",
-    "db:bootstrap-site": "tsx scripts/bootstrap-site.ts"
+    "db:bootstrap-site": "tsx scripts/bootstrap-site.ts",
+    "db:first-run": "tsx scripts/bootstrap-site.ts",
+    "db:seed:saas": "tsx scripts/seed-saas-plans.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "@staark/core": "workspace:*",
     "@staark/platform": "workspace:*",
     "@staark/theme-byra": "workspace:*",
@@ -33,19 +37,17 @@
     "@staark/theme-webb": "workspace:*",
     "iron-session": "^9.0.1",
     "next": "^16.3.6",
+    "pg": "8.23.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "@prisma/adapter-pg": "7.10.0",
-    "@prisma/client": "7.10.0",
-    "pg": "8.23.0"
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
+    "@types/pg": "8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "typescript": "^5.9.3",
-    "@types/pg": "8.23.1",
     "prisma": "7.10.0",
-    "tsx": "4.23.15"
+    "tsx": "4.23.15",
+    "typescript": "^5.9.3"
   }
 }

@@ -1,5 +1,5 @@
 import { safeAdminNext } from "@staark/platform/server";
-import { readContentJson } from "@/lib/storage";
+import { readAdminSiteSettings } from "@/lib/admin-site-settings";
 import BrandMark from "../BrandMark";
 import LoginForm from "./LoginForm";
 import styles from "./login.module.css";
@@ -26,9 +26,9 @@ const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function loadSitePreview(): Promise<SitePreview | null> {
-  // The login page must render even when content storage is unavailable.
+  // The login page must render even when tenant storage is unavailable.
   try {
-    return await readContentJson<SitePreview>("site.json");
+    return await readAdminSiteSettings();
   } catch {
     return null;
   }

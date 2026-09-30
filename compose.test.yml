@@ -1,19 +1,15 @@
 services:
   web:
     environment:
-      STAARK_CONTENT_DIR: content/skonhet
-      STAARK_THEME: skonhet
+      DATABASE_URL: ${DATABASE_URL}
+      STAARK_DATA_SOURCE: postgres
+      STAARK_DATA_FALLBACK: none
+      STAARK_TRUST_PROXY: "1"
+      STAARK_TENANT_SITE_KEY_FALLBACK: "0"
+      STAARK_SITE_KEY: ""
     ports: !override []
     networks:
       - staark-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=staark-network"
-
-      - "traefik.http.routers.staark-next.rule=Host(`next.staarkinc.com`)"
-      - "traefik.http.routers.staark-next.entrypoints=web"
-
-      - "traefik.http.services.staark-next.loadbalancer.server.port=3000"
 
 networks:
   staark-network:

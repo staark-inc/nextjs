@@ -11,3 +11,6 @@ next-env.d.ts
 
 *.patch
 apps/starter/generated/prisma/
+
+# Local SaaS secrets
+.env.saas

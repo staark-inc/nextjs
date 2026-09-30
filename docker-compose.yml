@@ -1,9 +1,11 @@
-# Staark Next — production stack for a client deployment on a VPS/Docker host.
+# Staark Next — multi-tenant SaaS runtime
 #
-#   docker compose up -d --build
+# Usage:
+#   docker compose --env-file .env.saas up -d --build web
 #
-# Put a reverse proxy (Caddy/Traefik/nginx) in front for the domain + TLS,
-# or add the Caddy service below.
+# This stack intentionally uses the central SaaS PostgreSQL service
+# `staark-postgres` on the external Docker network `staark-network`.
+# Do NOT set STAARK_SITE_KEY for SaaS: tenant resolution is hostname-based.
 
 services:
   web:
@@ -11,57 +13,53 @@ services:
       context: .
       dockerfile: apps/starter/Dockerfile
     restart: unless-stopped
+
     environment:
-      # Which theme this client deployment ships.
-      STAARK_THEME: ${STAARK_THEME:-webb}
-      STAARK_CONTENT_DIR: ${STAARK_CONTENT_DIR:-content/webb}
-      STAARK_CONTENT_SOURCE: ${STAARK_CONTENT_SOURCE:-fixtures}
+      NODE_ENV: production
 
-      # Storage v2 public read cutover. These do not change Hub/fixture transport.
-      STAARK_DATA_SOURCE: ${STAARK_DATA_SOURCE:-legacy}
-      STAARK_DATA_FALLBACK: ${STAARK_DATA_FALLBACK:-none}
-      STAARK_SITE_KEY: ${STAARK_SITE_KEY:-}
-      # When web runs in this compose network, PostgreSQL is reached as db:5432.
-      DATABASE_URL: ${DATABASE_URL:-}
+      # Public content/runtime
+      STAARK_DATA_SOURCE: postgres
+      STAARK_DATA_FALLBACK: none
 
-      # Stable deployment identity + release metadata used by the Hub update channel.
-      # Leave STAARK_DEPLOYMENT_ID empty to generate/persist one under /data.
+      # SaaS tenant routing: hostname -> Domain -> Site
+      STAARK_SITE_KEY: ""
+      STAARK_TENANT_SITE_KEY_FALLBACK: "0"
+      STAARK_TRUST_PROXY: "1"
+
+      # Central SaaS PostgreSQL on staark-network.
+      # Use a dedicated variable name so an old DATABASE_URL from the shell
+      # cannot silently point this container at another database.
+      DATABASE_URL: ${STAARK_SAAS_DATABASE_URL:?set STAARK_SAAS_DATABASE_URL}
+
+      # Storage
+      STAARK_STORAGE: ${STAARK_STORAGE:-fs}
+      STAARK_STORAGE_DIR: /data
+
+      # Staark Manager fallback account.
+      # SaaS tenant owners are stored in PostgreSQL.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?set ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set a 32+ char secret}
+
+      # Legacy client credentials are optional in SaaS mode.
+      ADMIN_CLIENT_USERNAME: ${ADMIN_CLIENT_USERNAME:-}
+      ADMIN_CLIENT_PASSWORD: ${ADMIN_CLIENT_PASSWORD:-}
+
+      # Deployment/release identity
       STAARK_DEPLOYMENT_ID: ${STAARK_DEPLOYMENT_ID:-}
       STAARK_UPDATE_CHANNEL: ${STAARK_UPDATE_CHANNEL:-stable}
       STAARK_RELEASE_VERSION: ${STAARK_RELEASE_VERSION:-0.1.0}
       STAARK_RELEASE_ID: ${STAARK_RELEASE_ID:-local}
 
-      # Storage: fs (default, uses the /data volume) or s3 for serverless/portable.
-      STAARK_STORAGE: ${STAARK_STORAGE:-fs}
-      STAARK_STORAGE_DIR: /data
-      # For S3/R2 instead, set STAARK_STORAGE=s3 and:
-      # STAARK_S3_BUCKET, STAARK_S3_ENDPOINT, STAARK_S3_ACCESS_KEY_ID, STAARK_S3_SECRET_ACCESS_KEY
-
-      # Local /admin — REQUIRED in production (the app refuses to start admin without them).
-      # Existing account = Staark Manager
-      ADMIN_USERNAME: ${ADMIN_USERNAME:?set ADMIN_USERNAME}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
-
-      # Client account
-      ADMIN_CLIENT_USERNAME: ${ADMIN_CLIENT_USERNAME:?set ADMIN_CLIENT_USERNAME}
-      ADMIN_CLIENT_PASSWORD: ${ADMIN_CLIENT_PASSWORD:?set ADMIN_CLIENT_PASSWORD}
-
-      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set a 32+ char secret}
-
-      # Optional client capabilities. Example: booking
-      # Hub provisioning becomes the source of truth later.
+      # Entitlements are normally resolved from Subscription -> Plan.
       STAARK_ENTITLEMENTS: ${STAARK_ENTITLEMENTS:-}
 
-      # Safe only while the published port stays loopback-only below.
-      STAARK_TRUST_PROXY: ${STAARK_TRUST_PROXY:-1}
-
-      # Submission notification routing. "hub" preserves the existing Hub-owned flow.
-      # Use "local" only when this deployment should send notifications itself.
+      # Notifications
       STAARK_NOTIFICATION_MODE: ${STAARK_NOTIFICATION_MODE:-hub}
       STAARK_NOTIFICATION_TO: ${STAARK_NOTIFICATION_TO:-}
       STAARK_ADMIN_BASE_URL: ${STAARK_ADMIN_BASE_URL:-}
 
-      # Server-side email transport. Disabled until explicitly configured.
+      # Mail transport
       STAARK_MAIL_TRANSPORT: ${STAARK_MAIL_TRANSPORT:-disabled}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -74,52 +72,35 @@ services:
       SMTP_TLS_REJECT_UNAUTHORIZED: ${SMTP_TLS_REJECT_UNAUTHORIZED:-true}
       SMTP_CONNECTION_TIMEOUT_MS: ${SMTP_CONNECTION_TIMEOUT_MS:-10000}
 
-      # Public form time-trap secret.
+      # Public form anti-bot secret
       STAARK_FORM_SECRET: ${STAARK_FORM_SECRET:?set STAARK_FORM_SECRET}
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=staark-network"
+
+      # Legacy/internal hostname
+      - "traefik.http.routers.staark-next.rule=Host(`next.staarkinc.com`)"
+      - "traefik.http.routers.staark-next.entrypoints=web"
+      - "traefik.http.routers.staark-next.service=staark-next"
+
+      # SaaS tenant hostnames
+      - "traefik.http.routers.staark-saas.rule=HostRegexp(`^[a-z0-9-]+\\.staark\\.app$`)"
+      - "traefik.http.routers.staark-saas.entrypoints=web"
+      - "traefik.http.routers.staark-saas.service=staark-next"
+
+      # App listens on 3000 inside the container.
+      - "traefik.http.services.staark-next.loadbalancer.server.port=3000"
+
     volumes:
       - staark-data:/data
-    ports:
-      # Secure default: only the host reverse proxy can reach the app.
-      # If STAARK_BIND_HOST=0.0.0.0, also set STAARK_TRUST_PROXY=0.
-      - "${STAARK_BIND_HOST:-127.0.0.1}:3000:3000"
 
-
-  # Storage Architecture v2 foundation.
-  # Opt-in during migration so existing fixture/S3 deployments keep working unchanged.
-  # Start only the database with:
-  #   docker compose --profile database up -d db
-  db:
-    image: postgres:17-alpine
-    profiles: ["database"]
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-staark}
-      POSTGRES_USER: ${POSTGRES_USER:-staark}
-      # Local-only default. Set a strong value anywhere beyond local development.
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staark-local-dev}
-    volumes:
-      - staark-postgres-data:/var/lib/postgresql/data
-    ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # Uncomment for automatic HTTPS on your domain (edit Caddyfile with your domain).
-  # caddy:
-  #   image: caddy:2
-  #   restart: unless-stopped
-  #   depends_on: [web]
-  #   ports: ["80:80", "443:443"]
-  #   volumes:
-  #     - ./Caddyfile:/etc/caddy/Caddyfile
-  #     - caddy-data:/data
-  #     - caddy-config:/config
+    networks:
+      - staark-network
 
 volumes:
   staark-data:
-  staark-postgres-data:
-  # caddy-data:
-  # caddy-config:
+
+networks:
+  staark-network:
+    external: true

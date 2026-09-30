@@ -1,4 +1,9 @@
-import { PageSchema, SiteSettingsSchema } from "@staark/core";
+import {
+  PageSchema,
+  SiteSettingsSchema,
+  WebsiteTypeSchema,
+  type WebsiteType,
+} from "@staark/core";
 
 import { disconnectPrismaClient } from "../lib/db/prisma";
 import {
@@ -12,12 +17,13 @@ type CliOptions = {
   url: string;
   locale: string;
   theme: string;
+  websiteType: WebsiteType;
   email?: string;
   homeTitle: string;
 };
 
 function usage(): string {
-  return `Staark Storage v2 greenfield site bootstrap
+  return `Staark Next — Production First Run Setup
 
 Usage:
   pnpm db:bootstrap-site -- --site-key <key> --name <name> --url <url> [options]
@@ -30,6 +36,8 @@ Required:
 Options:
   --locale <locale>      Site locale. Default: sv-SE
   --theme <family>       Initial theme family. Default: light
+  --website-type <type>  Product profile. Default: business
+                         business|salon|restaurant|hotel|automotive|portfolio|custom
   --email <email>        Contact email. Defaults to SiteSettingsSchema default.
   --home-title <title>   Initial homepage title. Default: Home
   -h, --help             Show this help.
@@ -53,6 +61,7 @@ function parseArgs(argv: string[]): CliOptions | null {
   let url = "";
   let locale = "sv-SE";
   let theme = "light";
+  let websiteType: WebsiteType = "business";
   let email: string | undefined;
   let homeTitle = "Home";
 
@@ -66,6 +75,7 @@ function parseArgs(argv: string[]): CliOptions | null {
       arg === "--url" ||
       arg === "--locale" ||
       arg === "--theme" ||
+      arg === "--website-type" ||
       arg === "--email" ||
       arg === "--home-title"
     ) {
@@ -75,6 +85,9 @@ function parseArgs(argv: string[]): CliOptions | null {
       if (arg === "--url") url = value;
       if (arg === "--locale") locale = value;
       if (arg === "--theme") theme = value;
+      if (arg === "--website-type") {
+        websiteType = WebsiteTypeSchema.parse(value.trim().toLowerCase());
+      }
       if (arg === "--email") email = value;
       if (arg === "--home-title") homeTitle = value;
       index += 1;
@@ -94,6 +107,7 @@ function parseArgs(argv: string[]): CliOptions | null {
     url: url.trim(),
     locale: locale.trim(),
     theme: theme.trim().toLowerCase(),
+    websiteType,
     email: email?.trim() || undefined,
     homeTitle: homeTitle.trim(),
   };
@@ -112,6 +126,7 @@ async function main(): Promise<void> {
 
   const settings = SiteSettingsSchema.parse({
     name: options.name,
+    websiteType: options.websiteType,
     locale: options.locale,
     url: options.url,
     theme: { family: options.theme },
@@ -165,6 +180,7 @@ async function main(): Promise<void> {
   console.log(`Site id:    ${result.site.id}`);
   console.log(`Name:       ${result.site.settings.name}`);
   console.log(`URL:        ${result.site.settings.url}`);
+  console.log(`Type:       ${result.site.settings.websiteType}`);
   console.log(`Theme:      ${result.site.settings.theme.family ?? "(none)"}`);
   console.log(`Homepage:   ${result.page.page.path} (${result.page.id})`);
   console.log("\nNext runtime settings:");

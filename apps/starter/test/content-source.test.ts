@@ -11,11 +11,12 @@ test("public content stays legacy by default", () => {
   });
 });
 
-test("postgres public reads require the imported site key", () => {
-  assert.throws(
-    () => resolvePublicContentConfig({ STAARK_DATA_SOURCE: "postgres" }),
-    /requires STAARK_SITE_KEY/,
-  );
+test("postgres public reads may resolve the site from the request hostname", () => {
+  assert.deepEqual(resolvePublicContentConfig({ STAARK_DATA_SOURCE: "postgres" }), {
+    source: "postgres",
+    fallback: "none",
+    siteKey: "",
+  });
 
   assert.deepEqual(
     resolvePublicContentConfig({

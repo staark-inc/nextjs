@@ -2,6 +2,8 @@ import type { BlockDefinition } from "@staark/theme-kit";
 import { skonhetBlockDefinitions } from "@staark/theme-skonhet/blocks";
 import { elBlockDefinitions } from "@staark/theme-el/blocks";
 import { kreatorBlockDefinitions } from "@staark/theme-kreator/blocks";
+import { salongBlockDefinitions } from "@staark/theme-salong/blocks";
+import { gastfrihetBlockDefinitions } from "@staark/theme-gastfrihet/blocks";
 
 /**
  * Blocks v2 integration point for the starter application.
@@ -18,6 +20,8 @@ const THEME_BLOCK_DEFINITIONS: Record<
   skonhet: skonhetBlockDefinitions,
   el: elBlockDefinitions,
   kreator: kreatorBlockDefinitions,
+  salong: salongBlockDefinitions,
+  gastfrihet: gastfrihetBlockDefinitions,
 };
 
 export function themeBlockDefinitionsFor(

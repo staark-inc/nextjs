@@ -40,6 +40,15 @@ function canRedirectPublicRequest(req: NextRequest): boolean {
   );
 }
 
+function isMissingConfiguredPostgresSite(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.message.startsWith(
+      'No PostgreSQL Site exists for STAARK_SITE_KEY="',
+    )
+  );
+}
+
 /**
  * Public redirects + admin gate.
  *
@@ -77,6 +86,10 @@ export async function proxy(req: NextRequest) {
         return NextResponse.redirect(destination, rule.status);
       }
     } catch (error) {
+      if (isMissingConfiguredPostgresSite(error)) {
+        return NextResponse.redirect(new URL("/admin/setup", req.url));
+      }
+
       // Redirect storage must never make the public site unavailable.
       console.error("[staark] Redirect lookup failed:", (error as Error).message);
     }
@@ -115,6 +128,39 @@ export async function proxy(req: NextRequest) {
 
   if (active) {
     const role = resolveAdminRole(session.role);
+    const setupRequest =
+      pathname === "/admin/setup" ||
+      pathname === "/api/admin/setup";
+
+    if (setupRequest && role !== "manager") {
+      if (isApi) {
+        return NextResponse.json(
+          { ok: false, error: "First configuration requires a manager session." },
+          { status: 403 },
+        );
+      }
+
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+
+    if (!setupRequest) {
+      try {
+        await readAdminSiteSettings();
+      } catch (error) {
+        if (isMissingConfiguredPostgresSite(error)) {
+          if (isApi) {
+            return NextResponse.json(
+              { ok: false, setupRequired: true },
+              { status: 409 },
+            );
+          }
+
+          return NextResponse.redirect(new URL("/admin/setup", req.url));
+        }
+
+        throw error;
+      }
+    }
 
     if (role === "client") {
       const managerOnlyThemeRequest =

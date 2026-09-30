@@ -9,11 +9,13 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./blocks": "./src/blocks.ts",
     "./styles.css": "./src/styles.css",
     "./manifest": "./src/manifest.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "dependencies": {
     "@staark/core": "workspace:*",
