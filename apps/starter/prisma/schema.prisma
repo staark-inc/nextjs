@@ -21,9 +21,10 @@ model Site {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  pages     Page[]
-  redirects   Redirect[]
-  submissions Submission[]
+  pages          Page[]
+  redirects      Redirect[]
+  submissions    Submission[]
+  serviceCatalog ServiceCatalog?
 
   @@map("sites")
 }
@@ -110,6 +111,24 @@ model Redirect {
   @@unique([siteId, fromPath], map: "redirects_site_id_from_path_key")
   @@index([siteId, enabled], map: "redirects_site_id_enabled_idx")
   @@map("redirects")
+}
+
+
+/// Mutable vertical service catalog owned by one Site.
+///
+/// The catalog remains a JSONB document for Storage v2 because the existing
+/// salon domain already has a stable nested category/service schema. If future
+/// booking/reporting needs relational service queries, this can be normalized
+/// behind the repository without leaking Prisma into application code.
+model ServiceCatalog {
+  siteId    String   @id @map("site_id") @db.Uuid
+  document  Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "service_catalogs_site_id_fkey")
+
+  @@map("service_catalogs")
 }
 
 

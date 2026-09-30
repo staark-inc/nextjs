@@ -3,6 +3,7 @@ import type { RedirectRepository } from "./redirect-repository";
 import type { RevisionRepository } from "./revision-repository";
 import type { SiteRepository } from "./site-repository";
 import type { SubmissionRepository } from "./submission-repository";
+import type { ServiceCatalogRepository } from "./service-catalog-repository";
 
 export type RepositorySet = {
   sites: SiteRepository;
@@ -10,6 +11,7 @@ export type RepositorySet = {
   revisions: RevisionRepository;
   redirects: RedirectRepository;
   submissions: SubmissionRepository;
+  serviceCatalogs: ServiceCatalogRepository;
 };
 
 export type RepositoryTransaction = <T>(

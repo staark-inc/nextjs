@@ -80,6 +80,119 @@ function serviceMenuCategories(
   );
 }
 
+function genericServiceItems(
+  catalog:
+    SalonServiceCatalog,
+  existingItems:
+    unknown,
+) {
+  const existing =
+    Array.isArray(existingItems)
+      ? existingItems
+          .filter(
+            (
+              value,
+            ): value is Obj =>
+              Boolean(value) &&
+              typeof value ===
+                "object" &&
+              !Array.isArray(value),
+          )
+      : [];
+
+  const existingByTitle =
+    new Map(
+      existing.map(
+        (item) => [
+          text(item.title)
+            .trim()
+            .toLocaleLowerCase("sv-SE"),
+          item,
+        ],
+      ),
+    );
+
+  return catalog.categories.flatMap(
+    (category) =>
+      category.services.map(
+        (service) => {
+          const previous =
+            existingByTitle.get(
+              service.name
+                .trim()
+                .toLocaleLowerCase("sv-SE"),
+            );
+
+          return {
+            ...(previous ?? {}),
+
+            title:
+              service.name,
+
+            description:
+              service.description,
+
+            price:
+              service.price,
+
+            duration:
+              service.duration,
+
+            bookable:
+              service.bookable,
+
+            // Presentation-only values stay owned by the page block.
+            // Duration is domain data and must not masquerade as a feature.
+            features:
+              Array.isArray(
+                previous?.features,
+              )
+                ? previous.features
+                : [],
+          };
+        },
+      ),
+  );
+}
+
+
+function genericServiceGroups(
+  catalog:
+    SalonServiceCatalog,
+  existingItems:
+    unknown,
+) {
+  return catalog.categories
+    .filter(
+      (category) =>
+        category.services.length > 0,
+    )
+    .map(
+      (category) => ({
+        id:
+          category.id,
+
+        title:
+          category.name,
+
+        description:
+          category.description,
+
+        items:
+          genericServiceItems(
+            {
+              ...catalog,
+              categories: [
+                category,
+              ],
+            },
+            existingItems,
+          ),
+      }),
+    );
+}
+
+
 function bookingServices(
   catalog:
     SalonServiceCatalog,
@@ -149,6 +262,40 @@ function hydrateSalonBlocks(
             categories:
               serviceMenuCategories(
                 catalog,
+              ),
+          },
+        }];
+      }
+
+
+      /* -----------------------------------------------
+       * Generic Services block
+       *
+       * Salon service data comes from the shared catalog while
+       * the block keeps presentation settings such as heading,
+       * intro, columns, icons and CTAs.
+       * --------------------------------------------- */
+
+      if (
+        type ===
+        "services"
+      ) {
+        return [{
+          ...block,
+
+          props: {
+            ...props,
+
+            items:
+              genericServiceItems(
+                catalog,
+                props.items,
+              ),
+
+            groups:
+              genericServiceGroups(
+                catalog,
+                props.items,
               ),
           },
         }];

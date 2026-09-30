@@ -26,6 +26,11 @@ export type {
   UpdateSubmissionInput,
 } from "./submission-repository";
 export type {
+  ServiceCatalogRecord,
+  ServiceCatalogRepository,
+  UpsertServiceCatalogInput,
+} from "./service-catalog-repository";
+export type {
   RepositorySet,
   RepositoryTransaction,
 } from "./repository-set";
