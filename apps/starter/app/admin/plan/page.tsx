@@ -69,98 +69,131 @@ export default async function PlanPage() {
       <div className="sa-page-header">
         <div>
           <p className="sa-page-eyebrow">Account</p>
-          <h1 className="sa-h1">Plan & usage</h1>
+          <h1 className="sa-h1">Plan</h1>
           <p className="sa-subtitle">
-            Your Staark package, subscription status and current resource usage.
+            Package, subscription and resource usage for this website.
           </p>
         </div>
-        <div className="sa-page-context">
-          <span>Status</span>
-          <strong>{plan.subscriptionStatus}</strong>
-        </div>
+        <span className="sa-plan-status">{plan.subscriptionStatus}</span>
       </div>
 
-      <div className="sa-stats sa-stats--dashboard">
-        <div className="sa-stat sa-stat--v2">
-          <div className="sa-stat__label">Current plan</div>
-          <div className="sa-stat__value">{plan.planName}</div>
-          <div className="sa-stat__desc">{plan.planKey}</div>
-        </div>
-        <div className="sa-stat sa-stat--v2">
-          <div className="sa-stat__label">Monthly price</div>
-          <div className="sa-stat__value">
-            {formatPrice(plan.monthlyPriceCents, plan.currency)}
+      <section className="sa-plan-hero">
+        <div className="sa-plan-hero__main">
+          <p className="sa-plan-kicker">Current package</p>
+          <div className="sa-plan-title-row">
+            <div>
+              <h2>{plan.planName}</h2>
+              <p>{plan.description || "Your current Staark website package."}</p>
+            </div>
+            <div className="sa-plan-price">
+              <strong>{formatPrice(plan.monthlyPriceCents, plan.currency)}</strong>
+              <span>/ month</span>
+            </div>
           </div>
-          <div className="sa-stat__desc">{plan.billingInterval} billing</div>
-        </div>
-        <div className="sa-stat sa-stat--v2">
-          <div className="sa-stat__label">Storage</div>
-          <div className="sa-stat__value">
-            {storagePercent === null ? formatBytes(plan.storageUsedBytes) : `${storagePercent}%`}
+
+          <div className="sa-plan-meta">
+            <div>
+              <span>Billing</span>
+              <strong>{plan.billingInterval}</strong>
+            </div>
+            <div>
+              <span>Current period</span>
+              <strong>
+                {formatDate(plan.currentPeriodStart)} – {formatDate(plan.currentPeriodEnd)}
+              </strong>
+            </div>
+            <div>
+              <span>Cancellation</span>
+              <strong>
+                {plan.canceledAt
+                  ? `Canceled ${formatDate(plan.canceledAt)}`
+                  : plan.cancelAtPeriodEnd
+                    ? "At period end"
+                    : "Not scheduled"}
+              </strong>
+            </div>
           </div>
-          <div className="sa-stat__desc">
+        </div>
+      </section>
+
+      <div className="sa-plan-usage-grid">
+        <article className="sa-plan-usage-card">
+          <div className="sa-plan-usage-card__top">
+            <span>Storage</span>
+            <strong>{storagePercent === null ? "—" : `${storagePercent}%`}</strong>
+          </div>
+          <p>
             {formatBytes(plan.storageUsedBytes)}
-            {storageLimitBytes ? ` / ${formatBytes(storageLimitBytes)}` : ""}
+            {storageLimitBytes ? ` of ${formatBytes(storageLimitBytes)}` : ""}
+          </p>
+          <div className="sa-plan-progress" aria-label="Storage usage">
+            <span style={{ width: `${storagePercent ?? 0}%` }} />
           </div>
-        </div>
-        <div className="sa-stat sa-stat--v2">
-          <div className="sa-stat__label">Pages</div>
-          <div className="sa-stat__value">{plan.pagesCount}</div>
-          <div className="sa-stat__desc">
-            {plan.mediaCount} media · {plan.submissionsCount} submissions
-          </div>
-        </div>
+        </article>
+
+        <article className="sa-plan-usage-card">
+          <span>Pages</span>
+          <strong>{plan.pagesCount}</strong>
+          <p>Published content pages</p>
+        </article>
+
+        <article className="sa-plan-usage-card">
+          <span>Media</span>
+          <strong>{plan.mediaCount}</strong>
+          <p>Uploaded assets</p>
+        </article>
+
+        <article className="sa-plan-usage-card">
+          <span>Submissions</span>
+          <strong>{plan.submissionsCount}</strong>
+          <p>Form & booking entries</p>
+        </article>
       </div>
 
-      <div className="sa-card">
-        <div className="sa-card__header">
-          <p className="sa-card__eyebrow">Subscription</p>
-          <h2>{plan.planName}</h2>
-          {plan.description ? <p>{plan.description}</p> : null}
+      <section className="sa-card sa-plan-entitlements">
+        <div className="sa-card__header sa-card__header--row">
+          <div>
+            <p className="sa-card__eyebrow">Included</p>
+            <h2>Package features</h2>
+          </div>
+          <span className="sa-note">Limits and features attached to {plan.planName}.</span>
         </div>
-        <div className="sa-form-grid sa-form-grid--2">
-          <div className="sa-field">
-            <label>Status</label>
-            <div className="sa-note">{plan.subscriptionStatus}</div>
-          </div>
-          <div className="sa-field">
-            <label>Current period</label>
-            <div className="sa-note">
-              {formatDate(plan.currentPeriodStart)} → {formatDate(plan.currentPeriodEnd)}
-            </div>
-          </div>
-          <div className="sa-field">
-            <label>Trial ends</label>
-            <div className="sa-note">{formatDate(plan.trialEndsAt)}</div>
-          </div>
-          <div className="sa-field">
-            <label>Cancellation</label>
-            <div className="sa-note">
-              {plan.canceledAt
-                ? `Canceled ${formatDate(plan.canceledAt)}`
-                : plan.cancelAtPeriodEnd
-                  ? `At period end (${formatDate(plan.currentPeriodEnd)})`
-                  : "Not scheduled"}
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="sa-card">
-        <div className="sa-card__header">
-          <p className="sa-card__eyebrow">Included</p>
-          <h2>Package limits & features</h2>
-          <p>These values come directly from the plan attached to this site.</p>
+        <div className="sa-plan-feature-grid">
+          {Object.entries(plan.entitlements).map(([key, value]) => {
+            const booleanValue = typeof value === "boolean";
+            const isStorage = key === "storageBytes" && typeof value === "number";
+
+            return (
+              <div className="sa-plan-feature" key={key}>
+                <div>
+                  <span>{labelFromKey(key)}</span>
+                  <strong>
+                    {isStorage
+                      ? formatBytes(value)
+                      : displayValue(value)}
+                  </strong>
+                </div>
+                {booleanValue ? (
+                  <span
+                    className={`sa-plan-feature__badge${
+                      value ? " sa-plan-feature__badge--on" : ""
+                    }`}
+                  >
+                    {value ? "Included" : "Not included"}
+                  </span>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
-        <div className="sa-form-grid sa-form-grid--2">
-          {Object.entries(plan.entitlements).map(([key, value]) => (
-            <div className="sa-field" key={key}>
-              <label>{labelFromKey(key)}</label>
-              <div className="sa-note">{displayValue(value)}</div>
-            </div>
-          ))}
+      </section>
+
+      {plan.trialEndsAt ? (
+        <div className="sa-plan-footnote">
+          Trial ends {formatDate(plan.trialEndsAt)}.
         </div>
-      </div>
+      ) : null}
     </>
   );
 }

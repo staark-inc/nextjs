@@ -3,6 +3,7 @@ import { resolveAdminRole } from "@staark/platform/server";
 import type { WebsiteType } from "@staark/core";
 import { adminSessionExpiresAt } from "@staark/platform/server";
 import { getSession, isSessionActive } from "@/lib/auth";
+import { getPrismaClient } from "@/lib/db/prisma";
 import { normalizeWebsiteType } from "@/lib/website-profile";
 import { peekAdminShellStatus } from "@/lib/admin-shell-status";
 import {
@@ -15,6 +16,28 @@ import "./admin.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Staark Hub · NextJS Platform", robots: "noindex" };
+
+async function resolveDisplayName(
+  username: string | undefined,
+  role: ReturnType<typeof resolveAdminRole>,
+): Promise<string> {
+  const fallback = username?.trim() || "Admin";
+
+  if (role !== "client" || !fallback.includes("@")) {
+    return fallback;
+  }
+
+  try {
+    const user = await getPrismaClient().user.findUnique({
+      where: { email: fallback.toLowerCase() },
+      select: { name: true },
+    });
+
+    return user?.name?.trim() || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Admin config may be missing (e.g. ADMIN_* unset in production). Never let that
@@ -54,6 +77,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const status =
     await peekAdminShellStatus();
 
+  const displayName =
+    await resolveDisplayName(session.username, role);
+
   const initialNow = Date.now();
 
   const sessionExpiresAt =
@@ -64,7 +90,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <AdminShell
       websiteType={websiteType}
       siteName={site?.name?.trim() || "Staark Hub"}
-      username={session.username ?? "Admin"}
+      username={displayName}
       role={role}
       features={features}
       entitlements={entitlements}

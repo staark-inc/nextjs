@@ -125,6 +125,7 @@ const BASE_CLIENT_FEATURES: readonly AdminFeature[] = [
   "design",
   "seo",
   "settings",
+  "plan",
 ];
 
 const FLEXIBLE_CLIENT_FEATURES: readonly AdminFeature[] = [
