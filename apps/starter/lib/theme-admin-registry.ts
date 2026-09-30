@@ -1,9 +1,10 @@
-import { blockDefinitionToLegacyTemplate } from "@staark/theme-kit";
-
 import {
-  skonhetBlockDefinitions,
-  skonhetPageTemplates,
-} from "@staark/theme-skonhet/admin";
+  blockDefinitionToLegacyTemplate,
+  type LegacyBlockTemplate,
+} from "@staark/theme-kit";
+
+import { skonhetPageTemplates } from "@staark/theme-skonhet/admin";
+import { themeBlockDefinitionsFor } from "@/lib/theme-block-registry";
 
 
 import {
@@ -16,13 +17,7 @@ import {
   kreatorBlockTemplates,
   kreatorPageTemplates,
 } from "@staark/theme-kreator/admin";
-export type ThemeBlockTemplate = {
-  type: string;
-  label: string;
-  description: string;
-  icon: string;
-  template: Record<string, unknown>;
-};
+export type ThemeBlockTemplate = LegacyBlockTemplate;
 
 export type ThemePageBlock = {
   id: string;
@@ -152,10 +147,6 @@ const SALONG_PAGES: ThemePageTemplate[] = [
  *
  * Source of truth lives inside the theme package.
  * ======================================================== */
-
-const SKONHET_BLOCKS = skonhetBlockDefinitions.map(
-  blockDefinitionToLegacyTemplate,
-) as ThemeBlockTemplate[];
 
 const SKONHET_PAGES =
   skonhetPageTemplates as unknown as ThemePageTemplate[];
@@ -565,7 +556,6 @@ const WEBB_PAGES: ThemePageTemplate[] = [
 
 const BLOCKS: Record<string, ThemeBlockTemplate[]> = {
   salong: SALONG_BLOCKS,
-  skonhet: SKONHET_BLOCKS,
   kreator: KREATOR_BLOCKS,
   
   el: EL_BLOCKS,gastfrihet: GASTFRIHET_BLOCKS,
@@ -586,7 +576,20 @@ const PAGES: Record<string, ThemePageTemplate[]> = {
 export function themeBlockTemplatesFor(
   theme: string,
 ): ThemeBlockTemplate[] {
-  return BLOCKS[theme] ?? [];
+  const v2Templates = themeBlockDefinitionsFor(theme).map(
+    blockDefinitionToLegacyTemplate,
+  );
+  const v2Types = new Set(
+    v2Templates.map((template) => template.type),
+  );
+
+  // Keep legacy templates during incremental migrations, but let Blocks v2
+  // definitions win when both registries contain the same block type.
+  const legacyTemplates = (BLOCKS[theme] ?? []).filter(
+    (template) => !v2Types.has(template.type),
+  );
+
+  return [...legacyTemplates, ...v2Templates];
 }
 
 export function themePageTemplatesFor(

@@ -1,7 +1,5 @@
-import {
-  skonhetBlockDefinitions,
-  skonhetHeroFields,
-} from "@staark/theme-skonhet/admin";
+import { skonhetHeroFields } from "@staark/theme-skonhet/admin";
+import { themeBlockDefinitionFor } from "@/lib/theme-block-registry";
 
 import {
   elBlockFields,
@@ -453,22 +451,7 @@ export const REQUIRED_FIELDS: Record<string, string[]> = {
  * The active theme owns its extra fields. Sibling theme fields never leak into
  * the editor, which keeps Theme Block Architecture v1 genuinely isolated.
  */
-const SKONHET_BLOCK_FIELDS = Object.fromEntries(
-  skonhetBlockDefinitions.map((definition) => [
-    definition.type,
-    [...definition.fields] as unknown as Field[],
-  ]),
-) as Record<string, Field[]>;
-
-const SKONHET_REQUIRED_FIELDS = Object.fromEntries(
-  skonhetBlockDefinitions.map((definition) => [
-    definition.type,
-    [...definition.required],
-  ]),
-) as Record<string, string[]>;
-
 const THEME_BLOCK_FIELDS: Record<string, Record<string, Field[]>> = {
-  skonhet: SKONHET_BLOCK_FIELDS,
   el:
     elBlockFields as unknown as Record<string, Field[]>,
   kreator:
@@ -485,7 +468,6 @@ const THEME_HERO_FIELDS: Record<string, Field[]> = {
 };
 
 const THEME_REQUIRED_FIELDS: Record<string, Record<string, string[]>> = {
-  skonhet: SKONHET_REQUIRED_FIELDS,
   el: elRequiredFields,
   kreator: kreatorRequiredFields,
 };
@@ -494,22 +476,33 @@ export function blockFieldsForTheme(
   themeId: string | undefined,
   type: string,
 ): Field[] | undefined {
-  const base = BLOCK_FIELDS[type];
-  const themed = themeId
-    ? THEME_BLOCK_FIELDS[themeId]?.[type]
+  const definition = themeId
+    ? themeBlockDefinitionFor(themeId, type)
     : undefined;
+  const base = BLOCK_FIELDS[type];
+  const themed = definition
+    ? definition.fields.length
+      ? ([...definition.fields] as unknown as Field[])
+      : undefined
+    : themeId
+      ? THEME_BLOCK_FIELDS[themeId]?.[type]
+      : undefined;
 
   if (type === "hero") {
     const extra = themeId
       ? THEME_HERO_FIELDS[themeId] ?? []
       : [];
+    const heroFields = definition
+      ? themed ?? []
+      : base ?? [];
+    const combined = [...heroFields, ...extra];
 
-    return base
-      ? [...base, ...extra]
-      : extra.length
-        ? extra
-        : undefined;
+    return combined.length ? combined : undefined;
   }
+
+  // A v2 definition with zero fields intentionally disables the generic field
+  // form (for example treatmentCatalog, whose content is data-driven).
+  if (definition) return themed;
 
   return themed ?? base;
 }
@@ -518,6 +511,14 @@ export function requiredFieldsForTheme(
   themeId: string | undefined,
   type: string,
 ): string[] | undefined {
+  const definition = themeId
+    ? themeBlockDefinitionFor(themeId, type)
+    : undefined;
+
+  if (definition) {
+    return [...(definition.required ?? [])];
+  }
+
   return (
     (themeId
       ? THEME_REQUIRED_FIELDS[themeId]?.[type]
