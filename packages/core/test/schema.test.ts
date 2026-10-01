@@ -166,3 +166,27 @@ test("FormSubmissionSchema keeps legacy submissions readable", () => {
 
   assert.equal(parsed.kind, "booking");
 });
+
+
+test("site email settings are tenant configurable", () => {
+  const site = SiteSettingsSchema.parse({
+    name: "Example AB",
+    url: "https://example.se",
+    contact: { email: "info@example.se" },
+    email: {
+      fromName: "Example Team",
+      replyTo: "reply@example.se",
+      notificationEmail: "notifications@example.se",
+      bookingConfirmationEnabled: true,
+      bookingDeclineEnabled: false,
+      contactNotificationEnabled: true,
+    },
+  });
+
+  assert.equal(site.email.fromName, "Example Team");
+  assert.equal(site.email.replyTo, "reply@example.se");
+  assert.equal(site.email.notificationEmail, "notifications@example.se");
+  assert.equal(site.email.bookingConfirmationEnabled, true);
+  assert.equal(site.email.bookingDeclineEnabled, false);
+  assert.equal(site.email.contactNotificationEnabled, true);
+});

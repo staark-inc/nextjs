@@ -7,6 +7,12 @@ import {
   getPostgresAdminSiteSettings,
   listPostgresAdminPages,
 } from "@/lib/admin-page-postgres";
+import { getPrismaClient } from "@/lib/db/prisma";
+import { requireAdminTenantContext } from "@/lib/admin-tenant";
+import {
+  PlanLimitError,
+  assertWithinPlanLimit,
+} from "@/lib/plan-entitlements";
 import {
   contentExists,
   contentStoragePath,
@@ -246,6 +252,16 @@ export async function POST(req: Request) {
         ? body.navigationLabel.trim()
         : title;
 
+      const tenant = await requireAdminTenantContext();
+      const currentPages = await getPrismaClient().page.count({
+        where: {
+          siteId: tenant.siteId,
+          deletedAt: null,
+        },
+      });
+
+      assertWithinPlanLimit(tenant.entitlements, "maxPages", currentPages);
+
       const created = await createPostgresAdminPage({
         page,
         addToPrimary,
@@ -262,9 +278,28 @@ export async function POST(req: Request) {
         path: created.page.path,
       });
     } catch (error) {
-      const status = error instanceof AdminPageConflictError ? 409 : 500;
+      const status =
+        error instanceof AdminPageConflictError
+          ? 409
+          : error instanceof PlanLimitError
+            ? 403
+            : 500;
+
       return NextResponse.json(
-        { error: (error as Error).message || "Could not create page." },
+        {
+          error:
+            error instanceof PlanLimitError
+              ? `Your plan allows up to ${error.limit} pages. Upgrade the plan to add more.`
+              : (error as Error).message || "Could not create page.",
+          ...(error instanceof PlanLimitError
+            ? {
+                code: "PLAN_LIMIT_REACHED",
+                limitKey: error.key,
+                limit: error.limit,
+                current: error.current,
+              }
+            : {}),
+        },
         { status },
       );
     }

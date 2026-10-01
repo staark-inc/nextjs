@@ -97,6 +97,16 @@ export const SiteSettingsSchema = z.object({
       openingHours: z.array(z.object({ days: z.string(), hours: z.string() })).default([]),
     })
     .prefault({}),
+  email: z
+    .object({
+      fromName: z.string().trim().min(1).max(160).optional(),
+      replyTo: z.string().trim().email().optional(),
+      notificationEmail: z.string().trim().email().optional(),
+      bookingConfirmationEnabled: z.boolean().default(true),
+      bookingDeclineEnabled: z.boolean().default(true),
+      contactNotificationEnabled: z.boolean().default(true),
+    })
+    .prefault({}),
   navigation: z
     .object({
       primary: z.array(LinkSchema).default([]),

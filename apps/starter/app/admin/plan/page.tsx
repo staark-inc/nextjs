@@ -1,6 +1,14 @@
 import { readAdminPlanSummary } from "@/lib/admin-plan";
+import BillingPortalButton from "./BillingPortalButton";
 
 export const dynamic = "force-dynamic";
+
+const USAGE_ENTITLEMENTS = new Set([
+  "storageBytes",
+  "maxPages",
+  "maxUsers",
+  "maxDomains",
+]);
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return "0 B";
@@ -31,20 +39,6 @@ function formatPrice(cents: number | null, currency: string): string {
   }).format(cents / 100);
 }
 
-function labelFromKey(key: string): string {
-  return key
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
-    .replace(/^./, (char) => char.toUpperCase());
-}
-
-function displayValue(value: unknown): string {
-  if (typeof value === "boolean") return value ? "Included" : "Not included";
-  if (typeof value === "number") return new Intl.NumberFormat("sv-SE").format(value);
-  if (typeof value === "string") return value;
-  return JSON.stringify(value);
-}
-
 function entitlementNumber(
   entitlements: Record<string, unknown>,
   key: string,
@@ -53,9 +47,51 @@ function entitlementNumber(
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function featureLabel(key: string): string {
+  const labels: Record<string, string> = {
+    maxForms: "Forms",
+    bookingEnabled: "Bookings",
+    crmEnabled: "CRM",
+  };
+
+  return (
+    labels[key] ??
+    key
+      .replace(/^max/, "")
+      .replace(/Enabled$/, "")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .replace(/^./, (char) => char.toUpperCase())
+  );
+}
+
+function displayEntitlement(value: unknown): string {
+  if (typeof value === "number") {
+    return new Intl.NumberFormat("sv-SE").format(value);
+  }
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
+}
+
+function usageValue(current: number, limit: number | null): string {
+  return limit === null ? String(current) : `${current} / ${limit}`;
+}
+
+function statusTone(status: string): string {
+  const normalized = status.toLowerCase();
+  if (["active", "trialing"].includes(normalized)) return "success";
+  if (["past_due", "unpaid", "incomplete"].includes(normalized)) return "warning";
+  return "muted";
+}
+
 export default async function PlanPage() {
   const plan = await readAdminPlanSummary();
+
   const storageLimitBytes = entitlementNumber(plan.entitlements, "storageBytes");
+  const maxPages = entitlementNumber(plan.entitlements, "maxPages");
+  const maxUsers = entitlementNumber(plan.entitlements, "maxUsers");
+  const maxDomains = entitlementNumber(plan.entitlements, "maxDomains");
+
   const storagePercent =
     storageLimitBytes && storageLimitBytes > 0
       ? Math.min(
@@ -64,43 +100,68 @@ export default async function PlanPage() {
         )
       : null;
 
+  const annualBilling = plan.billingInterval === "yearly";
+  const displayedPrice = annualBilling
+    ? plan.yearlyPriceCents
+    : plan.monthlyPriceCents;
+  const billingSuffix = annualBilling ? "/ year" : "/ month";
+
+  const renewalLabel = plan.cancelAtPeriodEnd
+    ? "Access until"
+    : "Renews";
+  const renewalDate = plan.currentPeriodEnd;
+
+  const packageFeatures = Object.entries(plan.entitlements).filter(
+    ([key]) => !USAGE_ENTITLEMENTS.has(key),
+  );
+
   return (
     <>
       <div className="sa-page-header">
         <div>
           <p className="sa-page-eyebrow">Account</p>
-          <h1 className="sa-h1">Plan</h1>
+          <h1 className="sa-h1">Plan & usage</h1>
           <p className="sa-subtitle">
-            Package, subscription and resource usage for this website.
+            Your package, billing cycle and live website usage in one place.
           </p>
         </div>
-        <span className="sa-plan-status">{plan.subscriptionStatus}</span>
+
+        <span
+          className={`sa-plan-status sa-plan-status--${statusTone(
+            plan.subscriptionStatus,
+          )}`}
+        >
+          {plan.subscriptionStatus}
+        </span>
       </div>
 
       <section className="sa-plan-hero">
         <div className="sa-plan-hero__main">
-          <p className="sa-plan-kicker">Current package</p>
+          <div className="sa-plan-hero__eyebrow-row">
+            <p className="sa-plan-kicker">Current package</p>
+            <span className="sa-plan-key">{plan.planKey}</span>
+          </div>
+
           <div className="sa-plan-title-row">
             <div>
               <h2>{plan.planName}</h2>
               <p>{plan.description || "Your current Staark website package."}</p>
             </div>
+
             <div className="sa-plan-price">
-              <strong>{formatPrice(plan.monthlyPriceCents, plan.currency)}</strong>
-              <span>/ month</span>
+              <strong>{formatPrice(displayedPrice, plan.currency)}</strong>
+              <span>{billingSuffix}</span>
             </div>
           </div>
 
           <div className="sa-plan-meta">
             <div>
-              <span>Billing</span>
-              <strong>{plan.billingInterval}</strong>
+              <span>Billing cycle</span>
+              <strong>{annualBilling ? "Yearly" : "Monthly"}</strong>
             </div>
             <div>
-              <span>Current period</span>
-              <strong>
-                {formatDate(plan.currentPeriodStart)} – {formatDate(plan.currentPeriodEnd)}
-              </strong>
+              <span>{renewalLabel}</span>
+              <strong>{formatDate(renewalDate)}</strong>
             </div>
             <div>
               <span>Cancellation</span>
@@ -108,7 +169,7 @@ export default async function PlanPage() {
                 {plan.canceledAt
                   ? `Canceled ${formatDate(plan.canceledAt)}`
                   : plan.cancelAtPeriodEnd
-                    ? "At period end"
+                    ? "Scheduled"
                     : "Not scheduled"}
               </strong>
             </div>
@@ -116,37 +177,60 @@ export default async function PlanPage() {
         </div>
       </section>
 
+      <div className="sa-plan-section-heading">
+        <div>
+          <p className="sa-card__eyebrow">Live usage</p>
+          <h2>Resource usage</h2>
+        </div>
+        <span className="sa-note">
+          Counts are scoped to this website and organization.
+        </span>
+      </div>
+
       <div className="sa-plan-usage-grid">
-        <article className="sa-plan-usage-card">
+        <article className="sa-plan-usage-card sa-plan-usage-card--storage">
           <div className="sa-plan-usage-card__top">
             <span>Storage</span>
             <strong>{storagePercent === null ? "—" : `${storagePercent}%`}</strong>
           </div>
-          <p>
+          <p className="sa-plan-usage-card__value">
             {formatBytes(plan.storageUsedBytes)}
-            {storageLimitBytes ? ` of ${formatBytes(storageLimitBytes)}` : ""}
+            {storageLimitBytes ? ` / ${formatBytes(storageLimitBytes)}` : ""}
           </p>
           <div className="sa-plan-progress" aria-label="Storage usage">
             <span style={{ width: `${storagePercent ?? 0}%` }} />
           </div>
+          <small>Uploaded website assets</small>
         </article>
 
         <article className="sa-plan-usage-card">
           <span>Pages</span>
-          <strong>{plan.pagesCount}</strong>
-          <p>Published content pages</p>
+          <strong>{usageValue(plan.pagesCount, maxPages)}</strong>
+          <p>Active content pages</p>
         </article>
 
         <article className="sa-plan-usage-card">
           <span>Media</span>
           <strong>{plan.mediaCount}</strong>
-          <p>Uploaded assets</p>
+          <p>Files currently in media storage</p>
+        </article>
+
+        <article className="sa-plan-usage-card">
+          <span>Users</span>
+          <strong>{usageValue(plan.usersCount, maxUsers)}</strong>
+          <p>Organization members</p>
+        </article>
+
+        <article className="sa-plan-usage-card">
+          <span>Domains</span>
+          <strong>{usageValue(plan.domainsCount, maxDomains)}</strong>
+          <p>Custom domains only</p>
         </article>
 
         <article className="sa-plan-usage-card">
           <span>Submissions</span>
           <strong>{plan.submissionsCount}</strong>
-          <p>Form & booking entries</p>
+          <p>Forms and booking entries received</p>
         </article>
       </div>
 
@@ -156,37 +240,59 @@ export default async function PlanPage() {
             <p className="sa-card__eyebrow">Included</p>
             <h2>Package features</h2>
           </div>
-          <span className="sa-note">Limits and features attached to {plan.planName}.</span>
+          <span className="sa-note">
+            Capabilities and additional limits included with {plan.planName}.
+          </span>
         </div>
 
         <div className="sa-plan-feature-grid">
-          {Object.entries(plan.entitlements).map(([key, value]) => {
-            const booleanValue = typeof value === "boolean";
-            const isStorage = key === "storageBytes" && typeof value === "number";
+          {packageFeatures.length ? (
+            packageFeatures.map(([key, value]) => {
+              const booleanValue = typeof value === "boolean";
 
-            return (
-              <div className="sa-plan-feature" key={key}>
-                <div>
-                  <span>{labelFromKey(key)}</span>
-                  <strong>
-                    {isStorage
-                      ? formatBytes(value)
-                      : displayValue(value)}
-                  </strong>
+              return (
+                <div className="sa-plan-feature" key={key}>
+                  <div>
+                    <span>{featureLabel(key)}</span>
+                    {!booleanValue ? (
+                      <strong>{displayEntitlement(value)}</strong>
+                    ) : (
+                      <small>
+                        {value
+                          ? "Available on this package"
+                          : "Not available on this package"}
+                      </small>
+                    )}
+                  </div>
+
+                  {booleanValue ? (
+                    <span
+                      className={`sa-plan-feature__badge${
+                        value ? " sa-plan-feature__badge--on" : ""
+                      }`}
+                    >
+                      {value ? "Included" : "Not included"}
+                    </span>
+                  ) : null}
                 </div>
-                {booleanValue ? (
-                  <span
-                    className={`sa-plan-feature__badge${
-                      value ? " sa-plan-feature__badge--on" : ""
-                    }`}
-                  >
-                    {value ? "Included" : "Not included"}
-                  </span>
-                ) : null}
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <p className="sa-note">No additional package features.</p>
+          )}
         </div>
+      </section>
+
+      <section className="sa-plan-billing-note">
+        <div>
+          <p className="sa-card__eyebrow">Subscription</p>
+          <strong>Billing management</strong>
+          <span>
+            Open the secure Stripe portal to manage invoices, payment methods,
+            cancellation and available subscription changes.
+          </span>
+        </div>
+        <BillingPortalButton />
       </section>
 
       {plan.trialEndsAt ? (

@@ -2,18 +2,27 @@ import { disconnectPrismaClient, getPrismaClient } from "../lib/db/prisma";
 
 const GIB = 1024 * 1024 * 1024;
 
+/**
+ * Domain entitlement rule:
+ * - every site gets exactly one platform hostname: <site>.staark.app
+ * - maxDomains counts CUSTOM domains only
+ * - Start: 0 custom, SaaS: 1 custom, Business: 3 custom
+ */
 const plans = [
   {
     key: "start",
     name: "Start",
-    description: "Grundläggande webbplats för mindre företag.",
+    description:
+      "Grundläggande webbplats med en inkluderad staark.app-adress.",
     monthlyPriceCents: 9900,
     yearlyPriceCents: 99000,
     currency: "SEK",
     entitlements: {
       storageBytes: 2 * GIB,
       maxPages: 5,
-      maxDomains: 1,
+      // maxDomains counts custom domains only.
+      // Every plan also gets one platform hostname: <site>.staark.app.
+      maxDomains: 0,
       maxUsers: 1,
       maxForms: 1,
       bookingEnabled: false,
@@ -24,14 +33,15 @@ const plans = [
     key: "saas",
     name: "SaaS",
     description:
-      "Komplett webbplattform med fler funktioner och automatisering.",
+      "Komplett webbplattform med en egen domän och fler funktioner.",
     monthlyPriceCents: 19900,
     yearlyPriceCents: 199000,
     currency: "SEK",
     entitlements: {
       storageBytes: 10 * GIB,
       maxPages: 25,
-      maxDomains: 3,
+      // One custom domain, in addition to the included staark.app hostname.
+      maxDomains: 1,
       maxUsers: 3,
       maxForms: 25,
       bookingEnabled: true,
@@ -41,14 +51,16 @@ const plans = [
   {
     key: "business",
     name: "Business",
-    description: "Avancerad lösning för företag med högre krav.",
+    description:
+      "Avancerad lösning med upp till tre egna domäner och högre kapacitet.",
     monthlyPriceCents: 39900,
     yearlyPriceCents: 399000,
     currency: "SEK",
     entitlements: {
       storageBytes: 50 * GIB,
       maxPages: null,
-      maxDomains: 10,
+      // Three custom domains, in addition to the included staark.app hostname.
+      maxDomains: 3,
       maxUsers: 10,
       maxForms: null,
       bookingEnabled: true,

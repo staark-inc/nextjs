@@ -5,6 +5,7 @@ import {
   type BookingStatus,
   type InboxStatus,
 } from "@/lib/admin-inbox";
+import { sendBookingStatusEmail } from "@/lib/booking-email";
 import { requireAuth } from "../../guard";
 
 type Ctx = {
@@ -124,10 +125,55 @@ export async function PATCH(
     activityMessage,
   });
 
-  return item
-    ? NextResponse.json(item)
-    : NextResponse.json(
-        { error: "Submission not found" },
-        { status: 404 },
+  if (!item) {
+    return NextResponse.json(
+      { error: "Submission not found" },
+      { status: 404 },
+    );
+  }
+
+  let notification:
+    | { attempted: false }
+    | { attempted: true; sent: true; messageId: string }
+    | { attempted: true; sent: false; error: string } = {
+      attempted: false,
+    };
+
+  if (
+    bookingStatus &&
+    bookingStatus !== "pending" &&
+    bookingStatus !== current.bookingStatus
+  ) {
+    try {
+      const result = await sendBookingStatusEmail(
+        item,
+        bookingStatus,
       );
+
+      if (result) {
+        notification = {
+          attempted: true,
+          sent: true,
+          messageId: result.messageId,
+        };
+      }
+    } catch (error) {
+      // Booking state is authoritative. A temporary SMTP problem must never
+      // roll back a confirmed/declined booking.
+      console.error("[booking-email] Could not send status email:", error);
+      notification = {
+        attempted: true,
+        sent: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not send booking email.",
+      };
+    }
+  }
+
+  return NextResponse.json({
+    ...item,
+    notification,
+  });
 }

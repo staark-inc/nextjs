@@ -10,6 +10,8 @@ import {
 import { requireAuth } from "../guard";
 import { getSession, isSessionActive } from "@/lib/auth";
 import { resolveAdminEntitlements } from "@/lib/admin-features";
+import { resolveAdminTenantContext } from "@/lib/admin-tenant";
+import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import {
   normalizeWebsiteType,
   resolveClientFeatures,
@@ -320,10 +322,17 @@ export async function GET() {
 
   const site = await readSite();
   const websiteType = normalizeWebsiteType(site.websiteType);
+  const tenant = await resolveAdminTenantContext();
+  const planFeatures = adminFeaturesFromPlanEntitlements(
+    tenant?.entitlements ?? {},
+  );
   const productFeatures = new Set(
     resolveClientFeatures(
       websiteType,
-      resolveAdminEntitlements(),
+      resolveAdminEntitlements(
+        process.env,
+        planFeatures,
+      ),
     ),
   );
 

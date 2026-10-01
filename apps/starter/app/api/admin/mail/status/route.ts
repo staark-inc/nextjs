@@ -3,25 +3,33 @@ import {
   MailConfigurationError,
   summarizeMailConfig,
 } from "@staark/platform/server";
-import { requireManager } from "../../guard";
+import { requireAuth } from "../../guard";
 
 export async function GET() {
-  const blocked = await requireManager();
+  const blocked = await requireAuth();
   if (blocked) return blocked;
 
   try {
-    return NextResponse.json(summarizeMailConfig(), {
-      headers: {
-        "Cache-Control": "no-store",
+    const summary = summarizeMailConfig();
+
+    return NextResponse.json(
+      {
+        configured: summary.configured,
+        transport: summary.configured ? "smtp" : "disabled",
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   } catch (error) {
     if (error instanceof MailConfigurationError) {
       return NextResponse.json(
         {
           configured: false,
           transport: "disabled",
-          error: error.message,
+          error: "Email delivery is not available.",
         },
         {
           status: 503,

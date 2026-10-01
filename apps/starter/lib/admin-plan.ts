@@ -1,5 +1,6 @@
 import { getPrismaClient } from "./db/prisma";
 import { requireAdminTenantContext } from "./admin-tenant";
+import { listMediaFiles } from "./admin-media";
 
 export type AdminPlanSummary = {
   planKey: string;
@@ -19,6 +20,8 @@ export type AdminPlanSummary = {
   mediaCount: number;
   pagesCount: number;
   submissionsCount: number;
+  usersCount: number;
+  domainsCount: number;
   entitlements: Record<string, unknown>;
 };
 
@@ -36,7 +39,15 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
   const tenant = await requireAdminTenantContext();
   const prisma = getPrismaClient();
 
-  const [subscription, usage] = await Promise.all([
+  const [
+    subscription,
+    usage,
+    pagesCount,
+    submissionsCount,
+    usersCount,
+    domainsCount,
+    mediaFiles,
+  ] = await Promise.all([
     prisma.subscription.findUnique({
       where: { siteId: tenant.siteId },
       include: { plan: true },
@@ -44,11 +55,39 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
     prisma.siteUsage.findUnique({
       where: { siteId: tenant.siteId },
     }),
+    prisma.page.count({
+      where: {
+        siteId: tenant.siteId,
+        deletedAt: null,
+      },
+    }),
+    prisma.submission.count({
+      where: {
+        siteId: tenant.siteId,
+      },
+    }),
+    tenant.organizationId
+      ? prisma.organizationMember.count({
+          where: { organizationId: tenant.organizationId },
+        })
+      : Promise.resolve(0),
+    prisma.domain.count({
+      where: {
+        siteId: tenant.siteId,
+        type: "custom",
+      },
+    }),
+    listMediaFiles(),
   ]);
 
   if (!subscription) {
     throw new Error("The current tenant does not have an attached subscription.");
   }
+
+  const liveMediaBytes = mediaFiles.reduce(
+    (total, file) => total + Math.max(0, file.size),
+    0,
+  );
 
   return {
     planKey: subscription.plan.key,
@@ -64,10 +103,17 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
     trialEndsAt: subscription.trialEndsAt?.toISOString() ?? null,
     cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
     canceledAt: subscription.canceledAt?.toISOString() ?? null,
-    storageUsedBytes: usage ? bigintToSafeNumber(usage.storageBytes) : 0,
-    mediaCount: usage?.mediaCount ?? 0,
-    pagesCount: usage?.pagesCount ?? 0,
-    submissionsCount: usage?.submissionsCount ?? 0,
+    // Media is read live from the tenant storage. SiteUsage remains useful
+    // for accounting, but it must not make the customer-facing plan page stale.
+    storageUsedBytes: Math.max(
+      usage ? bigintToSafeNumber(usage.storageBytes) : 0,
+      liveMediaBytes,
+    ),
+    mediaCount: mediaFiles.length,
+    pagesCount,
+    submissionsCount,
+    usersCount,
+    domainsCount,
     entitlements: asRecord(subscription.plan.entitlements),
   };
 }

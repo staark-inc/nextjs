@@ -16,6 +16,9 @@ import {
 } from "@/lib/website-profile";
 import ClientDashboard from "./ClientDashboard";
 import ManagerDashboard from "./ManagerDashboard";
+import { getPrismaClient } from "@/lib/db/prisma";
+import { resolveAdminTenantContext } from "@/lib/admin-tenant";
+import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -59,9 +62,19 @@ export default async function AdminDashboard() {
   const websiteType =
     data.websiteType;
 
+  const tenant =
+    await resolveAdminTenantContext();
+
+  const planFeatures =
+    adminFeaturesFromPlanEntitlements(
+      tenant?.entitlements ?? {},
+    );
+
   const availableFeatures =
     resolveAccessibleAdminFeatures(
       role,
+      process.env,
+      planFeatures,
     );
 
   const clientFeatures = [
@@ -71,13 +84,29 @@ export default async function AdminDashboard() {
     ),
   ];
 
+  let displayName =
+    session.username ??
+    "client";
+
+  if (displayName.includes("@")) {
+    const user = await getPrismaClient().user.findUnique({
+      where: {
+        email: displayName.toLowerCase(),
+      },
+      select: {
+        name: true,
+      },
+    });
+
+    displayName =
+      user?.name?.trim() ||
+      displayName;
+  }
+
   return (
     <ClientDashboard
       data={data}
-      username={
-        session.username ??
-        "client"
-      }
+      username={displayName}
       websiteType={websiteType}
       bookingEnabled={
         clientFeatures.includes(

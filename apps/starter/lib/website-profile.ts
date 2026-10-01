@@ -124,6 +124,7 @@ const BASE_CLIENT_FEATURES: readonly AdminFeature[] = [
   "navigation",
   "design",
   "seo",
+  "redirects",
   "settings",
   "plan",
 ];

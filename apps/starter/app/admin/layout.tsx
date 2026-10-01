@@ -11,6 +11,8 @@ import {
   resolveAdminEntitlements,
 } from "@/lib/admin-features";
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
+import { resolveAdminTenantContext } from "@/lib/admin-tenant";
+import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import AdminShell from "./AdminShell";
 import "./admin.css";
 
@@ -68,11 +70,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const role = resolveAdminRole(session.role);
 
+  const tenant =
+    await resolveAdminTenantContext();
+
+  const planFeatures =
+    adminFeaturesFromPlanEntitlements(
+      tenant?.entitlements ?? {},
+    );
+
   const features =
-    resolveAccessibleAdminFeatures(role);
+    resolveAccessibleAdminFeatures(
+      role,
+      process.env,
+      planFeatures,
+    );
 
   const entitlements =
-    resolveAdminEntitlements();
+    resolveAdminEntitlements(
+      process.env,
+      planFeatures,
+    );
 
   const status =
     await peekAdminShellStatus();
