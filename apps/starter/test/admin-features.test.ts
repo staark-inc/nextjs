@@ -14,7 +14,7 @@ test("client gets core features, not manager features", () => {
   assert.equal(features.includes("design"), true);
   assert.equal(features.includes("seo"), true);
   assert.equal(features.includes("themes"), false);
-  assert.equal(features.includes("redirects"), false);
+  assert.equal(features.includes("redirects"), true);
   assert.equal(features.includes("health"), false);
   assert.equal(features.includes("backups"), false);
 });
