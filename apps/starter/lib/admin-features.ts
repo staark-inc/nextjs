@@ -44,7 +44,7 @@ export const ADMIN_FEATURE_REGISTRY: Record<AdminFeature, AdminFeatureDefinition
 
   // Technical platform capabilities belong to Staark Manager.
   themes: { label: "Themes", access: "manager" },
-  redirects: { label: "Redirects", access: "manager" },
+  redirects: { label: "Redirects", access: "core" },
   health: { label: "Site Health", access: "manager" },
   backups: { label: "Backups", access: "manager" },
 
@@ -65,16 +65,22 @@ function isAdminFeature(value: string): value is AdminFeature {
  */
 export function resolveAdminEntitlements(
   env: NodeJS.ProcessEnv = process.env,
+  planFeatures: readonly AdminFeature[] = [],
 ): AdminFeature[] {
-  const raw = env.STAARK_ENTITLEMENTS?.trim();
-  if (!raw) return [];
-
   const result = new Set<AdminFeature>();
 
-  for (const token of raw.split(",")) {
-    const feature = token.trim();
-    if (!feature || !isAdminFeature(feature)) continue;
-    if (ADMIN_FEATURE_REGISTRY[feature].access !== "entitlement") continue;
+  const raw = env.STAARK_ENTITLEMENTS?.trim();
+  if (raw) {
+    for (const token of raw.split(",")) {
+      const feature = token.trim();
+      if (!feature || !isAdminFeature(feature)) continue;
+      if (ADMIN_FEATURE_REGISTRY[feature].access !== "entitlement") continue;
+      result.add(feature);
+    }
+  }
+
+  for (const feature of planFeatures) {
+    if (ADMIN_FEATURE_REGISTRY[feature]?.access !== "entitlement") continue;
     result.add(feature);
   }
 
@@ -97,8 +103,9 @@ export function canAccessAdminFeature(
 export function resolveAccessibleAdminFeatures(
   role: AdminRole,
   env: NodeJS.ProcessEnv = process.env,
+  planFeatures: readonly AdminFeature[] = [],
 ): AdminFeature[] {
-  const entitlements = resolveAdminEntitlements(env);
+  const entitlements = resolveAdminEntitlements(env, planFeatures);
   return ADMIN_FEATURES.filter((feature) =>
     canAccessAdminFeature(role, feature, entitlements),
   );
@@ -121,6 +128,7 @@ const PAGE_FEATURES: Array<[string, AdminFeature]> = [
   ["/admin/redirects", "redirects"],
   ["/admin/health", "health"],
   ["/admin/backups", "backups"],
+  ["/admin/domains", "settings"],
   ["/admin/site", "settings"],
   ["/admin/plan", "plan"],
 ];
@@ -139,6 +147,9 @@ const API_FEATURES: Array<[string, AdminFeature]> = [
   ["/api/admin/redirects", "redirects"],
   ["/api/admin/health", "health"],
   ["/api/admin/backups", "backups"],
+  ["/api/admin/mail", "settings"],
+  ["/api/admin/billing", "plan"],
+  ["/api/admin/domains", "settings"],
   ["/api/admin/site", "settings"],
   ["/api/admin/shell", "dashboard"],
 ];

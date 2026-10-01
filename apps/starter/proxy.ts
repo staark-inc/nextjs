@@ -12,6 +12,8 @@ import {
   resolveClientFeatures,
 } from "@/lib/website-profile";
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
+import { resolveTenantContext } from "@/lib/tenant-context";
+import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import {
   ADMIN_LOGIN_PATH,
   isAdminSessionActive,
@@ -19,6 +21,42 @@ import {
   resolveAdminRole,
   safeAdminNext,
 } from "@staark/platform/server";
+
+
+const STAARK_ORIGIN_HOST =
+  process.env.STAARK_ORIGIN_HOST?.trim().toLowerCase() ||
+  "origin.staark.app";
+
+function normalizeRequestHost(value: string | null): string | null {
+  if (!value) return null;
+
+  const first = value.split(",")[0]?.trim().toLowerCase();
+  if (!first) return null;
+
+  // Host headers may include a port. IPv6 literals are not expected for
+  // public tenant hostnames, so the simple hostname:port form is sufficient.
+  return first.replace(/:\d+$/, "").replace(/\.$/, "");
+}
+
+function requestHostname(req: NextRequest): string | null {
+  return normalizeRequestHost(
+    req.headers.get("x-forwarded-host") ??
+      req.headers.get("host"),
+  );
+}
+
+function isStaarkOriginHealthRequest(
+  req: NextRequest,
+  pathname: string,
+): boolean {
+  if (requestHostname(req) !== STAARK_ORIGIN_HOST) return false;
+  if (req.method !== "GET" && req.method !== "HEAD") return false;
+
+  // Keep the infrastructure origin deliberately tiny: it exists only so
+  // Cloudflare can validate/reach the fallback origin. Tenant traffic keeps
+  // the customer's original Host header and therefore never matches this.
+  return pathname === "/" || pathname === "/_staark/health";
+}
 
 function isAdminRequest(pathname: string): boolean {
   return pathname === "/admin" ||
@@ -61,6 +99,20 @@ function isMissingConfiguredPostgresSite(error: unknown): boolean {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const adminRequest = isAdminRequest(pathname);
+
+  if (isStaarkOriginHealthRequest(req, pathname)) {
+    return new NextResponse(
+      req.method === "HEAD" ? null : "Staark SaaS origin healthy\n",
+      {
+        status: 200,
+        headers: {
+          "cache-control": "no-store",
+          "content-type": "text/plain; charset=utf-8",
+          "x-staark-origin": "healthy",
+        },
+      },
+    );
+  }
 
   if (
     !adminRequest &&
@@ -187,7 +239,22 @@ export async function proxy(req: NextRequest) {
       }
     }
     const feature = featureForAdminPath(pathname);
-    const entitlements = resolveAdminEntitlements();
+
+    const tenant = await resolveTenantContext({
+      host: req.headers.get("host"),
+      forwardedHost: req.headers.get("x-forwarded-host"),
+    });
+
+    const planFeatures =
+      adminFeaturesFromPlanEntitlements(
+        tenant?.entitlements ?? {},
+      );
+
+    const entitlements =
+      resolveAdminEntitlements(
+        process.env,
+        planFeatures,
+      );
 
     let allowed = feature === null;
 
@@ -213,7 +280,11 @@ export async function proxy(req: NextRequest) {
         }
 
         const availableFeatures =
-          resolveAccessibleAdminFeatures(role);
+          resolveAccessibleAdminFeatures(
+            role,
+            process.env,
+            planFeatures,
+          );
 
         const clientFeatures =
           resolveClientFeatures(
