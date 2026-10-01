@@ -26,6 +26,10 @@ services:
       STAARK_TENANT_SITE_KEY_FALLBACK: "0"
       STAARK_TRUST_PROXY: "1"
 
+      # Hub -> Next provisioning
+      STAARK_PLATFORM_DOMAIN: ${STAARK_PLATFORM_DOMAIN:-staark.app}
+      STAARK_PROVISIONING_SECRET: ${STAARK_PROVISIONING_SECRET:-}
+
       # Central SaaS PostgreSQL on staark-network.
       # Use a dedicated variable name so an old DATABASE_URL from the shell
       # cannot silently point this container at another database.
