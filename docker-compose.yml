@@ -75,6 +75,16 @@ services:
       # Public form anti-bot secret
       STAARK_FORM_SECRET: ${STAARK_FORM_SECRET:?set STAARK_FORM_SECRET}
 
+      # Stripe configuration
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PORTAL_CONFIGURATION_ID: ${STRIPE_PORTAL_CONFIGURATION_ID:-}
+
+      # Cloudflare configuration
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID}
+      CLOUDFLARE_SAAS_CNAME_TARGET: ${CLOUDFLARE_SAAS_CNAME_TARGET}
+
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=staark-network"

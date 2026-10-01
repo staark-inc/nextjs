@@ -19,7 +19,8 @@
     "db:import:submissions": "tsx scripts/import-legacy-submissions.ts",
     "db:bootstrap-site": "tsx scripts/bootstrap-site.ts",
     "db:first-run": "tsx scripts/bootstrap-site.ts",
-    "db:seed:saas": "tsx scripts/seed-saas-plans.ts"
+    "db:seed:saas": "tsx scripts/seed-saas-plans.ts",
+    "billing:sync:stripe": "tsx scripts/sync-stripe-plans.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
