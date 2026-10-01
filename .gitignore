@@ -10,3 +10,7 @@ next-env.d.ts
 .staark/
 
 *.patch
+apps/starter/generated/prisma/
+
+# Local SaaS secrets
+.env.saas

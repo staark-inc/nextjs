@@ -11,7 +11,9 @@ import {
 import {
   resolveClientFeatures,
 } from "@/lib/website-profile";
-import { readContentJson } from "@/lib/storage";
+import { readAdminSiteSettings } from "@/lib/admin-site-settings";
+import { resolveTenantContext } from "@/lib/tenant-context";
+import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import {
   ADMIN_LOGIN_PATH,
   isAdminSessionActive,
@@ -19,6 +21,42 @@ import {
   resolveAdminRole,
   safeAdminNext,
 } from "@staark/platform/server";
+
+
+const STAARK_ORIGIN_HOST =
+  process.env.STAARK_ORIGIN_HOST?.trim().toLowerCase() ||
+  "origin.staark.app";
+
+function normalizeRequestHost(value: string | null): string | null {
+  if (!value) return null;
+
+  const first = value.split(",")[0]?.trim().toLowerCase();
+  if (!first) return null;
+
+  // Host headers may include a port. IPv6 literals are not expected for
+  // public tenant hostnames, so the simple hostname:port form is sufficient.
+  return first.replace(/:\d+$/, "").replace(/\.$/, "");
+}
+
+function requestHostname(req: NextRequest): string | null {
+  return normalizeRequestHost(
+    req.headers.get("x-forwarded-host") ??
+      req.headers.get("host"),
+  );
+}
+
+function isStaarkOriginHealthRequest(
+  req: NextRequest,
+  pathname: string,
+): boolean {
+  if (requestHostname(req) !== STAARK_ORIGIN_HOST) return false;
+  if (req.method !== "GET" && req.method !== "HEAD") return false;
+
+  // Keep the infrastructure origin deliberately tiny: it exists only so
+  // Cloudflare can validate/reach the fallback origin. Tenant traffic keeps
+  // the customer's original Host header and therefore never matches this.
+  return pathname === "/" || pathname === "/_staark/health";
+}
 
 function isAdminRequest(pathname: string): boolean {
   return pathname === "/admin" ||
@@ -40,11 +78,20 @@ function canRedirectPublicRequest(req: NextRequest): boolean {
   );
 }
 
+function isMissingConfiguredPostgresSite(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.message.startsWith(
+      'No PostgreSQL Site exists for STAARK_SITE_KEY="',
+    )
+  );
+}
+
 /**
  * Public redirects + admin gate.
  *
- * Redirects are file-backed and resolved per request so changes from the local
- * ACP become effective immediately without rebuilding the deployment.
+ * Redirects are resolved per request from the active Storage v2 source so ACP
+ * changes become effective immediately without rebuilding the deployment.
  *
  * Admin configuration is still resolved lazily and only for admin requests.
  * Missing ADMIN_* must never take down public pages.
@@ -52,6 +99,20 @@ function canRedirectPublicRequest(req: NextRequest): boolean {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const adminRequest = isAdminRequest(pathname);
+
+  if (isStaarkOriginHealthRequest(req, pathname)) {
+    return new NextResponse(
+      req.method === "HEAD" ? null : "Staark SaaS origin healthy\n",
+      {
+        status: 200,
+        headers: {
+          "cache-control": "no-store",
+          "content-type": "text/plain; charset=utf-8",
+          "x-staark-origin": "healthy",
+        },
+      },
+    );
+  }
 
   if (
     !adminRequest &&
@@ -77,6 +138,10 @@ export async function proxy(req: NextRequest) {
         return NextResponse.redirect(destination, rule.status);
       }
     } catch (error) {
+      if (isMissingConfiguredPostgresSite(error)) {
+        return NextResponse.redirect(new URL("/admin/setup", req.url));
+      }
+
       // Redirect storage must never make the public site unavailable.
       console.error("[staark] Redirect lookup failed:", (error as Error).message);
     }
@@ -115,6 +180,39 @@ export async function proxy(req: NextRequest) {
 
   if (active) {
     const role = resolveAdminRole(session.role);
+    const setupRequest =
+      pathname === "/admin/setup" ||
+      pathname === "/api/admin/setup";
+
+    if (setupRequest && role !== "manager") {
+      if (isApi) {
+        return NextResponse.json(
+          { ok: false, error: "First configuration requires a manager session." },
+          { status: 403 },
+        );
+      }
+
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+
+    if (!setupRequest) {
+      try {
+        await readAdminSiteSettings();
+      } catch (error) {
+        if (isMissingConfiguredPostgresSite(error)) {
+          if (isApi) {
+            return NextResponse.json(
+              { ok: false, setupRequired: true },
+              { status: 409 },
+            );
+          }
+
+          return NextResponse.redirect(new URL("/admin/setup", req.url));
+        }
+
+        throw error;
+      }
+    }
 
     if (role === "client") {
       const managerOnlyThemeRequest =
@@ -141,7 +239,22 @@ export async function proxy(req: NextRequest) {
       }
     }
     const feature = featureForAdminPath(pathname);
-    const entitlements = resolveAdminEntitlements();
+
+    const tenant = await resolveTenantContext({
+      host: req.headers.get("host"),
+      forwardedHost: req.headers.get("x-forwarded-host"),
+    });
+
+    const planFeatures =
+      adminFeaturesFromPlanEntitlements(
+        tenant?.entitlements ?? {},
+      );
+
+    const entitlements =
+      resolveAdminEntitlements(
+        process.env,
+        planFeatures,
+      );
 
     let allowed = feature === null;
 
@@ -156,24 +269,31 @@ export async function proxy(req: NextRequest) {
         let websiteType: unknown;
 
         try {
-          const site = await readContentJson<{ websiteType?: unknown }>(
-            "site.json",
-          );
-          websiteType = site?.websiteType;
+          const site =
+            await readAdminSiteSettings();
+
+          websiteType =
+            site.websiteType;
         } catch {
           // Fall back to the restrictive generic client profile.
           websiteType = "business";
         }
 
         const availableFeatures =
-          resolveAccessibleAdminFeatures(role);
+          resolveAccessibleAdminFeatures(
+            role,
+            process.env,
+            planFeatures,
+          );
 
-        const clientFeatures = resolveClientFeatures(
-          websiteType,
-          availableFeatures,
-        );
+        const clientFeatures =
+          resolveClientFeatures(
+            websiteType,
+            availableFeatures,
+          );
 
-        allowed = clientFeatures.includes(feature);
+        allowed =
+          clientFeatures.includes(feature);
       }
     }
 

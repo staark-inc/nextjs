@@ -29,16 +29,20 @@ export const Hero: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) =
             {p.eyebrow ? <Eyebrow>{p.eyebrow}</Eyebrow> : null}
             <h1 className="sk-hero__title">{p.heading}</h1>
             {p.intro ? <p className="sk-hero__intro">{p.intro}</p> : null}
-            <div className="sk-hero__actions">
-              <Button href={primary.href} ctx={ctx}>
-                {primary.label}
-              </Button>
-              {p.secondaryCta ? (
-                <Button href={p.secondaryCta.href} variant="ghost" ctx={ctx}>
-                  {p.secondaryCta.label}
-                </Button>
-              ) : null}
-            </div>
+            {primary || p.secondaryCta ? (
+              <div className="sk-hero__actions">
+                {primary ? (
+                  <Button href={primary.href} ctx={ctx}>
+                    {primary.label}
+                  </Button>
+                ) : null}
+                {p.secondaryCta ? (
+                  <Button href={p.secondaryCta.href} variant="ghost" ctx={ctx}>
+                    {p.secondaryCta.label}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
             {p.points.length ? (
               <ul className="sk-hero__points">
                 {p.points.map((point) => (
@@ -47,10 +51,19 @@ export const Hero: SectionComponent<z.infer<typeof schema>> = ({ props, ctx }) =
               </ul>
             ) : null}
           </div>
-          {p.image && variant === "split" ? (
+          {p.image &&
+          (variant === "split" ||
+            variant === "editorial") ? (
             <div
               className="sk-hero__media"
-              style={{ position: "relative", aspectRatio: "4 / 3", overflow: "hidden" }}
+              style={{
+                position: "relative",
+                aspectRatio:
+                  variant === "editorial"
+                    ? "16 / 7"
+                    : "4 / 3",
+                overflow: "hidden",
+              }}
             >
               {HostImage ? (
                 <HostImage

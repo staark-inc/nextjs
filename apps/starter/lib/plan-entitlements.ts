@@ -1,0 +1,56 @@
+import type { AdminFeature } from "./admin-features";
+import type { TenantEntitlements } from "./tenant-context";
+
+export class PlanLimitError extends Error {
+  readonly key: string;
+  readonly limit: number;
+  readonly current: number;
+
+  constructor(key: string, limit: number, current: number) {
+    super(`Plan limit reached for ${key}: ${current}/${limit}.`);
+    this.name = "PlanLimitError";
+    this.key = key;
+    this.limit = limit;
+    this.current = current;
+  }
+}
+
+export function entitlementNumber(
+  entitlements: TenantEntitlements,
+  key: string,
+): number | null {
+  const value = entitlements[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+export function entitlementBoolean(
+  entitlements: TenantEntitlements,
+  key: string,
+): boolean {
+  return entitlements[key] === true;
+}
+
+export function adminFeaturesFromPlanEntitlements(
+  entitlements: TenantEntitlements,
+): AdminFeature[] {
+  const features: AdminFeature[] = [];
+
+  if (entitlementBoolean(entitlements, "bookingEnabled")) {
+    features.push("booking");
+  }
+
+  return features;
+}
+
+export function assertWithinPlanLimit(
+  entitlements: TenantEntitlements,
+  key: string,
+  current: number,
+): void {
+  const limit = entitlementNumber(entitlements, key);
+  if (limit === null) return;
+
+  if (current >= limit) {
+    throw new PlanLimitError(key, limit, current);
+  }
+}

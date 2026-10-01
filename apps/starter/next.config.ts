@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: staarkSecurityHeaders() }];
   },
+  allowedDevOrigins: ['192.168.0.10'],
 };
 
 export default nextConfig;

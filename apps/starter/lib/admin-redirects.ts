@@ -1,24 +1,35 @@
-import { randomUUID } from "node:crypto";
+import {
+  assertValidRedirects,
+  inspectRedirects,
+  internalRedirectTargetPath,
+  normalizeRedirectPath,
+  normalizeRedirectTarget,
+  sanitizeRedirectRule,
+  type RedirectIssue,
+  type RedirectRule,
+  type RedirectSource,
+  type RedirectStatus,
+} from "./redirect-domain";
 import { readStateJson, writeStateJson } from "./storage";
 import { appendAdminLog } from "./admin-logs";
+import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
+import {
+  createPostgresRepositories,
+  withPostgresTransaction,
+  type RepositorySet,
+} from "./repositories";
 
-export type RedirectStatus = 301 | 302;
-
-export type RedirectRule = {
-  id: string;
-  from: string;
-  to: string;
-  status: RedirectStatus;
-  enabled: boolean;
-  source: "manual" | "page-path-change";
-  createdAt: string;
-  updatedAt: string;
+export {
+  inspectRedirects,
+  normalizeRedirectPath,
+  normalizeRedirectTarget,
 };
-
-export type RedirectIssue = {
-  severity: "error" | "warning";
-  ruleId?: string;
-  message: string;
+export type {
+  RedirectIssue,
+  RedirectRule,
+  RedirectSource,
+  RedirectStatus,
 };
 
 type RedirectDocument = {
@@ -33,199 +44,165 @@ const EMPTY_DOCUMENT: RedirectDocument = {
   redirects: [],
 };
 
-export function normalizeRedirectPath(value: string): string {
-  let pathValue = value.trim();
-  if (!pathValue.startsWith("/")) {
-    throw new Error("Source must start with /.");
-  }
-  if (pathValue.includes("?") || pathValue.includes("#")) {
-    throw new Error("Source cannot contain a query string or hash.");
-  }
-  if (
-    pathValue === "/admin" ||
-    pathValue.startsWith("/admin/") ||
-    pathValue.startsWith("/api/") ||
-    pathValue.startsWith("/_next/") ||
-    pathValue.startsWith("/uploads/")
-  ) {
-    throw new Error("That source path is reserved by the platform.");
-  }
-  pathValue = pathValue.replace(/\/{2,}/g, "/");
-  if (pathValue.length > 1) pathValue = pathValue.replace(/\/+$/, "");
-  return pathValue || "/";
+export function adminRedirectsUsePostgres(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return resolvePublicContentConfig(env).source === "postgres";
 }
 
-export function normalizeRedirectTarget(value: string): string {
-  const target = value.trim();
-  if (!target) throw new Error("Destination cannot be empty.");
-
-  if (target.startsWith("/")) {
-    const [pathname, suffix = ""] = target.split(/(?=[?#])/u, 2);
-    const normalized = normalizeRedirectPath(pathname ?? "/");
-    return `${normalized}${suffix}`;
+async function requirePostgresSite(repositories: RepositorySet) {
+  const key = await requireAdminSiteKey();
+  const site = await repositories.sites.findByKey(key);
+  if (!site) {
+    throw new Error(`No PostgreSQL Site exists for resolved tenant "${key}".`);
   }
-
-  let url: URL;
-  try {
-    url = new URL(target);
-  } catch {
-    throw new Error("Destination must be an internal path or an http(s) URL.");
-  }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("External redirects only support http and https.");
-  }
-  return url.toString();
+  return site;
 }
 
-function internalTargetPath(target: string): string | null {
-  if (!target.startsWith("/")) return null;
-  return normalizeRedirectPath(target.split(/[?#]/u, 1)[0] || "/");
-}
-
-function sanitizeRule(input: Partial<RedirectRule>, existing?: RedirectRule): RedirectRule {
-  const now = new Date().toISOString();
-  const from = normalizeRedirectPath(String(input.from ?? existing?.from ?? ""));
-  const to = normalizeRedirectTarget(String(input.to ?? existing?.to ?? ""));
-  const status = Number(input.status ?? existing?.status ?? 301);
-  if (status !== 301 && status !== 302) {
-    throw new Error("Redirect status must be 301 or 302.");
-  }
-
-  if (internalTargetPath(to) === from) {
-    throw new Error("Source and destination cannot be the same path.");
-  }
-
-  return {
-    id: existing?.id ?? randomUUID(),
-    from,
-    to,
-    status: status as RedirectStatus,
-    enabled: input.enabled ?? existing?.enabled ?? true,
-    source: existing?.source ?? input.source ?? "manual",
-    createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
-  };
-}
-
-async function readDocument(): Promise<RedirectDocument> {
+async function readLegacyDocument(): Promise<RedirectDocument> {
   const raw = await readStateJson<Partial<RedirectDocument>>("redirects.json");
   if (raw === null) return { ...EMPTY_DOCUMENT, redirects: [] };
 
-  if (raw.schema !== "staark-redirects/v1" || raw.version !== 1 || !Array.isArray(raw.redirects)) {
+  if (
+    raw.schema !== "staark-redirects/v1" ||
+    raw.version !== 1 ||
+    !Array.isArray(raw.redirects)
+  ) {
     throw new Error("Unsupported redirect storage format.");
   }
 
   return {
     schema: "staark-redirects/v1",
     version: 1,
-    redirects: raw.redirects,
-  } as RedirectDocument;
+    redirects: raw.redirects.map((rule) => sanitizeRedirectRule(rule, undefined, rule.updatedAt)),
+  };
 }
 
-async function writeDocument(document: RedirectDocument): Promise<void> {
+async function writeLegacyDocument(document: RedirectDocument): Promise<void> {
   await writeStateJson("redirects.json", document);
 }
 
-export function inspectRedirects(rules: RedirectRule[]): RedirectIssue[] {
-  const issues: RedirectIssue[] = [];
-  const enabled = rules.filter((rule) => rule.enabled);
-  const bySource = new Map<string, RedirectRule[]>();
-
-  for (const rule of rules) {
-    const group = bySource.get(rule.from) ?? [];
-    group.push(rule);
-    bySource.set(rule.from, group);
+async function assertSourceIsNotActivePage(
+  repositories: RepositorySet,
+  siteId: string,
+  from: string,
+): Promise<void> {
+  const page = await repositories.pages.findByPath(siteId, from);
+  if (page) {
+    throw new Error(
+      `Redirect source ${from} is an active page. Move or delete the page first.`,
+    );
   }
-
-  for (const [source, group] of bySource) {
-    if (group.length > 1) {
-      issues.push({
-        severity: "error",
-        message: `Duplicate source ${source}. Only one redirect may own a source path.`,
-      });
-    }
-  }
-
-  const active = new Map(enabled.map((rule) => [rule.from, rule]));
-  for (const rule of enabled) {
-    const targetPath = internalTargetPath(rule.to);
-    if (targetPath && active.has(targetPath)) {
-      issues.push({
-        severity: "warning",
-        ruleId: rule.id,
-        message: `${rule.from} creates a redirect chain through ${targetPath}.`,
-      });
-    }
-
-    const visited = new Set<string>();
-    let cursor = rule.from;
-    while (active.has(cursor)) {
-      if (visited.has(cursor)) {
-        issues.push({
-          severity: "error",
-          ruleId: rule.id,
-          message: `Redirect loop detected starting at ${rule.from}.`,
-        });
-        break;
-      }
-      visited.add(cursor);
-      const next = active.get(cursor)!;
-      const nextPath = internalTargetPath(next.to);
-      if (!nextPath) break;
-      cursor = nextPath;
-    }
-  }
-
-  return issues.filter(
-    (issue, index, all) =>
-      all.findIndex(
-        (candidate) =>
-          candidate.severity === issue.severity &&
-          candidate.ruleId === issue.ruleId &&
-          candidate.message === issue.message,
-      ) === index,
-  );
 }
 
-function assertValidRules(rules: RedirectRule[]): void {
-  const errors = inspectRedirects(rules).filter((issue) => issue.severity === "error");
-  if (errors.length) throw new Error(errors[0]!.message);
+export async function preparePostgresPageDestinationRedirect(
+  repositories: RepositorySet,
+  siteId: string,
+  destinationPath: string,
+  currentPath: string,
+): Promise<RedirectRule | null> {
+  const destination = normalizeRedirectPath(destinationPath);
+  const current = normalizeRedirectPath(currentPath);
+  const existing = await repositories.redirects.findByFrom(siteId, destination);
+  if (!existing) return null;
+
+  // Reversing a previous page move is safe: /old -> /current becomes
+  // /current -> /old. Remove the old auto rule inside the same transaction.
+  if (
+    existing.source === "page-path-change" &&
+    internalRedirectTargetPath(existing.to) === current
+  ) {
+    await repositories.redirects.delete(siteId, existing.id);
+    return null;
+  }
+
+  return existing;
+}
+
+export async function upsertPostgresRedirectWithRepositories(
+  repositories: RepositorySet,
+  siteId: string,
+  from: string,
+  to: string,
+  status: RedirectStatus = 301,
+  source: RedirectSource = "manual",
+): Promise<RedirectRule> {
+  const normalizedFrom = normalizeRedirectPath(from);
+  await assertSourceIsNotActivePage(repositories, siteId, normalizedFrom);
+
+  const rules = await repositories.redirects.list(siteId);
+  const existingIndex = rules.findIndex((rule) => rule.from === normalizedFrom);
+  const existing = existingIndex >= 0 ? rules[existingIndex] : undefined;
+  const rule = sanitizeRedirectRule(
+    { from: normalizedFrom, to, status, enabled: true, source },
+    existing,
+  );
+  rule.source = source;
+
+  const candidate: RedirectRule[] = [...rules];
+  if (existingIndex >= 0) candidate[existingIndex] = rule;
+  else candidate.push(rule);
+  assertValidRedirects(candidate);
+
+  const saved = await repositories.redirects.upsertByFrom({
+    siteId,
+    ...rule,
+  });
+  return saved;
 }
 
 export async function listRedirects(): Promise<{
   redirects: RedirectRule[];
   issues: RedirectIssue[];
 }> {
-  const document = await readDocument();
-  return {
-    redirects: [...document.redirects].sort((a, b) => a.from.localeCompare(b.from)),
-    issues: inspectRedirects(document.redirects),
-  };
-}
-
-export async function createRedirect(input: Partial<RedirectRule>): Promise<RedirectRule> {
-  const document = await readDocument();
-  const rule = sanitizeRule({ ...input, source: "manual" });
-
-  if (document.redirects.some((existing) => existing.from === rule.from)) {
-    throw new Error(`A redirect from ${rule.from} already exists.`);
+  if (!adminRedirectsUsePostgres()) {
+    const document = await readLegacyDocument();
+    return {
+      redirects: [...document.redirects].sort((a, b) => a.from.localeCompare(b.from)),
+      issues: inspectRedirects(document.redirects),
+    };
   }
 
-  const redirects = [...document.redirects, rule];
-  assertValidRules(redirects);
-  await writeDocument({ ...document, redirects });
+  const repositories = createPostgresRepositories();
+  const site = await requirePostgresSite(repositories);
+  const redirects = await repositories.redirects.list(site.id);
+  return { redirects, issues: inspectRedirects(redirects) };
+}
+
+export async function createRedirect(
+  input: Partial<RedirectRule>,
+): Promise<RedirectRule> {
+  let rule: RedirectRule;
+
+  if (!adminRedirectsUsePostgres()) {
+    const document = await readLegacyDocument();
+    rule = sanitizeRedirectRule({ ...input, source: "manual" });
+    if (document.redirects.some((existing) => existing.from === rule.from)) {
+      throw new Error(`A redirect from ${rule.from} already exists.`);
+    }
+    const redirects = [...document.redirects, rule];
+    assertValidRedirects(redirects);
+    await writeLegacyDocument({ ...document, redirects });
+  } else {
+    rule = await withPostgresTransaction(async (repositories) => {
+      const site = await requirePostgresSite(repositories);
+      const candidateRule = sanitizeRedirectRule({ ...input, source: "manual" });
+      await assertSourceIsNotActivePage(repositories, site.id, candidateRule.from);
+      const rules = await repositories.redirects.list(site.id);
+      if (rules.some((existing) => existing.from === candidateRule.from)) {
+        throw new Error(`A redirect from ${candidateRule.from} already exists.`);
+      }
+      assertValidRedirects([...rules, candidateRule]);
+      return repositories.redirects.create({ siteId: site.id, ...candidateRule });
+    });
+  }
 
   await appendAdminLog({
     area: "redirects",
     action: "redirect.created",
     message: `Redirect ${rule.from} → ${rule.to} created.`,
-    meta: {
-      from: rule.from,
-      to: rule.to,
-      status: rule.status,
-    },
+    meta: { from: rule.from, to: rule.to, status: rule.status },
   });
-
   return rule;
 }
 
@@ -233,19 +210,42 @@ export async function updateRedirect(
   id: string,
   input: Partial<RedirectRule>,
 ): Promise<RedirectRule> {
-  const document = await readDocument();
-  const index = document.redirects.findIndex((rule) => rule.id === id);
-  if (index < 0) throw new Error("Redirect not found.");
+  let updated: RedirectRule;
 
-  const updated = sanitizeRule(input, document.redirects[index]);
-  const redirects = [...document.redirects];
-  redirects[index] = updated;
+  if (!adminRedirectsUsePostgres()) {
+    const document = await readLegacyDocument();
+    const index = document.redirects.findIndex((rule) => rule.id === id);
+    if (index < 0) throw new Error("Redirect not found.");
 
-  const duplicate = redirects.find((rule, ruleIndex) => ruleIndex !== index && rule.from === updated.from);
-  if (duplicate) throw new Error(`A redirect from ${updated.from} already exists.`);
+    updated = sanitizeRedirectRule(input, document.redirects[index]);
+    const redirects = [...document.redirects];
+    redirects[index] = updated;
+    if (redirects.some((rule, ruleIndex) => ruleIndex !== index && rule.from === updated.from)) {
+      throw new Error(`A redirect from ${updated.from} already exists.`);
+    }
+    assertValidRedirects(redirects);
+    await writeLegacyDocument({ ...document, redirects });
+  } else {
+    updated = await withPostgresTransaction(async (repositories) => {
+      const site = await requirePostgresSite(repositories);
+      const current = await repositories.redirects.findById(site.id, id);
+      if (!current) throw new Error("Redirect not found.");
 
-  assertValidRules(redirects);
-  await writeDocument({ ...document, redirects });
+      const next = sanitizeRedirectRule(input, current);
+      await assertSourceIsNotActivePage(repositories, site.id, next.from);
+      const rules = await repositories.redirects.list(site.id);
+      const index = rules.findIndex((rule) => rule.id === id);
+      const candidate: RedirectRule[] = [...rules];
+      candidate[index] = next;
+      if (candidate.some((rule, ruleIndex) => ruleIndex !== index && rule.from === next.from)) {
+        throw new Error(`A redirect from ${next.from} already exists.`);
+      }
+      assertValidRedirects(candidate);
+      const saved = await repositories.redirects.update(site.id, id, next);
+      if (!saved) throw new Error("Redirect not found.");
+      return saved;
+    });
+  }
 
   await appendAdminLog({
     area: "redirects",
@@ -258,28 +258,29 @@ export async function updateRedirect(
       enabled: updated.enabled,
     },
   });
-
   return updated;
 }
 
 export async function deleteRedirect(id: string): Promise<void> {
-  const document = await readDocument();
-  const removed = document.redirects.find(
-    (rule) => rule.id === id,
-  );
+  let removed: RedirectRule | null = null;
 
-  const redirects = document.redirects.filter(
-    (rule) => rule.id !== id,
-  );
-
-  if (redirects.length === document.redirects.length) {
-    throw new Error("Redirect not found.");
+  if (!adminRedirectsUsePostgres()) {
+    const document = await readLegacyDocument();
+    removed = document.redirects.find((rule) => rule.id === id) ?? null;
+    const redirects = document.redirects.filter((rule) => rule.id !== id);
+    if (redirects.length === document.redirects.length) {
+      throw new Error("Redirect not found.");
+    }
+    await writeLegacyDocument({ ...document, redirects });
+  } else {
+    await withPostgresTransaction(async (repositories) => {
+      const site = await requirePostgresSite(repositories);
+      removed = await repositories.redirects.findById(site.id, id);
+      if (!removed) throw new Error("Redirect not found.");
+      const deleted = await repositories.redirects.delete(site.id, id);
+      if (!deleted) throw new Error("Redirect not found.");
+    });
   }
-
-  await writeDocument({
-    ...document,
-    redirects,
-  });
 
   await appendAdminLog({
     area: "redirects",
@@ -287,12 +288,7 @@ export async function deleteRedirect(id: string): Promise<void> {
     message: removed
       ? `Redirect ${removed.from} → ${removed.to} deleted.`
       : "Redirect deleted.",
-    meta: removed
-      ? {
-          from: removed.from,
-          to: removed.to,
-        }
-      : undefined,
+    meta: removed ? { from: removed.from, to: removed.to } : undefined,
   });
 }
 
@@ -300,30 +296,59 @@ export async function upsertRedirect(
   from: string,
   to: string,
   status: RedirectStatus = 301,
-  source: RedirectRule["source"] = "manual",
+  source: RedirectSource = "manual",
 ): Promise<RedirectRule> {
-  const document = await readDocument();
-  const normalizedFrom = normalizeRedirectPath(from);
-  const existingIndex = document.redirects.findIndex((rule) => rule.from === normalizedFrom);
+  if (!adminRedirectsUsePostgres()) {
+    const document = await readLegacyDocument();
+    const normalizedFrom = normalizeRedirectPath(from);
+    const existingIndex = document.redirects.findIndex(
+      (rule) => rule.from === normalizedFrom,
+    );
+    const existing = existingIndex >= 0 ? document.redirects[existingIndex] : undefined;
+    const rule = sanitizeRedirectRule(
+      { from: normalizedFrom, to, status, enabled: true, source },
+      existing,
+    );
+    rule.source = source;
+    const redirects = [...document.redirects];
+    if (existingIndex >= 0) redirects[existingIndex] = rule;
+    else redirects.push(rule);
+    assertValidRedirects(redirects);
+    await writeLegacyDocument({ ...document, redirects });
+    return rule;
+  }
 
-  const existing = existingIndex >= 0 ? document.redirects[existingIndex] : undefined;
-  const rule = sanitizeRule(
-    { from: normalizedFrom, to, status, enabled: true, source },
-    existing,
-  );
-  rule.source = source;
-
-  const redirects = [...document.redirects];
-  if (existingIndex >= 0) redirects[existingIndex] = rule;
-  else redirects.push(rule);
-
-  assertValidRules(redirects);
-  await writeDocument({ ...document, redirects });
-  return rule;
+  return withPostgresTransaction(async (repositories) => {
+    const site = await requirePostgresSite(repositories);
+    return upsertPostgresRedirectWithRepositories(
+      repositories,
+      site.id,
+      from,
+      to,
+      status,
+      source,
+    );
+  });
 }
 
-export async function findMatchingRedirect(pathname: string): Promise<RedirectRule | null> {
+export async function findMatchingRedirect(
+  pathname: string,
+): Promise<RedirectRule | null> {
   const normalized = normalizeRedirectPath(pathname);
-  const document = await readDocument();
-  return document.redirects.find((rule) => rule.enabled && rule.from === normalized) ?? null;
+
+  if (!adminRedirectsUsePostgres()) {
+    const document = await readLegacyDocument();
+    return (
+      document.redirects.find(
+        (rule) => rule.enabled && rule.from === normalized,
+      ) ?? null
+    );
+  }
+
+  // Proxy runs in Node.js in Next 16. This is a single indexed lookup by
+  // (site_id, from_path), not a scan of all redirect rules.
+  const repositories = createPostgresRepositories();
+  const site = await requirePostgresSite(repositories);
+  const redirect = await repositories.redirects.findByFrom(site.id, normalized);
+  return redirect?.enabled ? redirect : null;
 }

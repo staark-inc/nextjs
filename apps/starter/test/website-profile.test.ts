@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   WEBSITE_PROFILE_OPTIONS,
   normalizeWebsiteType,
+  resolveClientFeatures,
   resolveWebsiteProfile,
+  supportsServicesCatalog,
 } from "../lib/website-profile.ts";
 
 test("website profiles normalize unknown values safely", () => {
@@ -20,4 +22,25 @@ test("website profile registry exposes every 11A profile", () => {
   );
   assert.equal(resolveWebsiteProfile("automotive").inboxDescription, "Service enquiries");
   assert.equal(resolveWebsiteProfile("portfolio").shortLabel, "Portfolio");
+});
+
+
+test("website profile features stay vertical and entitlement-aware", () => {
+  const salon = resolveClientFeatures("salon", []);
+  assert.equal(salon.includes("booking"), true);
+  assert.equal(salon.includes("services"), true);
+
+  const business = resolveClientFeatures("business", []);
+  assert.equal(business.includes("booking"), false);
+  assert.equal(business.includes("services"), false);
+
+  const businessWithBooking = resolveClientFeatures(
+    "business",
+    ["booking"],
+  );
+  assert.equal(businessWithBooking.includes("booking"), true);
+
+  assert.equal(supportsServicesCatalog("salon"), true);
+  assert.equal(supportsServicesCatalog("business"), false);
+  assert.equal(supportsServicesCatalog("automotive"), false);
 });

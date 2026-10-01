@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type PageEntry = {
@@ -11,6 +13,10 @@ type PageEntry = {
   navigationLabel?: string;
 };
 
+type DeletedPageEntry = PageEntry & {
+  deletedAt: string;
+};
+
 type PageTemplate = {
   id: string;
   label: string;
@@ -20,12 +26,18 @@ type PageTemplate = {
 
 type PagesPayload = {
   pages: PageEntry[];
+  deletedPages: DeletedPageEntry[];
   theme: string;
   templates: PageTemplate[];
 };
 
 export default function PagesIndex() {
+  const router = useRouter();
   const [pages, setPages] = useState<PageEntry[]>([]);
+  const [deletedPages, setDeletedPages] =
+    useState<DeletedPageEntry[]>([]);
+  const [restoring, setRestoring] =
+    useState<string | null>(null);
   const [theme, setTheme] = useState("light");
   const [templates, setTemplates] = useState<PageTemplate[]>([]);
   const [newPath, setNewPath] = useState("");
@@ -50,6 +62,7 @@ export default function PagesIndex() {
     }
     const data = await res.json() as PagesPayload;
     setPages(data.pages ?? []);
+    setDeletedPages(data.deletedPages ?? []);
     setTheme(data.theme ?? "light");
     setTemplates(data.templates ?? []);
     if (!(data.templates ?? []).some((template) => template.id === templateId)) {
@@ -83,21 +96,57 @@ export default function PagesIndex() {
     });
     const data = await res.json().catch(() => ({})) as { error?: string; file?: string };
     if (res.ok && data.file) {
-      window.location.href = `/admin/pages/${data.file}`;
+      router.push(`/admin/pages/${data.file}`);
       return;
     }
     showToast(data.error ?? "Failed to create page.", false);
     setCreating(false);
   }
 
-  async function deletePage(file: string) {
-    if (!confirm(`Delete ${file}? The page is also removed from site navigation.`)) return;
+  async function deletePage(file: string, title: string) {
+    if (!confirm(`Delete \"${title}\"? The page is also removed from site navigation.`)) return;
     const res = await fetch(`/api/admin/pages/${file}`, { method: "DELETE" });
     if (res.ok) {
       showToast("Page deleted and navigation cleaned up.", true);
       await load();
     } else {
       showToast("Could not delete the page.", false);
+    }
+  }
+
+  async function restorePage(
+    file: string,
+    title: string,
+  ) {
+    if (!confirm(`Restore "${title}"?`)) return;
+
+    setRestoring(file);
+
+    try {
+      const res = await fetch(
+        `/api/admin/pages/${file}/restore`,
+        { method: "POST" },
+      );
+
+      const data = await res
+        .json()
+        .catch(() => ({})) as {
+          error?: string;
+        };
+
+      if (!res.ok) {
+        showToast(
+          data.error ??
+            "Could not restore the page.",
+          false,
+        );
+        return;
+      }
+
+      showToast("Page restored.", true);
+      await load();
+    } finally {
+      setRestoring(null);
     }
   }
 
@@ -118,13 +167,13 @@ export default function PagesIndex() {
       <div className="sa-card sa-pages-card">
         <div className="sa-card__header sa-card__header--row">
           <div><p className="sa-card__eyebrow">Existing pages</p><h2>{pages.length} pages</h2></div>
-          <span className="sa-note">Navigation badges reflect <code>site.json</code>.</span>
+          <span className="sa-note">Navigation badges reflect the active site settings.</span>
         </div>
         <ul className="sa-page-list sa-page-list--managed">
           {pages.map((page) => (
             <li key={page.file}>
               <div className="sa-page-list__main">
-                <a href={`/admin/pages/${page.file}`}>{page.title}</a>
+                <Link href={`/admin/pages/${page.file}`}>{page.title}</Link>
                 <div className="sa-path">{page.path}</div>
                 <div className="sa-page-badges">
                   {page.inPrimary ? <span className="sa-badge sa-badge--primary">Main navigation</span> : null}
@@ -135,13 +184,65 @@ export default function PagesIndex() {
               </div>
               <div className="sa-page-list__actions">
                 <a href={page.path} target="_blank" rel="noopener noreferrer" className="sa-btn sa-btn--ghost sa-btn--sm">View</a>
-                <a href={`/admin/pages/${page.file}`} className="sa-btn sa-btn--ghost sa-btn--sm">Edit</a>
-                <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => void deletePage(page.file)}>Delete</button>
+                <Link href={`/admin/pages/${page.file}`} className="sa-btn sa-btn--ghost sa-btn--sm">Edit</Link>
+                <button className="sa-btn sa-btn--danger sa-btn--sm" onClick={() => void deletePage(page.file, page.title)}>Delete</button>
               </div>
             </li>
           ))}
         </ul>
       </div>
+
+      {deletedPages.length > 0 ? (
+        <div className="sa-card sa-pages-card">
+          <div className="sa-card__header sa-card__header--row">
+            <div>
+              <p className="sa-card__eyebrow">Trash</p>
+              <h2>Deleted pages</h2>
+            </div>
+
+            <span className="sa-note">
+              Soft-deleted pages can be restored.
+            </span>
+          </div>
+
+          <ul className="sa-page-list sa-page-list--managed">
+            {deletedPages.map((page) => (
+              <li key={page.file}>
+                <div className="sa-page-list__main">
+                  <strong>{page.title}</strong>
+
+                  <div className="sa-path">
+                    {page.path}
+                  </div>
+
+                  <div className="sa-page-badges">
+                    <span className="sa-badge sa-badge--muted">
+                      Deleted
+                    </span>
+                  </div>
+                </div>
+
+                <div className="sa-page-list__actions">
+                  <button
+                    className="sa-btn sa-btn--ghost sa-btn--sm"
+                    disabled={restoring === page.file}
+                    onClick={() =>
+                      void restorePage(
+                        page.file,
+                        page.title,
+                      )
+                    }
+                  >
+                    {restoring === page.file
+                      ? "Restoring…"
+                      : "Restore"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="sa-card">
         <div className="sa-card__header">

@@ -6,8 +6,10 @@ export const ADMIN_FEATURES = [
   "pages",
   "media",
   "navigation",
+  "design",
   "seo",
   "settings",
+  "plan",
   "booking",
   "services",
   "themes",
@@ -31,8 +33,10 @@ export const ADMIN_FEATURE_REGISTRY: Record<AdminFeature, AdminFeatureDefinition
   pages: { label: "Pages", access: "core" },
   media: { label: "Media", access: "core" },
   navigation: { label: "Navigation", access: "core" },
+  design: { label: "Design", access: "core" },
   seo: { label: "SEO", access: "core" },
   settings: { label: "Settings", access: "core" },
+  plan: { label: "Plan & usage", access: "core" },
 
   // Optional client capability. The dedicated Bookings UI is added later.
   booking: { label: "Bookings", access: "entitlement" },
@@ -40,7 +44,7 @@ export const ADMIN_FEATURE_REGISTRY: Record<AdminFeature, AdminFeatureDefinition
 
   // Technical platform capabilities belong to Staark Manager.
   themes: { label: "Themes", access: "manager" },
-  redirects: { label: "Redirects", access: "manager" },
+  redirects: { label: "Redirects", access: "core" },
   health: { label: "Site Health", access: "manager" },
   backups: { label: "Backups", access: "manager" },
 
@@ -61,16 +65,22 @@ function isAdminFeature(value: string): value is AdminFeature {
  */
 export function resolveAdminEntitlements(
   env: NodeJS.ProcessEnv = process.env,
+  planFeatures: readonly AdminFeature[] = [],
 ): AdminFeature[] {
-  const raw = env.STAARK_ENTITLEMENTS?.trim();
-  if (!raw) return [];
-
   const result = new Set<AdminFeature>();
 
-  for (const token of raw.split(",")) {
-    const feature = token.trim();
-    if (!feature || !isAdminFeature(feature)) continue;
-    if (ADMIN_FEATURE_REGISTRY[feature].access !== "entitlement") continue;
+  const raw = env.STAARK_ENTITLEMENTS?.trim();
+  if (raw) {
+    for (const token of raw.split(",")) {
+      const feature = token.trim();
+      if (!feature || !isAdminFeature(feature)) continue;
+      if (ADMIN_FEATURE_REGISTRY[feature].access !== "entitlement") continue;
+      result.add(feature);
+    }
+  }
+
+  for (const feature of planFeatures) {
+    if (ADMIN_FEATURE_REGISTRY[feature]?.access !== "entitlement") continue;
     result.add(feature);
   }
 
@@ -93,8 +103,9 @@ export function canAccessAdminFeature(
 export function resolveAccessibleAdminFeatures(
   role: AdminRole,
   env: NodeJS.ProcessEnv = process.env,
+  planFeatures: readonly AdminFeature[] = [],
 ): AdminFeature[] {
-  const entitlements = resolveAdminEntitlements(env);
+  const entitlements = resolveAdminEntitlements(env, planFeatures);
   return ADMIN_FEATURES.filter((feature) =>
     canAccessAdminFeature(role, feature, entitlements),
   );
@@ -111,12 +122,15 @@ const PAGE_FEATURES: Array<[string, AdminFeature]> = [
   ["/admin/pages", "pages"],
   ["/admin/media", "media"],
   ["/admin/navigation", "navigation"],
-  ["/admin/themes", "themes"],
+  ["/admin/themes/studio", "themes"],
+  ["/admin/themes", "design"],
   ["/admin/seo", "seo"],
   ["/admin/redirects", "redirects"],
   ["/admin/health", "health"],
   ["/admin/backups", "backups"],
+  ["/admin/domains", "settings"],
   ["/admin/site", "settings"],
+  ["/admin/plan", "plan"],
 ];
 
 const API_FEATURES: Array<[string, AdminFeature]> = [
@@ -126,11 +140,16 @@ const API_FEATURES: Array<[string, AdminFeature]> = [
   ["/api/admin/pages", "pages"],
   ["/api/admin/media", "media"],
   ["/api/admin/navigation", "navigation"],
+  ["/api/admin/themes/studio", "themes"],
+  ["/api/admin/themes/config", "design"],
   ["/api/admin/themes", "themes"],
   ["/api/admin/seo", "seo"],
   ["/api/admin/redirects", "redirects"],
   ["/api/admin/health", "health"],
   ["/api/admin/backups", "backups"],
+  ["/api/admin/mail", "settings"],
+  ["/api/admin/billing", "plan"],
+  ["/api/admin/domains", "settings"],
   ["/api/admin/site", "settings"],
   ["/api/admin/shell", "dashboard"],
 ];

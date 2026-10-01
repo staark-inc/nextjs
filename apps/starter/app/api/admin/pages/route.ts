@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import {
+  AdminPageConflictError,
+  adminPagesUsePostgres,
+  createPostgresAdminPage,
+  getPostgresAdminSiteSettings,
+  listPostgresAdminPages,
+} from "@/lib/admin-page-postgres";
+import { getPrismaClient } from "@/lib/db/prisma";
+import { requireAdminTenantContext } from "@/lib/admin-tenant";
+import {
+  PlanLimitError,
+  assertWithinPlanLimit,
+} from "@/lib/plan-entitlements";
+import {
   contentExists,
   contentStoragePath,
   listContent,
@@ -158,6 +171,24 @@ export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
+  if (adminPagesUsePostgres()) {
+    try {
+      const { site, pages, deletedPages } = await listPostgresAdminPages();
+      const theme = resolveThemeRuntime(site.theme.family ?? "light").id;
+      return NextResponse.json({
+        pages,
+        deletedPages,
+        theme,
+        templates: templatesFor(theme),
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: (error as Error).message || "Could not load PostgreSQL pages." },
+        { status: 500 },
+      );
+    }
+  }
+
   const [site, files] = await Promise.all([
     readSite(),
     pageFiles(),
@@ -180,7 +211,12 @@ export async function GET() {
     }),
   );
   const theme = resolveThemeRuntime(site.theme?.family).id;
-  return NextResponse.json({ pages, theme, templates: templatesFor(theme) });
+  return NextResponse.json({
+    pages,
+    deletedPages: [],
+    theme,
+    templates: templatesFor(theme),
+  });
 }
 
 export async function POST(req: Request) {
@@ -194,6 +230,79 @@ export async function POST(req: Request) {
 
   if (!/^\/[a-z0-9\-/]*$/i.test(pathname)) {
     return NextResponse.json({ error: "Use a URL path such as /about-us." }, { status: 400 });
+  }
+
+  if (adminPagesUsePostgres()) {
+    try {
+      const site = await getPostgresAdminSiteSettings();
+      const theme = resolveThemeRuntime(site.theme.family ?? "light").id;
+      const allowedTemplates = templatesFor(theme);
+      const requestedTemplate = typeof body.templateId === "string" ? body.templateId : "blank";
+      const templateId = allowedTemplates.some((template) => template.id === requestedTemplate) ? requestedTemplate : "blank";
+      const page = {
+        path: pathname,
+        title,
+        seo: {},
+        blocks: blocksFor(theme, templateId, title),
+        updatedAt: new Date().toISOString(),
+      };
+      const addToPrimary = body.addToPrimary === true && pathname !== "/";
+      const addToFooter = body.addToFooter === true && pathname !== "/";
+      const navigationLabel = typeof body.navigationLabel === "string" && body.navigationLabel.trim()
+        ? body.navigationLabel.trim()
+        : title;
+
+      const tenant = await requireAdminTenantContext();
+      const currentPages = await getPrismaClient().page.count({
+        where: {
+          siteId: tenant.siteId,
+          deletedAt: null,
+        },
+      });
+
+      assertWithinPlanLimit(tenant.entitlements, "maxPages", currentPages);
+
+      const created = await createPostgresAdminPage({
+        page,
+        addToPrimary,
+        addToFooter,
+        navigationLabel,
+      });
+
+      revalidatePath("/", "layout");
+      return NextResponse.json({
+        ok: true,
+        // Compatibility field consumed by the current Admin UI. In PostgreSQL
+        // mode this is the Page UUID rather than a JSON filename.
+        file: created.id,
+        path: created.page.path,
+      });
+    } catch (error) {
+      const status =
+        error instanceof AdminPageConflictError
+          ? 409
+          : error instanceof PlanLimitError
+            ? 403
+            : 500;
+
+      return NextResponse.json(
+        {
+          error:
+            error instanceof PlanLimitError
+              ? `Your plan allows up to ${error.limit} pages. Upgrade the plan to add more.`
+              : (error as Error).message || "Could not create page.",
+          ...(error instanceof PlanLimitError
+            ? {
+                code: "PLAN_LIMIT_REACHED",
+                limitKey: error.key,
+                limit: error.limit,
+                current: error.current,
+              }
+            : {}),
+        },
+        { status },
+      );
+    }
   }
 
   const slug = pathname.replace(/^\//, "") || "index";

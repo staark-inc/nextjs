@@ -162,32 +162,31 @@ export default function SeoPage() {
 
   return (
     <>
-      <div className="sa-breadcrumb">
-        <a href="/admin">Dashboard</a>
-        <span>/</span>
-        <span>SEO</span>
-      </div>
+      <section className="sa-page-header">
+        <div>
+          <span className="sa-page-eyebrow">Growth</span>
+          <h1 className="sa-h1">SEO</h1>
+          <p className="sa-subtitle">Search engine optimization settings and page audit.</p>
+        </div>
+      </section>
 
-      <h1 className="sa-h1">SEO</h1>
-      <p className="sa-subtitle">Search engine optimization settings and page audit.</p>
-
-      <div className="sa-stats">
-        <div className="sa-stat">
+      <div className="sa-stats sa-stats--dashboard">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Pages</div>
           <div className="sa-stat__value">{pages.length}</div>
           <div className="sa-stat__desc">Total pages</div>
         </div>
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Optimized</div>
           <div className="sa-stat__value">{goodCount}</div>
           <div className="sa-stat__desc">SEO complete</div>
         </div>
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Needs work</div>
           <div className="sa-stat__value">{needsWork}</div>
           <div className="sa-stat__desc">Missing fields</div>
         </div>
-        <div className="sa-stat">
+        <div className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Noindex</div>
           <div className="sa-stat__value">{noindexCount}</div>
           <div className="sa-stat__desc">Excluded from search</div>

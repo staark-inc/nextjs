@@ -9,25 +9,11 @@ import {
 
 type NavLink = { label: string; href: string };
 type OpeningHour = { days: string; hours: string };
-type MailStatus =
-  | {
-      transport: "disabled";
-      configured: false;
-      error?: string;
-    }
-  | {
-      transport: "smtp";
-      configured: true;
-      host: string;
-      port: number;
-      secure: boolean;
-      from: string;
-      replyTo?: string;
-      authConfigured: boolean;
-      tlsRejectUnauthorized: boolean;
-      connectionTimeoutMs: number;
-      error?: string;
-    };
+type MailStatus = {
+  transport: "disabled" | "smtp";
+  configured: boolean;
+  error?: string;
+};
 
 type SiteData = {
   name: string;
@@ -42,6 +28,14 @@ type SiteData = {
     phone?: string;
     address?: { street?: string; postalCode?: string; city?: string; country?: string };
     openingHours?: OpeningHour[];
+  };
+  email?: {
+    fromName?: string;
+    replyTo?: string;
+    notificationEmail?: string;
+    bookingConfirmationEnabled?: boolean;
+    bookingDeclineEnabled?: boolean;
+    contactNotificationEnabled?: boolean;
   };
   navigation?: {
     primary?: NavLink[];
@@ -66,14 +60,31 @@ function normalizeSite(raw: SiteData): SiteData {
       email: "",
       phone: "",
       ...(raw.contact ?? {}),
-      address: { ...(raw.contact?.address ?? {}) },
+      address: {
+        street: "",
+        postalCode: "",
+        city: "",
+        country: "SE",
+        ...(raw.contact?.address ?? {}),
+      },
       openingHours: [...(raw.contact?.openingHours ?? [])],
+    },
+    email: {
+      fromName: raw.name,
+      replyTo: raw.contact?.email ?? "",
+      notificationEmail: raw.contact?.email ?? "",
+      bookingConfirmationEnabled: true,
+      bookingDeclineEnabled: true,
+      contactNotificationEnabled: true,
+      ...(raw.email ?? {}),
     },
     navigation: {
       primary: [...(raw.navigation?.primary ?? [])],
       footer: [...(raw.navigation?.footer ?? [])],
       ...(raw.navigation ?? {}),
-      cta: raw.navigation?.cta ? { ...raw.navigation.cta } : { label: "", href: "" },
+      ...(raw.navigation?.cta
+        ? { cta: { ...raw.navigation.cta } }
+        : {}),
     },
     seo: { ...(raw.seo ?? {}) },
   };
@@ -86,8 +97,7 @@ export default function SiteEditor() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [mailStatus, setMailStatus] = useState<MailStatus | null>(null);
   const [mailLoading, setMailLoading] = useState(true);
-  const [mailTesting, setMailTesting] = useState<"verify" | "send" | null>(null);
-  const [mailRecipient, setMailRecipient] = useState("");
+  const [mailTesting, setMailTesting] = useState<"send" | null>(null);
 
 
   function showToast(msg: string, ok: boolean) {
@@ -164,6 +174,22 @@ export default function SiteEditor() {
 
   function setContact(patch: Partial<NonNullable<SiteData["contact"]>>) {
     setSite((prev) => prev ? { ...prev, contact: { ...(prev.contact ?? {}), ...patch } } : prev);
+  }
+
+  function setEmailSettings(
+    patch: Partial<NonNullable<SiteData["email"]>>,
+  ) {
+    setSite((prev) =>
+      prev
+        ? {
+            ...prev,
+            email: {
+              ...(prev.email ?? {}),
+              ...patch,
+            },
+          }
+        : prev,
+    );
   }
 
   function setAddress(key: "street" | "postalCode" | "city" | "country", value: string) {
@@ -263,50 +289,25 @@ export default function SiteEditor() {
     }
   }
 
-  async function testMailConnection() {
-    setMailTesting("verify");
-    try {
-      const res = await fetch("/api/admin/mail/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verifyOnly: true }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "SMTP connection test failed.");
-      showToast("Email connection verified.", true);
-      await loadMailStatus();
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "SMTP connection test failed.",
-        false,
-      );
-    } finally {
-      setMailTesting(null);
-    }
-  }
-
   async function sendTestMail() {
-    const to = mailRecipient.trim();
-    if (!to) {
-      showToast("Enter an email address for the test message.", false);
-      return;
-    }
-
     setMailTesting("send");
     try {
       const res = await fetch("/api/admin/mail/test", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         messageId?: string;
+        deliveredTo?: string;
       };
-      if (!res.ok) throw new Error(data.error ?? "Could not send test email.");
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "Could not send test email.");
+      }
+
       showToast(
-        data.messageId
-          ? `Test email sent - ${data.messageId}`
+        data.deliveredTo
+          ? `Test email sent to ${data.deliveredTo}.`
           : "Test email sent.",
         true,
       );
@@ -511,11 +512,11 @@ showToast("Settings saved.", true);
         </div>
       </section>
 
-      <section className="sa-settings-panel sa-manager-only sa-mail-settings">
+      <section className="sa-settings-panel sa-mail-settings">
         <div className="sa-settings-panel__head">
           <div>
             <span className="sa-settings-kicker">Email</span>
-            <h2>Email transport</h2>
+            <h2>Email notifications</h2>
           </div>
           <span
             className={`sa-badge ${
@@ -525,85 +526,174 @@ showToast("Settings saved.", true);
             {mailLoading
               ? "Checking..."
               : mailStatus?.configured
-                ? "Configured"
-                : "Disabled"}
+                ? "Active"
+                : "Unavailable"}
           </span>
         </div>
 
+        <p className="sa-settings-panel__intro">
+          Staark manages email delivery through the platform. You control the
+          business identity, replies and which automatic notifications are sent.
+        </p>
+
         {mailStatus?.error ? (
           <div className="sa-mail-settings__notice sa-mail-settings__notice--error">
-            {mailStatus.error}
+            Email delivery is temporarily unavailable.
           </div>
         ) : null}
 
+        <div className="sa-settings-fields sa-settings-fields--two">
+          <div className="sa-field">
+            <label htmlFor="mail-from-name">Sender name</label>
+            <input
+              id="mail-from-name"
+              value={site.email?.fromName ?? ""}
+              onChange={(e) =>
+                setEmailSettings({ fromName: e.target.value })
+              }
+              placeholder={site.name}
+            />
+            <div className="sa-field-hint">
+              Shown to customers as the sender name. The sender address is
+              managed by Staark.
+            </div>
+          </div>
+
+          <div className="sa-field">
+            <label htmlFor="mail-reply-to">Reply-to email</label>
+            <input
+              id="mail-reply-to"
+              type="email"
+              value={site.email?.replyTo ?? ""}
+              onChange={(e) =>
+                setEmailSettings({ replyTo: e.target.value })
+              }
+              placeholder={site.contact?.email || "info@example.se"}
+            />
+            <div className="sa-field-hint">
+              Customer replies are sent to this address.
+            </div>
+          </div>
+
+          <div className="sa-field sa-settings-field--wide">
+            <label htmlFor="mail-notification-email">
+              Notification email
+            </label>
+            <input
+              id="mail-notification-email"
+              type="email"
+              value={site.email?.notificationEmail ?? ""}
+              onChange={(e) =>
+                setEmailSettings({
+                  notificationEmail: e.target.value,
+                })
+              }
+              placeholder={site.contact?.email || "info@example.se"}
+            />
+            <div className="sa-field-hint">
+              Internal website notifications can be delivered here.
+            </div>
+          </div>
+        </div>
+
+        <div className="sa-settings-subsection">
+          <div className="sa-settings-subsection__head">
+            <div>
+              <strong>Automatic emails</strong>
+              <span>
+                Choose which customer and business notifications Staark sends.
+              </span>
+            </div>
+          </div>
+
+          <div className="sa-settings-fields sa-settings-fields--two">
+            <label className="sa-settings-toggle">
+              <input
+                type="checkbox"
+                checked={
+                  site.email?.bookingConfirmationEnabled !== false
+                }
+                onChange={(e) =>
+                  setEmailSettings({
+                    bookingConfirmationEnabled: e.target.checked,
+                  })
+                }
+              />
+              <span>
+                <strong>Booking confirmations</strong>
+                <small>
+                  Email the customer when a booking is confirmed.
+                </small>
+              </span>
+            </label>
+
+            <label className="sa-settings-toggle">
+              <input
+                type="checkbox"
+                checked={site.email?.bookingDeclineEnabled !== false}
+                onChange={(e) =>
+                  setEmailSettings({
+                    bookingDeclineEnabled: e.target.checked,
+                  })
+                }
+              />
+              <span>
+                <strong>Booking declines</strong>
+                <small>
+                  Email the customer when a booking is declined.
+                </small>
+              </span>
+            </label>
+
+            <label className="sa-settings-toggle">
+              <input
+                type="checkbox"
+                checked={
+                  site.email?.contactNotificationEnabled !== false
+                }
+                onChange={(e) =>
+                  setEmailSettings({
+                    contactNotificationEnabled: e.target.checked,
+                  })
+                }
+              />
+              <span>
+                <strong>New enquiry notifications</strong>
+                <small>
+                  Notify the business when new website enquiries arrive.
+                </small>
+              </span>
+            </label>
+          </div>
+        </div>
+
         {mailStatus?.configured ? (
-          <>
-            <dl className="sa-mail-settings__summary">
-              <div>
-                <dt>SMTP server</dt>
-                <dd><code>{mailStatus.host}:{mailStatus.port}</code></dd>
-              </div>
-              <div>
-                <dt>Security</dt>
-                <dd>{mailStatus.secure ? "TLS / SMTPS" : "STARTTLS / relay"}</dd>
-              </div>
-              <div>
-                <dt>From</dt>
-                <dd>{mailStatus.from}</dd>
-              </div>
-              <div>
-                <dt>Reply-To</dt>
-                <dd>{mailStatus.replyTo || "Uses From address"}</dd>
-              </div>
-              <div>
-                <dt>Authentication</dt>
-                <dd>{mailStatus.authConfigured ? "Configured" : "Trusted relay / none"}</dd>
-              </div>
-              <div>
-                <dt>TLS certificates</dt>
-                <dd>{mailStatus.tlsRejectUnauthorized ? "Verified" : "Verification disabled"}</dd>
-              </div>
-            </dl>
-
-            <div className="sa-mail-settings__actions">
-              <button
-                type="button"
-                className="sa-btn sa-btn--ghost"
-                onClick={testMailConnection}
-                disabled={mailTesting !== null}
-              >
-                {mailTesting === "verify" ? "Testing..." : "Test connection"}
-              </button>
-
-              <div className="sa-mail-settings__send">
-                <input
-                  type="email"
-                  value={mailRecipient}
-                  onChange={(e) => setMailRecipient(e.target.value)}
-                  placeholder="you@example.com"
-                  aria-label="Test email recipient"
-                />
-                <button
-                  type="button"
-                  className="sa-btn sa-btn--primary"
-                  onClick={sendTestMail}
-                  disabled={mailTesting !== null}
-                >
-                  {mailTesting === "send" ? "Sending..." : "Send test email"}
-                </button>
+          <div className="sa-mail-settings__actions">
+            <div>
+              <strong>Email delivery is active</strong>
+              <div className="sa-field-hint">
+                Test messages are sent automatically to the notification email
+                above.
               </div>
             </div>
-          </>
+            <button
+              type="button"
+              className="sa-btn sa-btn--ghost"
+              onClick={sendTestMail}
+              disabled={mailTesting !== null}
+            >
+              {mailTesting === "send" ? "Sending..." : "Send test email"}
+            </button>
+          </div>
         ) : (
           <div className="sa-mail-settings__notice">
-            Email delivery is currently disabled. Configure the SMTP environment
-            variables for this deployment, recreate the container, then return
-            here to verify the connection.
+            Email delivery is not currently available for this site.
           </div>
         )}
 
         <p className="sa-mail-settings__hint">
-          SMTP credentials stay server-side and are never returned to this page.
+          SMTP host, account credentials and sender address are managed securely
+          by Staark and are never exposed to client accounts.
         </p>
       </section>
 

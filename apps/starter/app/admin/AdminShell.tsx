@@ -28,7 +28,9 @@ type AdminShellProps = {
   username: string;
   role: AdminRole;
   features: AdminFeature[];
+  entitlements: AdminFeature[];
   sessionExpiresAt: number;
+  initialNow: number;
   initialStatus: AdminShellStatus;
   development: boolean;
 };
@@ -91,13 +93,13 @@ function NavBadges({ item, status }: { item: AdminNavItem; status: AdminShellSta
   return null;
 }
 
-export default function AdminShell({ websiteType, children, siteName, username, role, features, sessionExpiresAt, initialStatus, development }: AdminShellProps) {
+export default function AdminShell({ websiteType, children, siteName, username, role, features, entitlements, sessionExpiresAt, initialNow, initialStatus, development }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeWebsiteType, setActiveWebsiteType] = useState<WebsiteType>(websiteType);
   const [status, setStatus] = useState<AdminShellStatus>(initialStatus);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(initialNow);
   const redirecting = useRef(false);
 
   const profile = useMemo(
@@ -106,12 +108,39 @@ export default function AdminShell({ websiteType, children, siteName, username, 
   );
 
   const visibleFeatures = useMemo<AdminFeature[]>(() => {
-    if (role === "manager") return features;
+    if (role === "client") {
+      return [
+        ...resolveClientFeatures(
+          activeWebsiteType,
+          features,
+        ),
+      ];
+    }
 
-    return [
-      ...resolveClientFeatures(activeWebsiteType, features),
-    ];
-  }, [activeWebsiteType, features, role]);
+    const contextualProductFeatures =
+      new Set<AdminFeature>(
+        resolveClientFeatures(
+          activeWebsiteType,
+          entitlements,
+        ),
+      );
+
+    return features.filter((feature) => {
+      if (
+        feature !== "booking" &&
+        feature !== "services"
+      ) {
+        return true;
+      }
+
+      return contextualProductFeatures.has(feature);
+    });
+  }, [
+    activeWebsiteType,
+    entitlements,
+    features,
+    role,
+  ]);
 
   const navItems = useMemo(
     () =>

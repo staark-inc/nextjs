@@ -4,6 +4,12 @@ import {
   readContentJson,
   writeContentJson,
 } from "./storage";
+import {
+  resolvePublicContentConfig,
+} from "./content-source";
+import {
+  createPostgresRepositories,
+} from "./repositories";
 
 export const SALON_SERVICE_CATALOG_FILE =
   "services.json";
@@ -270,8 +276,53 @@ function normalizeCatalog(
   };
 }
 
+async function postgresCatalogContext() {
+  const config =
+    resolvePublicContentConfig();
+
+  const repositories =
+    createPostgresRepositories();
+
+  const site =
+    await repositories.sites.findByKey(
+      config.siteKey,
+    );
+
+  if (!site) {
+    throw new Error(
+      `PostgreSQL site "${config.siteKey}" was not found.`,
+    );
+  }
+
+  return {
+    repositories,
+    site,
+  };
+}
+
 export async function readSalonServiceCatalog():
 Promise<SalonServiceCatalog | null> {
+  const config =
+    resolvePublicContentConfig();
+
+  if (config.source === "postgres") {
+    const {
+      repositories,
+      site,
+    } = await postgresCatalogContext();
+
+    const record =
+      await repositories.serviceCatalogs.findBySiteId(
+        site.id,
+      );
+
+    return record
+      ? normalizeCatalog(
+          record.document,
+        )
+      : null;
+  }
+
   const raw =
     await readContentJson<unknown>(
       SALON_SERVICE_CATALOG_FILE,
@@ -294,6 +345,23 @@ export async function writeSalonServiceCatalog(
       updatedAt:
         new Date().toISOString(),
     });
+
+  const config =
+    resolvePublicContentConfig();
+
+  if (config.source === "postgres") {
+    const {
+      repositories,
+      site,
+    } = await postgresCatalogContext();
+
+    await repositories.serviceCatalogs.upsert({
+      siteId: site.id,
+      document: catalog as unknown as Record<string, unknown>,
+    });
+
+    return catalog;
+  }
 
   await writeContentJson(
     SALON_SERVICE_CATALOG_FILE,
@@ -347,21 +415,31 @@ function blocks(
     : [];
 }
 
-/**
- * One-time migration for an existing Salon.
- *
- * Priority:
- * 1. serviceMenu = detailed source
- * 2. /behandlingar services = recover missing services
- * 3. bookingRequest = recover orphan booking options
- */
-export async function migrateSalonServiceCatalog():
-Promise<SalonServiceCatalog> {
-  const existing =
-    await readSalonServiceCatalog();
+async function catalogMigrationPages():
+Promise<Obj[]> {
+  const config =
+    resolvePublicContentConfig();
 
-  if (existing) {
-    return existing;
+  if (config.source === "postgres") {
+    const {
+      repositories,
+      site,
+    } = await postgresCatalogContext();
+
+    const records =
+      await repositories.pages.list(
+        site.id,
+      );
+
+    return records
+      .filter(
+        (record) =>
+          record.deletedAt === null,
+      )
+      .map(
+        (record) =>
+          record.page as unknown as Obj,
+      );
   }
 
   const files =
@@ -379,6 +457,29 @@ Promise<SalonServiceCatalog> {
       pages.push(page);
     }
   }
+
+  return pages;
+}
+
+/**
+ * One-time migration for an existing Salon.
+ *
+ * Priority:
+ * 1. serviceMenu = detailed source
+ * 2. /behandlingar services = recover missing services
+ * 3. bookingRequest = recover orphan booking options
+ */
+export async function migrateSalonServiceCatalog():
+Promise<SalonServiceCatalog> {
+  const existing =
+    await readSalonServiceCatalog();
+
+  if (existing) {
+    return existing;
+  }
+
+  const pages =
+    await catalogMigrationPages();
 
   let heading =
     "Meny & priser";

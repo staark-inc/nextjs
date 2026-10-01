@@ -31,6 +31,7 @@ type ThemeConfig = {
   presets: ThemePreset[];
   overrides: ThemeTokens;
   components: Record<string, string>;
+  componentVariants: Record<string, string[]>;
 };
 
 type EditorSection = "colors" | "typography" | "shape" | "layout" | "components";
@@ -56,7 +57,7 @@ function humanize(value: string): string {
     .replace(/^./, (letter) => letter.toUpperCase());
 }
 
-function orderedKeys(record: Record<string, string> | undefined, preferred: string[]): string[] {
+function orderedKeys(record: Record<string, unknown> | undefined, preferred: string[]): string[] {
   const keys = Object.keys(record ?? {});
   return [...preferred.filter((key) => keys.includes(key)), ...keys.filter((key) => !preferred.includes(key)).sort()];
 }
@@ -224,7 +225,10 @@ export default function ThemeManagerClient({
   const activeTheme = themes.find((item) => item.id === active);
   const tokenKeys = (group: TokenGroup, preferred: string[]) =>
     orderedKeys({ ...(preset?.tokens[group] ?? {}), ...(overrides[group] ?? {}) }, preferred);
-  const componentKeys = orderedKeys({ ...(preset?.components ?? {}), ...components }, COMPONENT_ORDER);
+  const componentKeys = orderedKeys(
+    config?.componentVariants ?? {},
+    COMPONENT_ORDER,
+  );
   const customCount =
     Object.keys(overrides.colors ?? {}).length +
     Object.keys(overrides.typography ?? {}).length +
@@ -451,12 +455,24 @@ export default function ThemeManagerClient({
                 {componentKeys.map((key) => (
                   <div className="sa-field" key={key}>
                     <label htmlFor={`theme-component-${key}`}>{humanize(key)}</label>
-                    <input
+                    <select
                       id={`theme-component-${key}`}
                       value={componentValue(key)}
-                      onChange={(event) => setComponent(key, event.target.value)}
-                    />
-                    <div className="sa-field-hint">Preset default: {preset.components[key] ?? "—"}</div>
+                      onChange={(event) =>
+                        setComponent(key, event.target.value)
+                      }
+                    >
+                      {(config.componentVariants[key] ?? []).map(
+                        (value) => (
+                          <option key={value} value={value}>
+                            {humanize(value)}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                    <div className="sa-field-hint">
+                      Preset default: {preset.components[key] ?? "—"}
+                    </div>
                   </div>
                 ))}
               </div>

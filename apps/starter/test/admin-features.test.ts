@@ -11,9 +11,10 @@ test("client gets core features, not manager features", () => {
   const features = resolveAccessibleAdminFeatures("client", {});
   assert.equal(features.includes("dashboard"), true);
   assert.equal(features.includes("pages"), true);
+  assert.equal(features.includes("design"), true);
   assert.equal(features.includes("seo"), true);
   assert.equal(features.includes("themes"), false);
-  assert.equal(features.includes("redirects"), false);
+  assert.equal(features.includes("redirects"), true);
   assert.equal(features.includes("health"), false);
   assert.equal(features.includes("backups"), false);
 });
@@ -33,8 +34,14 @@ test("booking is entitlement-driven for clients", () => {
   assert.equal(canAccessAdminFeature("client", "booking", ["booking"]), true);
 });
 
-test("technical and unknown admin routes fail closed", () => {
-  assert.equal(featureForAdminPath("/admin/themes"), "themes");
+test("design, technical and unknown admin routes are classified correctly", () => {
+  assert.equal(featureForAdminPath("/admin/themes"), "design");
+  assert.equal(featureForAdminPath("/api/admin/themes/config"), "design");
+
+  assert.equal(featureForAdminPath("/admin/themes/studio"), "themes");
+  assert.equal(featureForAdminPath("/api/admin/themes"), "themes");
+  assert.equal(featureForAdminPath("/api/admin/themes/activate"), "themes");
+
   assert.equal(featureForAdminPath("/api/admin/backups/create"), "backups");
   assert.equal(featureForAdminPath("/admin/future-tool"), "system");
   assert.equal(featureForAdminPath("/api/admin/future-tool"), "system");

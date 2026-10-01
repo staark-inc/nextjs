@@ -1,0 +1,353 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A customer website / tenant.
+///
+/// `settings` is a transitional JSONB envelope for mutable site.json fields that
+/// are not yet normalized (theme selection/overrides, brand, contact, navigation,
+/// site SEO, etc.). Repository code owns the mapping; application code must not
+/// read this JSON directly.
+model Site {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  key            String   @unique(map: "sites_key_key") @db.VarChar(100)
+  name           String   @db.VarChar(200)
+  settings       Json     @default("{}") @db.JsonB
+  setupCompletedAt    DateTime? @map("setup_completed_at") @db.Timestamptz(3)
+  setupTokenHash      String?   @map("setup_token_hash") @db.VarChar(64)
+  setupTokenExpiresAt DateTime? @map("setup_token_expires_at") @db.Timestamptz(3)
+  setupClaimedAt      DateTime? @map("setup_claimed_at") @db.Timestamptz(3)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull, map: "sites_organization_id_fkey")
+  pages          Page[]
+  redirects      Redirect[]
+  submissions    Submission[]
+  serviceCatalog ServiceCatalog?
+  domains        Domain[]
+  usage          SiteUsage?
+  subscriptions  Subscription[]
+
+  @@index([organizationId], map: "sites_organization_id_idx")
+  @@map("sites")
+}
+
+/// A routable page owned by one Site.
+model Page {
+  id        String   @id @default(uuid()) @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  path      String   @db.VarChar(1024)
+  title     String   @db.VarChar(300)
+  seo       Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedContext Json      @default("{}") @map("deleted_context") @db.JsonB
+
+  site      Site           @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "pages_site_id_fkey")
+  blocks    PageBlock[]
+  revisions PageRevision[]
+
+  // The second unique key lets child rows enforce siteId + pageId together,
+  // preventing a tenant id from being paired with another site's page.
+  @@unique([siteId, id], map: "pages_site_id_id_key")
+  @@unique([siteId, path], map: "pages_site_id_path_key")
+  @@index([siteId], map: "pages_site_id_idx")
+  @@index([siteId, deletedAt], map: "pages_site_id_deleted_at_idx")
+  @@map("pages")
+}
+
+/// A block instance within a page.
+///
+/// `id` deliberately preserves the existing block id from JSON. IDs such as
+/// "hero" occur on many pages, so the primary key is (pageId, id), not id alone.
+model PageBlock {
+  siteId   String @map("site_id") @db.Uuid
+  pageId   String @map("page_id") @db.Uuid
+  id       String @db.VarChar(160)
+  type     String @db.VarChar(160)
+  position Int
+  props    Json   @default("{}") @db.JsonB
+
+  page Page @relation(fields: [siteId, pageId], references: [siteId, id], onDelete: Cascade, map: "page_blocks_site_id_page_id_fkey")
+
+  @@id([pageId, id], map: "page_blocks_pkey")
+  @@index([siteId, pageId, position], map: "page_blocks_site_id_page_id_position_idx")
+  @@map("page_blocks")
+}
+
+/// Immutable page history.
+///
+/// `snapshot` stores the complete domain page (including ordered blocks) so a
+/// restore does not depend on today's block schema. The repository is
+/// responsible for hashing, deduplication and retention (currently max 50/page).
+model PageRevision {
+  id        String   @id @default(uuid()) @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  pageId    String   @map("page_id") @db.Uuid
+  reason    String   @db.VarChar(80)
+  checksum  String   @db.Char(64)
+  snapshot  Json     @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  page Page @relation(fields: [siteId, pageId], references: [siteId, id], onDelete: Cascade, map: "page_revisions_site_id_page_id_fkey")
+
+  @@index([siteId, pageId, createdAt], map: "page_revisions_site_id_page_id_created_at_idx")
+  @@map("page_revisions")
+}
+
+
+/// Runtime redirect rule owned by one Site.
+model Redirect {
+  id        String   @id @default(uuid()) @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  fromPath  String   @map("from_path") @db.VarChar(1024)
+  to        String   @db.VarChar(2048)
+  status    Int      @default(301) @db.SmallInt
+  enabled   Boolean  @default(true)
+  source    String   @default("manual") @db.VarChar(40)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "redirects_site_id_fkey")
+
+  @@unique([siteId, fromPath], map: "redirects_site_id_from_path_key")
+  @@index([siteId, enabled], map: "redirects_site_id_enabled_idx")
+  @@map("redirects")
+}
+
+
+/// Mutable vertical service catalog owned by one Site.
+///
+/// The catalog remains a JSONB document for Storage v2 because the existing
+/// salon domain already has a stable nested category/service schema. If future
+/// booking/reporting needs relational service queries, this can be normalized
+/// behind the repository without leaking Prisma into application code.
+model ServiceCatalog {
+  siteId    String   @id @map("site_id") @db.Uuid
+  document  Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "service_catalogs_site_id_fkey")
+
+  @@map("service_catalogs")
+}
+
+
+/// A website form submission. `fields` stays JSONB because forms are intentionally flexible,
+/// while workflow state is normalized for Inbox/Bookings/CRM queries.
+model Submission {
+  siteId        String   @map("site_id") @db.Uuid
+  id            String   @db.VarChar(80)
+  formId        String   @map("form_id") @db.VarChar(64)
+  kind          String   @db.VarChar(20)
+  fields        Json     @default("{}") @db.JsonB
+  pageUrl       String?  @map("page_url") @db.VarChar(2048)
+  meta          Json     @default("{}") @db.JsonB
+  status        String   @default("new") @db.VarChar(20)
+  bookingStatus String?  @map("booking_status") @db.VarChar(20)
+  receivedAt    DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site       Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "submissions_site_id_fkey")
+  activities SubmissionActivity[]
+
+  @@id([siteId, id], map: "submissions_pkey")
+  @@index([siteId, kind, status, receivedAt], map: "submissions_site_id_kind_status_received_at_idx")
+  @@index([siteId, bookingStatus, receivedAt], map: "submissions_site_id_booking_status_received_at_idx")
+  @@map("submissions")
+}
+
+/// Timeline entry for Inbox/booking activity.
+model SubmissionActivity {
+  id           String   @id @default(uuid()) @db.Uuid
+  siteId       String   @map("site_id") @db.Uuid
+  submissionId String   @map("submission_id") @db.VarChar(80)
+  at           DateTime @default(now()) @db.Timestamptz(3)
+  actor        String   @db.VarChar(80)
+  message      String   @db.VarChar(500)
+
+  submission Submission @relation(fields: [siteId, submissionId], references: [siteId, id], onDelete: Cascade, map: "submission_activities_site_id_submission_id_fkey")
+
+  @@index([siteId, submissionId, at], map: "submission_activities_site_id_submission_id_at_idx")
+  @@map("submission_activities")
+}
+
+/// SaaS account identity. Authentication credentials are intentionally kept
+/// outside this first data-model slice so auth can evolve independently.
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique(map: "users_email_key") @db.VarChar(320)
+  name      String?  @db.VarChar(200)
+  status       String   @default("active") @db.VarChar(30)
+  passwordHash String?  @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  memberships OrganizationMember[]
+
+  @@map("users")
+}
+
+/// Billing/account boundary above one or more customer Sites.
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(200)
+  slug      String   @unique(map: "organizations_slug_key") @db.VarChar(120)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  members       OrganizationMember[]
+  sites         Site[]
+  subscriptions Subscription[]
+  billingEvents BillingEvent[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  role           String   @default("member") @db.VarChar(30)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "organization_members_organization_id_fkey")
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade, map: "organization_members_user_id_fkey")
+
+  @@unique([organizationId, userId], map: "organization_members_organization_id_user_id_key")
+  @@index([userId], map: "organization_members_user_id_idx")
+  @@index([organizationId], map: "organization_members_organization_id_idx")
+  @@map("organization_members")
+}
+
+/// Commercial package. Feature/usage limits live in `entitlements`, e.g.
+/// storageBytes, maxPages, maxDomains, maxUsers, bookingEnabled, crmEnabled.
+model Plan {
+  id                   String   @id @default(uuid()) @db.Uuid
+  key                  String   @unique(map: "plans_key_key") @db.VarChar(40)
+  name                 String   @db.VarChar(100)
+  description          String?  @db.VarChar(500)
+  monthlyPriceCents    Int?     @map("monthly_price_cents")
+  yearlyPriceCents     Int?     @map("yearly_price_cents")
+  currency             String   @default("SEK") @db.Char(3)
+  entitlements         Json     @default("{}") @db.JsonB
+  stripeProductId      String?  @unique(map: "plans_stripe_product_id_key") @map("stripe_product_id") @db.VarChar(255)
+  stripePriceMonthlyId String?  @unique(map: "plans_stripe_price_monthly_id_key") @map("stripe_price_monthly_id") @db.VarChar(255)
+  stripePriceYearlyId  String?  @unique(map: "plans_stripe_price_yearly_id_key") @map("stripe_price_yearly_id") @db.VarChar(255)
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+/// One paid subscription can provision/own one Site in v1. `siteId` stays
+/// nullable until checkout has completed and provisioning has created the Site.
+model Subscription {
+  id                     String    @id @default(uuid()) @db.Uuid
+  organizationId         String    @map("organization_id") @db.Uuid
+  planId                 String    @map("plan_id") @db.Uuid
+  siteId                 String?   @unique(map: "subscriptions_site_id_key") @map("site_id") @db.Uuid
+  provider               String    @default("stripe") @db.VarChar(30)
+  providerCustomerId     String?   @map("provider_customer_id") @db.VarChar(255)
+  providerSubscriptionId String?   @unique(map: "subscriptions_provider_subscription_id_key") @map("provider_subscription_id") @db.VarChar(255)
+  status                 String    @default("trialing") @db.VarChar(30)
+  billingInterval        String    @default("monthly") @map("billing_interval") @db.VarChar(20)
+  currentPeriodStart     DateTime? @map("current_period_start") @db.Timestamptz(3)
+  currentPeriodEnd       DateTime? @map("current_period_end") @db.Timestamptz(3)
+  cancelAtPeriodEnd      Boolean   @default(false) @map("cancel_at_period_end")
+  canceledAt             DateTime? @map("canceled_at") @db.Timestamptz(3)
+  trialEndsAt            DateTime? @map("trial_ends_at") @db.Timestamptz(3)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "subscriptions_organization_id_fkey")
+  plan         Plan         @relation(fields: [planId], references: [id], onDelete: Restrict, map: "subscriptions_plan_id_fkey")
+  site         Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull, map: "subscriptions_site_id_fkey")
+  billingEvents BillingEvent[]
+
+  @@index([organizationId], map: "subscriptions_organization_id_idx")
+  @@index([planId], map: "subscriptions_plan_id_idx")
+  @@index([status], map: "subscriptions_status_idx")
+  @@map("subscriptions")
+}
+
+/// Hostname → Site mapping. Platform domains will look like
+/// `customer.staark.app`; custom domains use the same resolver.
+model Domain {
+  id                String   @id @default(uuid()) @db.Uuid
+  siteId            String   @map("site_id") @db.Uuid
+  hostname          String   @unique(map: "domains_hostname_key") @db.VarChar(253)
+  type              String   @default("platform") @db.VarChar(30)
+  verified          Boolean  @default(false)
+  primaryDomain     Boolean  @default(false) @map("primary_domain")
+  verificationToken          String?  @map("verification_token") @db.VarChar(255)
+  sslStatus                  String   @default("pending") @map("ssl_status") @db.VarChar(50)
+  provider                   String?  @db.VarChar(30)
+  providerHostnameId         String?  @unique(map: "domains_provider_hostname_id_key") @map("provider_hostname_id") @db.VarChar(100)
+  providerStatus             String?  @map("provider_status") @db.VarChar(50)
+  providerError              String?  @map("provider_error") @db.Text
+  ownershipVerificationName  String?  @map("ownership_verification_name") @db.VarChar(253)
+  ownershipVerificationValue String?  @map("ownership_verification_value") @db.VarChar(255)
+  sslValidationRecords       Json?    @map("ssl_validation_records")
+  providerLastSyncAt         DateTime? @map("provider_last_sync_at") @db.Timestamptz(3)
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "domains_site_id_fkey")
+
+  @@index([siteId], map: "domains_site_id_idx")
+  @@index([siteId, primaryDomain], map: "domains_site_id_primary_domain_idx")
+  @@map("domains")
+}
+
+/// Current usage counters used for package quota checks. Storage is accounted
+/// in bytes so the same model works with local FS, MinIO, S3 or R2.
+model SiteUsage {
+  siteId           String   @id @map("site_id") @db.Uuid
+  storageBytes     BigInt   @default(0) @map("storage_bytes")
+  mediaCount       Int      @default(0) @map("media_count")
+  pagesCount       Int      @default(0) @map("pages_count")
+  submissionsCount Int      @default(0) @map("submissions_count")
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "site_usage_site_id_fkey")
+
+  @@map("site_usage")
+}
+
+/// Stripe webhook audit/idempotency ledger.
+model BillingEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  organizationId  String?   @map("organization_id") @db.Uuid
+  subscriptionId  String?   @map("subscription_id") @db.Uuid
+  provider        String    @default("stripe") @db.VarChar(30)
+  providerEventId String    @unique(map: "billing_events_provider_event_id_key") @map("provider_event_id") @db.VarChar(255)
+  type            String    @db.VarChar(120)
+  payload         Json?     @db.JsonB
+  processed       Boolean   @default(false)
+  processedAt     DateTime? @map("processed_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull, map: "billing_events_organization_id_fkey")
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull, map: "billing_events_subscription_id_fkey")
+
+  @@index([organizationId], map: "billing_events_organization_id_idx")
+  @@index([subscriptionId], map: "billing_events_subscription_id_idx")
+  @@index([type], map: "billing_events_type_idx")
+  @@index([processed], map: "billing_events_processed_idx")
+  @@map("billing_events")
+}

@@ -3,6 +3,15 @@ import {
   inferSubmissionKind,
   type SubmissionKind,
 } from "@staark/core";
+import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
+import { createPostgresRepositories } from "./repositories";
+import type {
+  BookingStatus as RepositoryBookingStatus,
+  RepositorySet,
+  SubmissionRecord,
+  SubmissionStatus,
+} from "./repositories";
 import {
   readStateJson,
   readStateText,
@@ -10,16 +19,8 @@ import {
   writeStateText,
 } from "./storage";
 
-export type InboxStatus =
-  | "new"
-  | "read"
-  | "replied"
-  | "archived";
-
-export type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "declined";
+export type InboxStatus = SubmissionStatus;
+export type BookingStatus = RepositoryBookingStatus;
 
 export type InboxActivity = {
   at: string;
@@ -52,11 +53,7 @@ function submissionId(index: number): string {
   return `SFS-${String(index + 1).padStart(5, "0")}`;
 }
 
-/**
- * CRM existed briefly in the starter admin.
- * Keep old state files readable, but do not surface historical
- * pipeline/follow-up noise in the CMS.
- */
+/** CRM existed briefly in the starter admin. Keep old state readable without surfacing old noise. */
 function visibleActivity(entry: InboxActivity): boolean {
   return !(
     /^Lead stage:/i.test(entry.message) ||
@@ -65,13 +62,44 @@ function visibleActivity(entry: InboxActivity): boolean {
   );
 }
 
-async function readState(): Promise<InboxStateFile> {
-  try {
-    const parsed = await readStateJson<unknown>(
-      "inbox-state.json",
-    );
+export function adminInboxUsesPostgres(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return resolvePublicContentConfig(env).source === "postgres";
+}
 
-    return parsed && typeof parsed === "object"
+async function requirePostgresSite(repositories: RepositorySet) {
+  const key = await requireAdminSiteKey();
+  const site = await repositories.sites.findByKey(key);
+  if (!site) {
+    throw new Error(`No PostgreSQL Site exists for resolved tenant "${key}".`);
+  }
+  return site;
+}
+
+function toInboxSubmission(record: SubmissionRecord): InboxSubmission {
+  return {
+    id: record.id,
+    formId: record.formId,
+    kind: record.kind,
+    fields: record.fields,
+    pageUrl: record.pageUrl,
+    receivedAt: record.receivedAt,
+    meta: record.meta,
+    status: record.status,
+    bookingStatus: record.bookingStatus,
+    activity: record.activity.map((entry) => ({
+      at: entry.at,
+      actor: entry.actor,
+      message: entry.message,
+    })),
+  };
+}
+
+async function readLegacyState(): Promise<InboxStateFile> {
+  try {
+    const parsed = await readStateJson<unknown>("inbox-state.json");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
       ? (parsed as InboxStateFile)
       : {};
   } catch {
@@ -79,30 +107,22 @@ async function readState(): Promise<InboxStateFile> {
   }
 }
 
-async function writeState(
-  state: InboxStateFile,
-): Promise<void> {
+async function writeLegacyState(state: InboxStateFile): Promise<void> {
   await writeStateJson("inbox-state.json", state);
 }
 
-export async function listInboxSubmissions():
-Promise<InboxSubmission[]> {
+async function listLegacyInboxSubmissions(): Promise<InboxSubmission[]> {
   let lines: string[] = [];
 
   try {
     const raw = await readStateText("submissions.jsonl");
-
-    if (raw === null) return [];
-
-    lines = raw
-      .trim()
-      .split("\n")
-      .filter(Boolean);
+    if (raw === null || !raw.trim()) return [];
+    lines = raw.trim().split("\n").filter(Boolean);
   } catch {
     return [];
   }
 
-  const state = await readState();
+  const state = await readLegacyState();
   const submissions: InboxSubmission[] = [];
 
   for (let index = 0; index < lines.length; index += 1) {
@@ -117,81 +137,61 @@ Promise<InboxSubmission[]> {
       };
 
       const id = submissionId(index);
-
-      const fields =
-        raw.fields && typeof raw.fields === "object"
-          ? (raw.fields as Record<string, unknown>)
-          : {};
-
-      const formId =
-        typeof raw.formId === "string"
-          ? raw.formId
-          : "form";
-
-      const kindResult =
-        SubmissionKindSchema.safeParse(raw.kind);
-
-      const kind = kindResult.success
-        ? kindResult.data
-        : inferSubmissionKind(formId, fields);
-
-      const receivedAt =
-        typeof raw.receivedAt === "string"
-          ? raw.receivedAt
-          : new Date(0).toISOString();
-
+      const fields = raw.fields && typeof raw.fields === "object" && !Array.isArray(raw.fields)
+        ? (raw.fields as Record<string, unknown>)
+        : {};
+      const formId = typeof raw.formId === "string" ? raw.formId : "form";
+      const kindResult = SubmissionKindSchema.safeParse(raw.kind);
+      const kind = kindResult.success ? kindResult.data : inferSubmissionKind(formId, fields);
+      const receivedAt = typeof raw.receivedAt === "string"
+        ? raw.receivedAt
+        : new Date(0).toISOString();
       const saved = state[id] ?? {};
-
-      const savedActivity =
-        saved.activity?.filter(visibleActivity) ?? [];
-
+      const savedActivity = saved.activity?.filter(visibleActivity) ?? [];
       const activity = savedActivity.length
         ? savedActivity
-        : [
-            {
-              at: receivedAt,
-              actor: "system",
-              message: "Submission received",
-            },
-          ];
+        : [{ at: receivedAt, actor: "system", message: "Submission received" }];
 
       submissions.push({
         id,
         formId,
         kind,
         fields,
-        pageUrl:
-          typeof raw.pageUrl === "string"
-            ? raw.pageUrl
-            : undefined,
+        pageUrl: typeof raw.pageUrl === "string" ? raw.pageUrl : undefined,
         receivedAt,
         meta:
-          raw.meta && typeof raw.meta === "object"
+          raw.meta && typeof raw.meta === "object" && !Array.isArray(raw.meta)
             ? (raw.meta as Record<string, string>)
             : undefined,
         status: saved.status ?? "new",
-        bookingStatus:
-          kind === "booking"
-            ? saved.bookingStatus ?? "pending"
-            : undefined,
+        bookingStatus: kind === "booking" ? saved.bookingStatus ?? "pending" : undefined,
         activity,
       });
     } catch {
-      // One malformed submission must not break the inbox.
+      // One malformed legacy line must not break the Inbox.
     }
   }
 
   return submissions.reverse();
 }
 
-export async function getInboxSubmission(
-  id: string,
-): Promise<InboxSubmission | null> {
-  return (
-    (await listInboxSubmissions()).find(
-      (item) => item.id === id,
-    ) ?? null
-  );
+export async function listInboxSubmissions(): Promise<InboxSubmission[]> {
+  if (!adminInboxUsesPostgres()) return listLegacyInboxSubmissions();
+
+  const repositories = createPostgresRepositories();
+  const site = await requirePostgresSite(repositories);
+  return (await repositories.submissions.list(site.id)).map(toInboxSubmission);
+}
+
+export async function getInboxSubmission(id: string): Promise<InboxSubmission | null> {
+  if (!adminInboxUsesPostgres()) {
+    return (await listLegacyInboxSubmissions()).find((item) => item.id === id) ?? null;
+  }
+
+  const repositories = createPostgresRepositories();
+  const site = await requirePostgresSite(repositories);
+  const record = await repositories.submissions.findById(site.id, id);
+  return record ? toInboxSubmission(record) : null;
 }
 
 export async function updateInboxSubmission(
@@ -202,85 +202,107 @@ export async function updateInboxSubmission(
     activityMessage?: string;
   },
 ): Promise<InboxSubmission | null> {
-  const current = await getInboxSubmission(id);
+  if (!adminInboxUsesPostgres()) {
+    const current = await getInboxSubmission(id);
+    if (!current) return null;
+
+    const state = await readLegacyState();
+    const previous = state[id] ?? {};
+    const activity = previous.activity?.filter(visibleActivity) ?? [];
+    if (!activity.length) {
+      activity.push({ at: current.receivedAt, actor: "system", message: "Submission received" });
+    }
+
+    if (patch.status && patch.status !== current.status) {
+      activity.push({
+        at: new Date().toISOString(),
+        actor: "admin",
+        message: `Status: ${current.status} → ${patch.status}`,
+      });
+    }
+    if (patch.bookingStatus && patch.bookingStatus !== current.bookingStatus) {
+      activity.push({
+        at: new Date().toISOString(),
+        actor: "admin",
+        message: `Booking: ${current.bookingStatus ?? "pending"} → ${patch.bookingStatus}`,
+      });
+    }
+    if (patch.activityMessage?.trim()) {
+      activity.push({
+        at: new Date().toISOString(),
+        actor: "admin",
+        message: patch.activityMessage.trim().slice(0, 500),
+      });
+    }
+
+    state[id] = {
+      ...(patch.status
+        ? { status: patch.status }
+        : previous.status
+          ? { status: previous.status }
+          : {}),
+      ...(patch.bookingStatus
+        ? { bookingStatus: patch.bookingStatus }
+        : previous.bookingStatus
+          ? { bookingStatus: previous.bookingStatus }
+          : {}),
+      activity,
+    };
+    await writeLegacyState(state);
+    return getInboxSubmission(id);
+  }
+
+  const repositories = createPostgresRepositories();
+  const site = await requirePostgresSite(repositories);
+  const current = await repositories.submissions.findById(site.id, id);
   if (!current) return null;
 
-  const state = await readState();
-  const previous = state[id] ?? {};
-
-  const activity =
-    previous.activity?.filter(visibleActivity) ?? [];
-
-  if (!activity.length) {
-    activity.push({
-      at: current.receivedAt,
-      actor: "system",
-      message: "Submission received",
-    });
+  if (patch.bookingStatus && current.kind !== "booking") {
+    throw new Error("Booking status can only be updated on booking submissions.");
   }
 
-  if (
-    patch.status &&
-    patch.status !== current.status
-  ) {
-    activity.push({
-      at: new Date().toISOString(),
+  const now = new Date().toISOString();
+  const appendActivity: InboxActivity[] = [];
+  if (patch.status && patch.status !== current.status) {
+    appendActivity.push({
+      at: now,
       actor: "admin",
-      message:
-        `Status: ${current.status} → ${patch.status}`,
+      message: `Status: ${current.status} → ${patch.status}`,
     });
   }
-
-  if (
-    patch.bookingStatus &&
-    patch.bookingStatus !== current.bookingStatus
-  ) {
-    activity.push({
-      at: new Date().toISOString(),
+  if (patch.bookingStatus && patch.bookingStatus !== current.bookingStatus) {
+    appendActivity.push({
+      at: now,
       actor: "admin",
-      message:
-        `Booking: ${
-          current.bookingStatus ?? "pending"
-        } → ${patch.bookingStatus}`,
+      message: `Booking: ${current.bookingStatus ?? "pending"} → ${patch.bookingStatus}`,
     });
   }
-
   if (patch.activityMessage?.trim()) {
-    activity.push({
-      at: new Date().toISOString(),
+    appendActivity.push({
+      at: now,
       actor: "admin",
-      message: patch.activityMessage
-        .trim()
-        .slice(0, 500),
+      message: patch.activityMessage.trim().slice(0, 500),
     });
   }
 
-  // Rebuild the record instead of spreading the old state.
-  // This drops legacy CRM keys when an item is next updated.
-  state[id] = {
-    ...(patch.status
-      ? { status: patch.status }
-      : previous.status
-        ? { status: previous.status }
-        : {}),
-
-    ...(patch.bookingStatus
-      ? { bookingStatus: patch.bookingStatus }
-      : previous.bookingStatus
-        ? { bookingStatus: previous.bookingStatus }
-        : {}),
-
-    activity,
-  };
-
-  await writeState(state);
-
-  return getInboxSubmission(id);
+  const updated = await repositories.submissions.update(site.id, id, {
+    status: patch.status,
+    bookingStatus: patch.bookingStatus,
+    appendActivity,
+  });
+  return updated ? toInboxSubmission(updated) : null;
 }
 
 export async function clearInbox(): Promise<void> {
-  await Promise.all([
-    writeStateText("submissions.jsonl", ""),
-    writeStateJson("inbox-state.json", {}),
-  ]);
+  if (!adminInboxUsesPostgres()) {
+    await Promise.all([
+      writeStateText("submissions.jsonl", ""),
+      writeStateJson("inbox-state.json", {}),
+    ]);
+    return;
+  }
+
+  const repositories = createPostgresRepositories();
+  const site = await requirePostgresSite(repositories);
+  await repositories.submissions.clear(site.id);
 }

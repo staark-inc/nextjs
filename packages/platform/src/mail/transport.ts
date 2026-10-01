@@ -15,6 +15,11 @@ export type StaarkMailMessage = {
   text?: string;
   html?: string;
   replyTo?: string;
+  /**
+   * Optional tenant-facing display name. The actual sender address still comes
+   * from server-side SMTP_FROM and is never tenant-controlled.
+   */
+  fromName?: string;
 };
 
 export type StaarkMailResult = {
@@ -106,6 +111,11 @@ export async function verifyMailTransport(
   await transporter.verify();
 }
 
+function senderAddress(from: string): string {
+  const angle = /<([^<>]+)>\s*$/.exec(from);
+  return (angle?.[1] ?? from).trim();
+}
+
 export async function sendMail(
   message: StaarkMailMessage,
   env: NodeJS.ProcessEnv = process.env,
@@ -115,7 +125,12 @@ export async function sendMail(
   const { config, transporter } = getMailTransport(env);
 
   const payload: SendMailOptions = {
-    from: config.from,
+    from: message.fromName?.trim()
+      ? {
+          name: message.fromName.trim(),
+          address: senderAddress(config.from),
+        }
+      : config.from,
     to: message.to,
     subject: message.subject,
     ...(message.text ? { text: message.text } : {}),

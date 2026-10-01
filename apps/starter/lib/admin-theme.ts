@@ -1,5 +1,8 @@
 import { getThemeRuntime } from "@/lib/theme-runtime";
-import { readContentJson, writeContentJson } from "@/lib/storage";
+import {
+  readAdminSiteSettings,
+  writeAdminSiteSettings,
+} from "@/lib/admin-site-settings";
 
 export type ThemeTokens = {
   colors?: Record<string, string>;
@@ -26,13 +29,12 @@ export type SiteThemeConfig = {
 };
 
 export async function readSite(): Promise<Record<string, unknown>> {
-  const site = await readContentJson<Record<string, unknown>>("site.json");
-  if (!site) throw new Error("Site settings not found.");
-  return site;
+  const site = await readAdminSiteSettings();
+  return site as unknown as Record<string, unknown>;
 }
 
 export async function writeSite(site: Record<string, unknown>): Promise<void> {
-  await writeContentJson("site.json", site);
+  await writeAdminSiteSettings(site);
 }
 
 function asStringRecord(value: unknown): Record<string, string> {
@@ -110,4 +112,99 @@ export function sanitizeOverrides(input: unknown): ThemeOverrides {
 
 export function sanitizeComponents(input: unknown): Record<string, string> {
   return cleanRecord(input, 80);
+}
+
+export type ThemeComponentVariants = Record<string, string[]>;
+
+export function readThemeComponentVariants(
+  themeId: string,
+): ThemeComponentVariants {
+  const runtime = getThemeRuntime(themeId);
+  if (!runtime) return {};
+
+  const variants = new Map<string, Set<string>>();
+
+  const add = (
+    key: string,
+    value: string,
+  ) => {
+    if (!key || !value) return;
+
+    let values = variants.get(key);
+    if (!values) {
+      values = new Set<string>();
+      variants.set(key, values);
+    }
+
+    values.add(value);
+  };
+
+  const chain = [];
+  const visited = new Set<string>();
+  let current: typeof runtime.theme | undefined =
+    runtime.theme;
+
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    chain.push(current);
+
+    if (!current.parentId) break;
+
+    current =
+      runtime.registry?.[current.parentId];
+
+    if (!current) break;
+  }
+
+  // Parent first, child last. Values are a union, so child themes may add
+  // variants while still inheriting parent-theme variants.
+  for (const theme of chain.reverse()) {
+    for (const preset of Object.values(theme.presets)) {
+      for (const [key, value] of Object.entries(
+        preset.components ?? {},
+      )) {
+        if (typeof value === "string") {
+          add(key, value);
+        }
+      }
+    }
+
+    for (const [key, values] of Object.entries(
+      theme.componentVariants ?? {},
+    )) {
+      for (const value of values) {
+        add(key, value);
+      }
+    }
+  }
+
+  return Object.fromEntries(
+    [...variants.entries()].map(
+      ([key, values]) => [
+        key,
+        [...values],
+      ],
+    ),
+  );
+}
+
+export function sanitizeComponentsForTheme(
+  themeId: string,
+  input: unknown,
+): Record<string, string> {
+  const cleaned = sanitizeComponents(input);
+  const variants =
+    readThemeComponentVariants(themeId);
+
+  const supported: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(cleaned)) {
+    const allowed = variants[key] ?? [];
+
+    if (allowed.includes(value)) {
+      supported[key] = value;
+    }
+  }
+
+  return supported;
 }

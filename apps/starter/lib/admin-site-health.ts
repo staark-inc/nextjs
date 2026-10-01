@@ -3,6 +3,9 @@ import { resolveThemeRuntime } from "./theme-runtime";
 import { listMediaFiles } from "./admin-media";
 import { buildMediaUsageIndex } from "./admin-media-usage";
 import { listRedirects, type RedirectRule } from "./admin-redirects";
+import { resolvePublicContentConfig } from "./content-source";
+import { requireAdminSiteKey } from "./admin-tenant";
+import { createPostgresRepositories } from "./repositories";
 import {
   contentStoragePath,
   listContent,
@@ -144,7 +147,90 @@ function issueId(
   return `${category}:${source}:${code}`;
 }
 
+async function readHealthSite(): Promise<JsonObject> {
+  const config = resolvePublicContentConfig();
+
+  if (config.source === "postgres") {
+    const repositories = createPostgresRepositories();
+    const siteKey = await requireAdminSiteKey();
+    const site = await repositories.sites.findByKey(siteKey);
+
+    if (!site) {
+      throw new Error(
+        `No PostgreSQL Site exists for resolved tenant "${siteKey}".`,
+      );
+    }
+
+    return site.settings as unknown as JsonObject;
+  }
+
+  const storedSite = await readContentJson<JsonObject>("site.json");
+  if (!storedSite) {
+    throw new Error("Site settings not found in storage.");
+  }
+
+  return storedSite;
+}
+
 async function readPages(issues: HealthIssue[]): Promise<PageRecord[]> {
+  const config = resolvePublicContentConfig();
+
+  if (config.source === "postgres") {
+    try {
+      const repositories = createPostgresRepositories();
+      const siteKey = await requireAdminSiteKey();
+      const site = await repositories.sites.findByKey(siteKey);
+
+      if (!site) {
+        throw new Error(
+          `No PostgreSQL Site exists for resolved tenant "${siteKey}".`,
+        );
+      }
+
+      const records = await repositories.pages.list(site.id);
+      const pages: PageRecord[] = [];
+
+      for (const record of records) {
+        const data = record.page as unknown as JsonObject;
+        const parsed = PageSchema.safeParse(data);
+
+        if (!parsed.success) {
+          const first = parsed.error.issues[0];
+
+          issues.push({
+            id: issueId("content", record.id, "schema"),
+            category: "content",
+            severity: "error",
+            title: "Page does not match the content schema",
+            detail: `${record.page.path}: ${first?.path.join(".") || "page"} ${first?.message || "is invalid"}`,
+            source: record.page.path,
+            href: pageEditorHref(record.id),
+          });
+        }
+
+        pages.push({
+          file: record.id,
+          data,
+          path: record.page.path,
+          title: record.page.title,
+        });
+      }
+
+      return pages;
+    } catch (error) {
+      issues.push({
+        id: issueId("content", "pages", "storage-unreadable"),
+        category: "content",
+        severity: "error",
+        title: "Page storage cannot be read",
+        detail: (error as Error).message,
+        href: "/admin/pages",
+      });
+
+      return [];
+    }
+  }
+
   const prefix = `${contentStoragePath("pages")}/`;
   let files: string[];
 
@@ -679,9 +765,7 @@ export async function runSiteHealth(): Promise<SiteHealthReport> {
 
   let site: JsonObject = {};
   try {
-    const storedSite = await readContentJson<JsonObject>("site.json");
-    if (!storedSite) throw new Error("Site settings not found in storage.");
-    site = storedSite;
+    site = await readHealthSite();
     const parsed = SiteSettingsSchema.safeParse(site);
     if (!parsed.success) {
       const first = parsed.error.issues[0];

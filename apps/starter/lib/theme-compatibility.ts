@@ -1,4 +1,4 @@
-import { contentStoragePath, listContent, readContentJson } from "./storage";
+import { listAdminContentPages } from "./admin-site-settings";
 import { getThemeRuntime } from "./theme-runtime";
 
 export type ThemeBlockUsage = {
@@ -10,10 +10,6 @@ export type ThemeBlockUsage = {
 export type ThemeCompatibility = {
   compatible: boolean;
   incompatible: ThemeBlockUsage[];
-};
-
-type ContentPage = {
-  blocks?: unknown[];
 };
 
 export function themeSupportedBlockTypes(themeId: string): Set<string> {
@@ -28,27 +24,17 @@ export function themeSupportedBlockTypes(themeId: string): Set<string> {
 }
 
 export async function scanThemeBlockUsage(): Promise<ThemeBlockUsage[]> {
-  const prefix = `${contentStoragePath("pages")}/`;
-  const files = (await listContent("pages"))
-    .map((entry) => entry.path.startsWith(prefix) ? entry.path.slice(prefix.length) : "")
-    .filter((file) => Boolean(file) && !file.includes("/") && file.endsWith(".json"))
-    .sort();
-
+  const pages = await listAdminContentPages();
   const usage = new Map<string, { count: number; pages: Set<string> }>();
 
-  for (const file of files) {
-    const page = await readContentJson<ContentPage>(`pages/${file}`);
-    if (!page || !Array.isArray(page.blocks)) continue;
-
+  for (const { file, page } of pages) {
     for (const block of page.blocks) {
-      if (!block || typeof block !== "object" || Array.isArray(block)) continue;
-      const rawType = (block as Record<string, unknown>).type;
-      if (typeof rawType !== "string" || !rawType.trim()) continue;
+      const type = block.type.trim();
+      if (!type) continue;
 
-      const type = rawType.trim();
       const current = usage.get(type) ?? { count: 0, pages: new Set<string>() };
       current.count += 1;
-      current.pages.add(file);
+      current.pages.add(page.path || file);
       usage.set(type, current);
     }
   }

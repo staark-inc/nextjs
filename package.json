@@ -11,7 +11,8 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "sign-request": "node scripts/sign-request.mjs"
+    "sign-request": "node scripts/sign-request.mjs",
+    "smoke:prod": "node scripts/prod-smoke.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.63.0",

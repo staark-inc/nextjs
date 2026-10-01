@@ -1,0 +1,378 @@
+.firstSetup {
+  width: min(980px, calc(100% - 40px));
+  margin: 44px auto 80px;
+  color: #172033;
+}
+
+.firstSetup__hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.firstSetup__eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.firstSetup__hero h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 50px);
+  line-height: 1.04;
+  letter-spacing: -.04em;
+}
+
+.firstSetup__hero p {
+  max-width: 680px;
+  margin: 14px 0 0;
+  color: #667085;
+  line-height: 1.6;
+}
+
+.firstSetup__stepCount {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 1px solid #e2e7ef;
+  border-radius: 999px;
+  background: #fff;
+  font-weight: 800;
+}
+
+.firstSetup__steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.firstSetup__steps button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #8b95a7;
+  text-align: left;
+  cursor: default;
+}
+
+.firstSetup__steps button.is-active,
+.firstSetup__steps button.is-done {
+  color: #172033;
+  cursor: pointer;
+}
+
+.firstSetup__steps button.is-active {
+  background: #edf3ff;
+}
+
+.firstSetup__steps button span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef1f5;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.firstSetup__steps button.is-active span,
+.firstSetup__steps button.is-done span {
+  background: #2563eb;
+  color: white;
+}
+
+.firstSetup__panel {
+  min-height: 480px;
+  padding: clamp(22px, 4vw, 42px);
+  border: 1px solid #e2e7ef;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgba(35, 49, 75, .07);
+}
+
+.firstSetup__heading {
+  margin-bottom: 28px;
+}
+
+.firstSetup__heading h2 {
+  margin: 0 0 8px;
+  font-size: 25px;
+  letter-spacing: -.02em;
+}
+
+.firstSetup__heading p {
+  margin: 0;
+  color: #667085;
+}
+
+.firstSetup__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.firstSetup__field {
+  display: grid;
+  gap: 8px;
+}
+
+.firstSetup__field--wide {
+  grid-column: 1 / -1;
+}
+
+.firstSetup__field > span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.firstSetup__field input,
+.firstSetup__field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid #d8dee8;
+  border-radius: 11px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.firstSetup__field input:focus,
+.firstSetup__field select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.firstSetup__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.firstSetup__choice {
+  display: grid;
+  gap: 5px;
+  min-height: 94px;
+  padding: 16px;
+  border: 1px solid #e2e7ef;
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.firstSetup__choice:hover {
+  border-color: #b8c5d9;
+}
+
+.firstSetup__choice.is-selected {
+  border-color: #2563eb;
+  background: #f4f7ff;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+.firstSetup__choice span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.firstSetup__theme {
+  display: flex;
+  align-items: end;
+  gap: 24px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #edf0f4;
+}
+
+.firstSetup__theme .firstSetup__field {
+  min-width: 240px;
+}
+
+.firstSetup__theme p {
+  margin: 0 0 12px;
+  color: #667085;
+}
+
+.firstSetup__pageList {
+  display: grid;
+  gap: 10px;
+}
+
+.firstSetup__pageRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 18px;
+  border: 1px solid #e2e7ef;
+  border-radius: 13px;
+  cursor: pointer;
+}
+
+.firstSetup__pageRow > div {
+  display: grid;
+  gap: 4px;
+}
+
+.firstSetup__pageRow > div span {
+  color: #667085;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.firstSetup__pageRow input {
+  width: 19px;
+  height: 19px;
+}
+
+.firstSetup__pageRow.is-fixed {
+  background: #f8fafc;
+  cursor: default;
+}
+
+.firstSetup__pageRow.is-fixed > span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.firstSetup__review {
+  display: grid;
+  margin: 0;
+  border: 1px solid #e2e7ef;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.firstSetup__review > div {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 20px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.firstSetup__review > div:last-child {
+  border-bottom: 0;
+}
+
+.firstSetup__review dt {
+  color: #667085;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.firstSetup__review dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.firstSetup__notice,
+.firstSetup__error {
+  margin-top: 18px;
+  padding: 13px 15px;
+  border-radius: 11px;
+}
+
+.firstSetup__notice {
+  background: #f6f8fb;
+  color: #556176;
+}
+
+.firstSetup__error {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b42318;
+}
+
+.firstSetup__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 22px;
+  border-top: 1px solid #edf0f4;
+}
+
+.firstSetup__button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #2563eb;
+  border-radius: 11px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.firstSetup__button--ghost {
+  border-color: #d8dee8;
+  background: #fff;
+  color: #344054;
+}
+
+.firstSetup__button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .firstSetup {
+    width: min(100% - 20px, 980px);
+    margin-top: 22px;
+  }
+
+  .firstSetup__hero {
+    align-items: flex-start;
+  }
+
+  .firstSetup__stepCount {
+    display: none;
+  }
+
+  .firstSetup__steps {
+    grid-template-columns: repeat(4, auto);
+    overflow-x: auto;
+  }
+
+  .firstSetup__steps button {
+    font-size: 0;
+  }
+
+  .firstSetup__steps button span {
+    font-size: 12px;
+  }
+
+  .firstSetup__grid,
+  .firstSetup__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .firstSetup__field--wide {
+    grid-column: auto;
+  }
+
+  .firstSetup__theme {
+    display: grid;
+  }
+
+  .firstSetup__review > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

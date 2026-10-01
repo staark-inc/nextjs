@@ -2,67 +2,74 @@ import { NextResponse } from "next/server";
 import {
   MailConfigurationError,
   sendMail,
-  verifyMailTransport,
 } from "@staark/platform/server";
-import { requireManager } from "../../guard";
+
+import { readAdminSiteSettings } from "@/lib/admin-site-settings";
+import { requireAuth } from "../../guard";
 
 function validEmail(value: string): boolean {
   return value.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-export async function POST(req: Request) {
-  const blocked = await requireManager();
+export async function POST() {
+  const blocked = await requireAuth();
   if (blocked) return blocked;
 
-  let body: { to?: unknown; verifyOnly?: unknown };
   try {
-    body = (await req.json()) as { to?: unknown; verifyOnly?: unknown };
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON request." }, { status: 400 });
-  }
+    const settings = await readAdminSiteSettings();
+    const to =
+      settings.email.notificationEmail?.trim() ||
+      settings.contact.email?.trim() ||
+      "";
 
-  try {
-    if (body.verifyOnly === true) {
-      await verifyMailTransport();
-      return NextResponse.json({ ok: true, verified: true });
-    }
-
-    const to = typeof body.to === "string" ? body.to.trim() : "";
     if (!validEmail(to)) {
       return NextResponse.json(
-        { error: "A valid recipient email is required." },
+        {
+          error:
+            "Set a valid notification email in Settings before sending a test.",
+        },
         { status: 400 },
       );
     }
 
+    const replyTo =
+      settings.email.replyTo?.trim() ||
+      settings.contact.email?.trim() ||
+      undefined;
+
     const result = await sendMail({
       to,
-      subject: "Staark SMTP test",
+      subject: `Email test - ${settings.name}`,
       text: [
-        "Staark Next SMTP transport is working.",
+        `Email delivery for ${settings.name} is working.`,
         "",
         `Sent at: ${new Date().toISOString()}`,
-        "This is a manager-triggered diagnostic message.",
+        "Staark manages the email transport for this website.",
       ].join("\n"),
+      fromName: settings.email.fromName?.trim() || settings.name,
+      ...(replyTo ? { replyTo } : {}),
     });
 
     return NextResponse.json({
       ok: true,
       messageId: result.messageId,
-      accepted: result.accepted,
-      rejected: result.rejected,
+      deliveredTo: to,
     });
   } catch (error) {
     if (error instanceof MailConfigurationError) {
-      return NextResponse.json({ error: error.message }, { status: 503 });
+      return NextResponse.json(
+        { error: "Email delivery is not available." },
+        { status: 503 },
+      );
     }
 
     console.error(
-      "[staark] SMTP diagnostic failed:",
+      "[staark] SMTP test failed:",
       error instanceof Error ? error.message : String(error),
     );
+
     return NextResponse.json(
-      { error: "SMTP diagnostic failed. Check server logs and mail configuration." },
+      { error: "Could not send the test email. Check the server logs." },
       { status: 502 },
     );
   }

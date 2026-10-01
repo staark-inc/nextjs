@@ -4,7 +4,8 @@ import {
   readSite,
   readSiteTheme,
   readThemePresets,
-  sanitizeComponents,
+  readThemeComponentVariants,
+  sanitizeComponentsForTheme,
   sanitizeOverrides,
   writeSite,
 } from "@/lib/admin-theme";
@@ -24,12 +25,21 @@ export async function GET() {
     ? current.preset
     : presets[0]?.id;
 
+  const componentVariants =
+    readThemeComponentVariants(theme);
+
   return NextResponse.json({
     theme,
     preset,
     presets,
     overrides: current.overrides ?? {},
-    components: current.components ?? {},
+    // Old/free-text overrides that are not supported by the active theme
+    // are deliberately not exposed back to the editor.
+    components: sanitizeComponentsForTheme(
+      theme,
+      current.components ?? {},
+    ),
+    componentVariants,
   });
 }
 
@@ -48,7 +58,10 @@ export async function PUT(req: Request) {
   }
 
   const overrides = sanitizeOverrides(body.overrides);
-  const components = sanitizeComponents(body.components);
+  const components = sanitizeComponentsForTheme(
+    theme,
+    body.components,
+  );
 
   site.theme = {
     ...(site.theme && typeof site.theme === "object" && !Array.isArray(site.theme)
@@ -84,5 +97,7 @@ export async function PUT(req: Request) {
     changedPreset: previous.preset !== preset,
     overrides,
     components,
+    componentVariants:
+      readThemeComponentVariants(theme),
   });
 }

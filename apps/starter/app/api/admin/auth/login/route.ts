@@ -7,9 +7,11 @@ import {
   resolveAdminAuthConfig,
   resolveAdminLoginAccount,
   type AdminAuthConfig,
+  type AdminRole,
   type LoginRateLimiter,
 } from "@staark/platform/server";
 import { getSession } from "@/lib/auth";
+import { resolveSaasLoginAccount } from "@/lib/saas-auth";
 
 // Keep one limiter per server process, also across dev hot reloads.
 const globalForLimiter = globalThis as typeof globalThis & { __staarkLoginLimiter?: LoginRateLimiter };
@@ -29,14 +31,6 @@ function tooManyAttempts(retryAfterSeconds: number) {
 }
 
 export async function POST(req: NextRequest) {
-  let config: AdminAuthConfig;
-  try {
-    config = resolveAdminAuthConfig();
-  } catch (error) {
-    console.error("[staark] Admin login unavailable:", (error as Error).message);
-    return NextResponse.json({ ok: false, code: "not_configured" }, { status: 503 });
-  }
-
   const key = clientAddress(req.headers);
   const gate = limiter.check(key);
   if (!gate.allowed) return tooManyAttempts(gate.retryAfterSeconds);
@@ -65,7 +59,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, code: "bad_request" }, { status: 400 });
   }
 
-  const account = resolveAdminLoginAccount(config, { username, password });
+  let account: { username: string; role: AdminRole } | null = await resolveSaasLoginAccount(
+    {
+      host: req.headers.get("host"),
+      forwardedHost: req.headers.get("x-forwarded-host"),
+    },
+    username,
+    password,
+  );
+
+  if (!account) {
+    try {
+      const config: AdminAuthConfig = resolveAdminAuthConfig();
+      account = resolveAdminLoginAccount(config, { username, password });
+    } catch {
+      account = null;
+    }
+  }
+
   if (!account) {
     const after = limiter.recordFailure(key);
     if (!after.allowed) return tooManyAttempts(after.retryAfterSeconds);

@@ -17,6 +17,7 @@ import styles from "./dashboard.module.css";
 const ARROW = "M5 12h14 M13 6l6 6-6 6";
 
 const ACTIVITY_ICONS: Record<string, string> = {
+  inbox: "M4 4h16v16H4V4Zm0 3 8 6 8-6",
   enquiry: "M4 4h16v16H4V4Zm0 3 8 6 8-6",
   booking: "M4 6h16v14H4V6Zm0 4h16 M8 3v4 M16 3v4",
   page: "M4 20h4L19 9l-4-4L4 16v4Z",
@@ -82,6 +83,7 @@ export default function ClientDashboard({
     // Do not expose internal CRM / admin state changes to the client.
     return (
       event.kind === "enquiry" ||
+      event.kind === "inbox" ||
       event.kind === "page" ||
       event.kind === "media"
     );
