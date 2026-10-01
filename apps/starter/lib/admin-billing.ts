@@ -1,7 +1,6 @@
 import { getPrismaClient } from "./db/prisma";
 import { requireAdminTenantContext } from "./admin-tenant";
 import {
-  createStripeCustomer,
   createStripePortalSession,
   stripeBillingConfigured,
   stripeCustomerId,
@@ -60,24 +59,12 @@ export async function createAdminBillingPortalSession(
     throw new Error("The current tenant does not have an attached subscription.");
   }
 
-  let customerId = subscription.providerCustomerId;
+  const customerId = subscription.providerCustomerId;
 
   if (!customerId) {
-    const customer = await createStripeCustomer({
-      name: subscription.organization.name,
-      organizationId: subscription.organization.id,
-      siteId: tenant.siteId,
-      siteKey: tenant.siteKey,
-    });
-    customerId = customer.id;
-
-    await prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        provider: "stripe",
-        providerCustomerId: customerId,
-      },
-    });
+    throw new Error(
+      "Billing customer has not been synchronized from Staark Hub yet.",
+    );
   }
 
   const session = await createStripePortalSession({

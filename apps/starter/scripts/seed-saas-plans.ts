@@ -3,66 +3,127 @@ import { disconnectPrismaClient, getPrismaClient } from "../lib/db/prisma";
 const GIB = 1024 * 1024 * 1024;
 
 /**
- * Domain entitlement rule:
- * - every site gets exactly one platform hostname: <site>.staark.app
- * - maxDomains counts CUSTOM domains only
- * - Start: 0 custom, SaaS: 1 custom, Business: 3 custom
+ * Runtime mirror of the canonical Staark Hub plan catalog.
+ *
+ * Billing/Stripe remains owned by staark-inc/web.
+ * This table exists so the Next runtime can enforce local usage/features and
+ * render the customer's Plan & usage area.
+ *
+ * Canonical commercial plans:
+ * - Starter:  199 SEK/month, 1 990 SEK/year
+ * - Growth:   399 SEK/month, 3 990 SEK/year
+ * - Business: 899 SEK/month, 8 990 SEK/year
+ *
+ * `start` is intentionally kept as the runtime key for backward compatibility.
+ * Hub plan codes map as:
+ *   STARTER  -> start
+ *   SAAS     -> saas
+ *   BUSINESS -> business
  */
 const plans = [
   {
     key: "start",
-    name: "Start",
-    description:
-      "Grundläggande webbplats med en inkluderad staark.app-adress.",
-    monthlyPriceCents: 9900,
-    yearlyPriceCents: 99000,
+    name: "Starter",
+    description: "Website care for one production website.",
+    monthlyPriceCents: 19900,
+    yearlyPriceCents: 199000,
     currency: "SEK",
     entitlements: {
-      storageBytes: 2 * GIB,
+      websiteMax: 1,
+      customDomain: true,
+
+      storageBytes: 10 * GIB,
       maxPages: 5,
-      // maxDomains counts custom domains only.
-      // Every plan also gets one platform hostname: <site>.staark.app.
-      maxDomains: 0,
+      maxDomains: 1,
       maxUsers: 1,
       maxForms: 1,
+
+      backupRetentionDays: 7,
+      security: "core",
+      performance: "core",
+      seo: "basic",
+      searchConsole: "overview",
+      analytics: "overview",
+      businessProfile: false,
+      leadsEnabled: false,
+      reports: "basic",
+      automations: "none",
+      clientManagementEnabled: false,
+      teamEnabled: false,
+      support: "standard",
+
+      // Next-runtime capability.
       bookingEnabled: false,
       crmEnabled: false,
     },
   },
   {
     key: "saas",
-    name: "SaaS",
-    description:
-      "Komplett webbplattform med en egen domän och fler funktioner.",
-    monthlyPriceCents: 19900,
-    yearlyPriceCents: 199000,
+    name: "Growth",
+    description: "Growth tooling and integrations for one production website.",
+    monthlyPriceCents: 39900,
+    yearlyPriceCents: 399000,
     currency: "SEK",
     entitlements: {
-      storageBytes: 10 * GIB,
+      websiteMax: 1,
+      customDomain: true,
+
+      storageBytes: 30 * GIB,
       maxPages: 25,
-      // One custom domain, in addition to the included staark.app hostname.
       maxDomains: 1,
-      maxUsers: 3,
+      maxUsers: 1,
       maxForms: 25,
+
+      backupRetentionDays: 14,
+      security: "full",
+      performance: "full",
+      seo: "full",
+      searchConsole: "full",
+      analytics: "full",
+      businessProfile: true,
+      leadsEnabled: true,
+      reports: "full",
+      automations: "standard",
+      clientManagementEnabled: false,
+      teamEnabled: false,
+      support: "standard",
+
+      // Vertical/runtime capability already supported by Staark Next.
       bookingEnabled: true,
-      crmEnabled: true,
+      crmEnabled: false,
     },
   },
   {
     key: "business",
     name: "Business",
-    description:
-      "Avancerad lösning med upp till tre egna domäner och högre kapacitet.",
-    monthlyPriceCents: 39900,
-    yearlyPriceCents: 399000,
+    description: "Operations, CRM and advanced reporting for one production website.",
+    monthlyPriceCents: 89900,
+    yearlyPriceCents: 899000,
     currency: "SEK",
     entitlements: {
-      storageBytes: 50 * GIB,
+      websiteMax: 1,
+      customDomain: true,
+
+      storageBytes: 60 * GIB,
       maxPages: null,
-      // Three custom domains, in addition to the included staark.app hostname.
-      maxDomains: 3,
+      maxDomains: 1,
       maxUsers: 10,
       maxForms: null,
+
+      backupRetentionDays: 30,
+      security: "full",
+      performance: "full",
+      seo: "full",
+      searchConsole: "full",
+      analytics: "advanced",
+      businessProfile: true,
+      leadsEnabled: true,
+      reports: "advanced",
+      automations: "advanced",
+      clientManagementEnabled: true,
+      teamEnabled: true,
+      support: "priority",
+
       bookingEnabled: true,
       crmEnabled: true,
     },
@@ -92,7 +153,7 @@ async function main() {
   }
 
   console.log(
-    `Seeded SaaS plans: ${plans.map((plan) => plan.key).join(", ")}`,
+    `Seeded SaaS plan mirror: ${plans.map((plan) => plan.key).join(", ")}`,
   );
 }
 
