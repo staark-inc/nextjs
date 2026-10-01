@@ -11,6 +11,7 @@ import {
   SETUP_CLAIM_COOKIE,
   validateSetupSession,
 } from "@/lib/setup-claim";
+import { notifyHubSetupActivated } from "@/lib/hub-activation";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,14 @@ export async function POST(request: NextRequest) {
     session.expiresAt = loginAt + ADMIN_SESSION_TTL_SECONDS * 1000;
     session.remember = false;
     await session.save();
+
+    // Best-effort: customer setup must not fail if Hub is temporarily
+    // unavailable. Re-provisioning can reconcile ACTIVE state later.
+    await notifyHubSetupActivated({
+      siteId: result.siteId,
+      siteKey: result.siteKey,
+      ownerEmail: result.ownerEmail,
+    });
 
     const response = NextResponse.json({ ok: true, ...result });
     response.cookies.set(SETUP_CLAIM_COOKIE, "", {
