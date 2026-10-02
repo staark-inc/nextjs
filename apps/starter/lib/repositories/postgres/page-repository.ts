@@ -74,6 +74,26 @@ function blockCreates(page: Page) {
 export class PostgresPageRepository implements PageRepository {
   constructor(private readonly db: RepositoryDbClient) {}
 
+  private async syncPagesCount(siteId: string): Promise<void> {
+    const pagesCount = await this.db.page.count({
+      where: {
+        siteId,
+        deletedAt: null,
+      },
+    });
+
+    await this.db.siteUsage.upsert({
+      where: { siteId },
+      create: {
+        siteId,
+        pagesCount,
+      },
+      update: {
+        pagesCount,
+      },
+    });
+  }
+
   async list(
     siteId: string,
     options: PageReadOptions = {},
@@ -155,6 +175,8 @@ export class PostgresPageRepository implements PageRepository {
       include: { blocks: orderedBlocks },
     });
 
+    await this.syncPagesCount(siteId);
+
     return mapPage(row);
   }
 
@@ -186,6 +208,8 @@ export class PostgresPageRepository implements PageRepository {
       include: { blocks: orderedBlocks },
     });
 
+    await this.syncPagesCount(siteId);
+
     return mapPage(row);
   }
 
@@ -209,6 +233,8 @@ export class PostgresPageRepository implements PageRepository {
       },
       include: { blocks: orderedBlocks },
     });
+
+    await this.syncPagesCount(siteId);
 
     return mapPage(row);
   }
