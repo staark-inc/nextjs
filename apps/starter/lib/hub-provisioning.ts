@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 
 import { getPrismaClient } from "./db/prisma";
+import {
+  createFirstSetup,
+  type FirstSetupInput,
+} from "./first-setup";
 import { issueSetupClaimForSite } from "./setup-claim";
 
 export type HubProvisioningInput = {
@@ -23,6 +27,10 @@ export type HubProvisioningInput = {
   currentPeriodEnd?: string | null;
   trialEnd?: string | null;
   cancelAtPeriodEnd?: boolean;
+
+  hostname?: string;
+  domainType?: "platform";
+  setup?: FirstSetupInput;
 };
 
 const PLAN_KEYS = {
@@ -103,12 +111,67 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
 
   const suffix = digest(hubSubscriptionId).slice(0, 8);
   const fullDigest = digest(hubSubscriptionId);
-  const nameSlug = slugify(customerName) || "site";
 
-  const organizationSlug = `${nameSlug}-${suffix}`.slice(0, 120);
-  const siteKey = `hub-${fullDigest.slice(0, 24)}`;
-  const hostname = `${nameSlug}-${suffix}.${platformDomain}`;
-  const siteUrl = `https://${hostname}`;
+  const configuredName =
+    raw.setup?.name?.trim() || customerName;
+
+  const nameSlug =
+    slugify(configuredName) || "site";
+
+  const organizationSlug =
+    `${nameSlug}-${suffix}`.slice(0, 120);
+
+  const siteKey =
+    `hub-${fullDigest.slice(0, 24)}`;
+
+  const fallbackHostname =
+    `${nameSlug}-${suffix}.${platformDomain}`;
+
+  const hostname =
+    raw.hostname?.trim().toLowerCase() ||
+    fallbackHostname;
+
+  const platformSuffix =
+    `.${platformDomain}`;
+
+  if (!hostname.endsWith(platformSuffix)) {
+    throw new Error(
+      `hostname must be a subdomain of ${platformDomain}.`,
+    );
+  }
+
+  const hostnameLabel =
+    hostname.slice(
+      0,
+      -platformSuffix.length,
+    );
+
+  if (
+    !hostnameLabel ||
+    hostnameLabel.includes(".") ||
+    hostnameLabel.length > 63 ||
+    hostnameLabel.includes("--") ||
+    !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(
+      hostnameLabel,
+    )
+  ) {
+    throw new Error(
+      "hostname contains an invalid platform subdomain.",
+    );
+  }
+
+  const siteUrl =
+    `https://${hostname}`;
+
+  const ownerEmail =
+    raw.setup?.owner?.email
+      ?.trim()
+      .toLowerCase() ||
+    customerEmail;
+
+  const ownerName =
+    raw.setup?.owner?.name?.trim() ||
+    customerName;
 
   const prisma = getPrismaClient();
 
@@ -124,13 +187,14 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
     }
 
     const user = await tx.user.upsert({
-      where: { email: customerEmail },
+      where: { email: ownerEmail },
       create: {
-        email: customerEmail,
-        name: customerName,
+        email: ownerEmail,
+        name: ownerName,
         status: "active",
       },
       update: {
+        name: ownerName,
         status: "active",
       },
     });
@@ -138,7 +202,7 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
     const organization = await tx.organization.upsert({
       where: { slug: organizationSlug },
       create: {
-        name: customerName,
+        name: configuredName,
         slug: organizationSlug,
       },
       update: {},
@@ -165,15 +229,43 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
       where: { key: siteKey },
       create: {
         key: siteKey,
-        name: customerName,
+        name: configuredName,
         organizationId: organization.id,
         settings: {
-          name: customerName,
+          name: configuredName,
           url: siteUrl,
         },
       },
       update: {
+        name: configuredName,
         organizationId: organization.id,
+      },
+    });
+
+    const occupiedDomain =
+      await tx.domain.findUnique({
+        where: { hostname },
+        select: {
+          siteId: true,
+        },
+      });
+
+    if (
+      occupiedDomain &&
+      occupiedDomain.siteId !== site.id
+    ) {
+      throw new Error(
+        `Hostname "${hostname}" is already in use.`,
+      );
+    }
+
+    await tx.domain.deleteMany({
+      where: {
+        siteId: site.id,
+        type: "platform",
+        hostname: {
+          not: hostname,
+        },
       },
     });
 
@@ -244,23 +336,72 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
     };
   });
 
-  const setupClaim = result.site.setupCompletedAt
-    ? null
-    : await issueSetupClaimForSite(siteKey);
+  let setupCompleted =
+    Boolean(result.site.setupCompletedAt);
+
+  if (
+    raw.setup &&
+    !setupCompleted
+  ) {
+    if (!raw.setup.owner) {
+      throw new Error(
+        "setup.owner is required.",
+      );
+    }
+
+    await createFirstSetup(
+      raw.setup,
+      {
+        host: hostname,
+        forwardedHost: hostname,
+      },
+    );
+
+    setupCompleted = true;
+  }
+
+  const setupClaim =
+    setupCompleted
+      ? null
+      : await issueSetupClaimForSite(
+          siteKey,
+        );
 
   return {
-    organizationId: result.organization.id,
-    subscriptionId: result.subscription.id,
-    siteId: result.site.id,
+    organizationId:
+      result.organization.id,
+
+    subscriptionId:
+      result.subscription.id,
+
+    siteId:
+      result.site.id,
+
     siteKey,
     hostname,
     siteUrl,
-    setupUrl: setupClaim
-      ? `https://${hostname}/setup/claim?token=${encodeURIComponent(
-          setupClaim.token,
-        )}`
-      : null,
-    setupExpiresAt: setupClaim?.expiresAt ?? null,
-    setupCompleted: Boolean(result.site.setupCompletedAt),
+
+    adminUrl:
+      setupCompleted
+        ? `${siteUrl}/admin/login`
+        : null,
+
+    domainType:
+      "platform",
+
+    domainVerified:
+      true,
+
+    setupUrl:
+      setupClaim
+        ? `https://${hostname}/setup/claim?token=${encodeURIComponent(
+            setupClaim.token,
+          )}`
+        : null,
+
+    setupExpiresAt:
+      setupClaim?.expiresAt ?? null,
+
+    setupCompleted,
   };
 }
