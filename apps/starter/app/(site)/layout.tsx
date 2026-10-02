@@ -19,11 +19,22 @@ import "@staark/theme-kreator/styles.css";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
+  if (process.env.STAARK_ROLE === "app") {
+    return {
+      title: "Staark SaaS",
+      robots: { index: false, follow: false },
+    };
+  }
+
   const site = await content.getSite();
   return buildRootMetadata(site);
 }
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  if (process.env.STAARK_ROLE === "app") {
+    return <>{children}</>;
+  }
+
   const site = await content.getSite();
   const runtime = resolveThemeRuntime(site.theme.family);
   const preset = resolvePreset(runtime.theme, site.theme.preset);
