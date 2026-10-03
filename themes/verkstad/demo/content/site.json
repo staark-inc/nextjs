@@ -1,0 +1,76 @@
+{
+  "name": "Motorhallen",
+  "tagline": "Märkesoberoende bilverkstad i Örebro",
+  "locale": "sv-SE",
+  "url": "https://motorhallen.example",
+  "theme": {
+    "family": "verkstad",
+    "preset": "verkstad"
+  },
+  "brand": {
+    "copyright": "© 2026 Motorhallen Örebro AB"
+  },
+  "contact": {
+    "email": "verkstad@motorhallen.example",
+    "phone": "019-600 12 34",
+    "address": {
+      "street": "Bettorpsgatan 12",
+      "postalCode": "703 69",
+      "city": "Örebro",
+      "country": "SE"
+    },
+    "openingHours": [
+      {
+        "days": "Mån–Fre",
+        "hours": "07–17"
+      },
+      {
+        "days": "Lör",
+        "hours": "Stängt"
+      }
+    ]
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Priser",
+        "href": "/#priser"
+      },
+      {
+        "label": "Däck",
+        "href": "/#sasong"
+      },
+      {
+        "label": "Frågor",
+        "href": "/#fragor"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "footer": [
+      {
+        "label": "Priser",
+        "href": "/#priser"
+      },
+      {
+        "label": "Boka",
+        "href": "/#boka"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "cta": {
+      "label": "Boka tid",
+      "href": "/#boka"
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Motorhallen",
+    "defaultDescription": "Service, däck, bromsar och AC i Örebro. Fasta priser, lånebil och nybilsgarantin gäller.",
+    "businessType": "AutoRepair"
+  }
+}

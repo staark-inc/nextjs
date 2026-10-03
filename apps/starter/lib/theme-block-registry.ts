@@ -4,6 +4,7 @@ import { elBlockDefinitions } from "@staark/theme-el/blocks";
 import { kreatorBlockDefinitions } from "@staark/theme-kreator/blocks";
 import { salongBlockDefinitions } from "@staark/theme-salong/blocks";
 import { gastfrihetBlockDefinitions } from "@staark/theme-gastfrihet/blocks";
+import { verkstadBlockDefinitions } from "@staark/theme-verkstad/blocks";
 
 /**
  * Blocks v2 integration point for the starter application.
@@ -22,6 +23,7 @@ const THEME_BLOCK_DEFINITIONS: Record<
   kreator: kreatorBlockDefinitions,
   salong: salongBlockDefinitions,
   gastfrihet: gastfrihetBlockDefinitions,
+  verkstad: verkstadBlockDefinitions,
 };
 
 export function themeBlockDefinitionsFor(

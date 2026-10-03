@@ -1,0 +1,269 @@
+{
+  "path": "/",
+  "title": "Startsida",
+  "seo": {
+    "title": "Motorhallen – bilverkstad i Örebro",
+    "description": "Boka service, hjulskifte eller bromsar med ditt regnummer. Fasta priser och lånebil."
+  },
+  "updatedAt": "2026-09-28T10:00:00Z",
+  "blocks": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Märkesoberoende verkstad",
+        "heading": "Service utan överraskningar.",
+        "intro": "Fasta priser, lånebil och ett samtal innan vi gör något extra. Nybilsgarantin gäller hos oss.",
+        "image": {
+          "src": "/verkstad/hero.svg",
+          "alt": ""
+        },
+        "secondaryCta": {
+          "label": "Se våra priser",
+          "href": "#priser"
+        },
+        "points": [
+          "Lånebil",
+          "Fast pris",
+          "Alla märken"
+        ],
+        "plate": {
+          "label": "Boka med ditt regnummer",
+          "placeholder": "ABC 123",
+          "buttonLabel": "Boka",
+          "href": "#boka"
+        }
+      }
+    },
+    {
+      "id": "lofte",
+      "type": "promises",
+      "props": {
+        "items": [
+          {
+            "title": "Alla märken",
+            "text": "Nybilsgarantin gäller",
+            "icon": "shield"
+          },
+          {
+            "title": "Fast pris",
+            "text": "Du vet priset innan vi börjar",
+            "icon": "receipt"
+          },
+          {
+            "title": "Lånebil",
+            "text": "Boka i samband med tiden",
+            "icon": "key"
+          },
+          {
+            "title": "Vi ringer först",
+            "text": "Inget extra arbete utan ditt ok",
+            "icon": "phone"
+          }
+        ]
+      }
+    },
+    {
+      "id": "priser",
+      "type": "priceTable",
+      "props": {
+        "eyebrow": "Priser",
+        "heading": "Fasta priser",
+        "intro": "Priserna gäller de flesta bilar i respektive storlek. Vi bekräftar alltid priset när du bokar.",
+        "columns": [
+          "Småbil",
+          "Mellanklass",
+          "SUV / stor"
+        ],
+        "groups": [
+          {
+            "title": "Service",
+            "rows": [
+              {
+                "name": "Service",
+                "note": "Enligt tillverkarens serviceprogram, inkl. olja och filter",
+                "prices": [
+                  "2 495 kr",
+                  "2 995 kr",
+                  "3 695 kr"
+                ]
+              },
+              {
+                "name": "Oljebyte",
+                "note": "Olja och oljefilter",
+                "prices": [
+                  "995 kr",
+                  "1 195 kr",
+                  "1 495 kr"
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Däck",
+            "rows": [
+              {
+                "name": "Hjulskifte",
+                "note": "Byte mellan sommar- och vinterhjul",
+                "prices": [
+                  "395 kr",
+                  "445 kr",
+                  "545 kr"
+                ]
+              },
+              {
+                "name": "Däckhotell",
+                "note": "Tvätt, förvaring och kontroll, per säsong",
+                "prices": [
+                  "695 kr",
+                  "695 kr",
+                  "795 kr"
+                ]
+              },
+              {
+                "name": "Däckbyte på fälg",
+                "note": "Montering och balansering, 4 däck",
+                "prices": [
+                  "695 kr",
+                  "795 kr",
+                  "995 kr"
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Bromsar & AC",
+            "rows": [
+              {
+                "name": "Bromsbelägg fram",
+                "note": "Arbete, delar tillkommer",
+                "prices": [
+                  "895 kr",
+                  "995 kr",
+                  "1 195 kr"
+                ]
+              },
+              {
+                "name": "AC-service",
+                "note": "Tömning, läcktest och påfyllning",
+                "prices": [
+                  "1 195 kr",
+                  "1 195 kr",
+                  "1 395 kr"
+                ]
+              }
+            ]
+          }
+        ],
+        "footnote": "Alla priser inkl. moms."
+      }
+    },
+    {
+      "id": "sasong",
+      "type": "highlightBand",
+      "props": {
+        "eyebrow": "Säsong",
+        "heading": "Dags för vinterhjulen",
+        "text": "Dubbdäck är tillåtna från 1 oktober. Boka hjulskifte i god tid, så slipper du köerna när första snön kommer.",
+        "facts": [
+          {
+            "label": "Hjulskifte",
+            "value": "från 395 kr"
+          },
+          {
+            "label": "Däckhotell",
+            "value": "från 695 kr/säsong"
+          }
+        ],
+        "icon": "tire",
+        "cta": {
+          "label": "Boka hjulskifte",
+          "href": "?tjanst=Hjulskifte#boka"
+        }
+      }
+    },
+    {
+      "id": "omdomen",
+      "type": "testimonials",
+      "props": {
+        "eyebrow": "Omdömen",
+        "heading": "Kunderna om oss",
+        "items": [
+          {
+            "quote": "De ringde innan de bytte bromsskivorna och förklarade varför. Precis så det ska vara.",
+            "author": "Kund, bromsar"
+          },
+          {
+            "quote": "Lämnade bilen 07:30 och hade lånebil hela dagen. Enkelt.",
+            "author": "Kund, service"
+          },
+          {
+            "quote": "Snabbt hjulskifte och de förvarar däcken åt oss.",
+            "author": "Kund, däckhotell"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fragor",
+      "type": "faq",
+      "props": {
+        "eyebrow": "Frågor",
+        "heading": "Vanliga frågor",
+        "items": [
+          {
+            "question": "Påverkas nybilsgarantin om jag servar hos er?",
+            "answer": "Nej, så länge servicen görs enligt tillverkarens serviceprogram och med delar av motsvarande kvalitet. Du får stämpel i den digitala serviceboken."
+          },
+          {
+            "question": "Hur vet jag vilken service bilen ska ha?",
+            "answer": "Skriv regnummer och mätarställning när du bokar, så kollar vi vilken service som är aktuell och bekräftar priset."
+          },
+          {
+            "question": "Vad händer om ni hittar fler fel?",
+            "answer": "Vi ringer och berättar vad vi hittat och vad det kostar. Inget extra arbete utan ditt godkännande."
+          },
+          {
+            "question": "När måste jag byta till vinterdäck?",
+            "answer": "Vinterdäck krävs 1 december–31 mars när det är vinterväglag. Dubbdäck får användas från 1 oktober till 15 april."
+          }
+        ]
+      }
+    },
+    {
+      "id": "boka",
+      "type": "serviceBooking",
+      "props": {
+        "eyebrow": "Boka",
+        "heading": "Boka verkstadstid",
+        "intro": "Fyll i regnummer och vad som ska göras. Vi bekräftar tiden samma dag.",
+        "formId": "verkstad-bokning",
+        "services": [
+          "Service",
+          "Oljebyte",
+          "Hjulskifte",
+          "Däckhotell",
+          "Däckbyte på fälg",
+          "Bromsbelägg fram",
+          "AC-service",
+          "Felsökning"
+        ],
+        "dropOffTimes": [
+          "07:30",
+          "08:30",
+          "10:00",
+          "13:00"
+        ],
+        "loanCar": true,
+        "notes": [
+          "Lämna bilen på morgonen",
+          "Vi ringer om vi hittar något mer",
+          "Hämta när vi sms:at att den är klar"
+        ],
+        "submitLabel": "Skicka bokning",
+        "successMessage": "Vi bekräftar tiden via sms eller e-post samma dag.",
+        "consent": "Vi använder uppgifterna bara för din bokning."
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "verkstad",
+  "name": "Verkstad",
+  "description": "Car workshop direction: warm concrete paper, asphalt ink, motor-red accent, condensed uppercase Barlow headings and tight square-ish corners.",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "ink": "#17181A",
+      "muted": "#5E6166",
+      "line": "#D4D1CB",
+      "paper": "#F3F2EF",
+      "surface": "#E6E4DF",
+      "white": "#FFFFFF",
+      "primary": "#C8261E",
+      "primaryDark": "#9F1C15",
+      "primarySoft": "#F8E1DE",
+      "success": "#2E7D4F",
+      "forest": "#1F2124",
+      "forestDeep": "#141517",
+      "gold": "#F2B705"
+    },
+    "typography": {
+      "body": "Barlow, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+      "display": "\"Barlow Condensed\", \"Arial Narrow\", ui-sans-serif, system-ui, sans-serif",
+      "displayWeight": "700",
+      "label": "\"Barlow Condensed\", \"Arial Narrow\", ui-sans-serif, sans-serif",
+      "headingWeight": "700",
+      "headingStretch": "normal",
+      "headingCase": "uppercase"
+    },
+    "radius": {
+      "sm": "4px",
+      "md": "8px",
+      "lg": "12px",
+      "button": "6px"
+    },
+    "layout": {
+      "content": "740px",
+      "wide": "1240px",
+      "wrap": "1240px"
+    }
+  },
+  "components": {
+    "header": "verkstad",
+    "buttons": "solid",
+    "cards": "verkstad",
+    "hero": "split",
+    "footer": "deep"
+  }
+}

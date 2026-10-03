@@ -1,0 +1,31 @@
+{
+  "path": "/kontakt",
+  "title": "Kontakt",
+  "seo": {
+    "description": "Hitta till Motorhallen eller boka verkstadstid."
+  },
+  "updatedAt": "2026-09-28T10:00:00Z",
+  "blocks": [
+    {
+      "id": "boka",
+      "type": "serviceBooking",
+      "props": {
+        "eyebrow": "Kontakt",
+        "heading": "Boka eller hör av dig",
+        "intro": "Ring eller boka direkt med ditt regnummer.",
+        "formId": "verkstad-bokning",
+        "services": [
+          "Service",
+          "Oljebyte",
+          "Hjulskifte",
+          "Däckhotell",
+          "Däckbyte på fälg",
+          "Bromsbelägg fram",
+          "AC-service",
+          "Felsökning"
+        ],
+        "successMessage": "Vi bekräftar tiden via sms eller e-post samma dag."
+      }
+    }
+  ]
+}

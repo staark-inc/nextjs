@@ -7,6 +7,7 @@ import kreatorTheme, { kreatorRegistry } from "@staark/theme-kreator";
 import gastfrihetTheme, { gastfrihetRegistry } from "@staark/theme-gastfrihet";
 import byraTheme, { byraRegistry } from "@staark/theme-byra";
 import webbTheme, { webbRegistry } from "@staark/theme-webb";
+import verkstadTheme, { verkstadRegistry } from "@staark/theme-verkstad";
 
 export type ThemeRuntime = {
   id: string;
@@ -75,6 +76,14 @@ const THEMES: Record<string, ThemeRuntime> = {
     description: "Staark web-agency theme with projects, pricing and service areas.",
     theme: webbTheme,
     registry: webbRegistry,
+  },
+  verkstad: {
+    id: "verkstad",
+    name: verkstadTheme.name,
+    description:
+      "Automotive and workshop theme with service booking, pricing, promises and seasonal campaigns.",
+    theme: verkstadTheme,
+    registry: verkstadRegistry,
   },
 };
 
