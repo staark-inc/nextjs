@@ -304,6 +304,9 @@ model Domain {
   ownershipVerificationValue String?  @map("ownership_verification_value") @db.VarChar(255)
   sslValidationRecords       Json?    @map("ssl_validation_records")
   providerLastSyncAt         DateTime? @map("provider_last_sync_at") @db.Timestamptz(3)
+  blockedAt                  DateTime? @map("blocked_at") @db.Timestamptz(3)
+  releaseAt                  DateTime? @map("release_at") @db.Timestamptz(3)
+  releasedAt                 DateTime? @map("released_at") @db.Timestamptz(3)
   createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
