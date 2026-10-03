@@ -5724,3 +5724,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
     flex-direction: column;
   }
 }
+
+.sa-ga4-guide__steps p > strong {
+  margin: 0 5px !important;
+}

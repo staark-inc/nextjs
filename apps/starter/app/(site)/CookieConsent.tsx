@@ -31,14 +31,18 @@ function clearGoogleAnalyticsCookies() {
           ?.trim(),
       )
       .filter(
-        (name): name is string =>
-          Boolean(name) &&
-          (
+        (name): name is string => {
+          if (!name) {
+            return false;
+          }
+
+          return (
             name === "_ga" ||
             name.startsWith("_ga_") ||
             name === "_gid" ||
             name === "_gat"
-          ),
+          );
+        },
       );
 
   for (const name of cookieNames) {
