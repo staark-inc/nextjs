@@ -7,8 +7,20 @@ export type TenantEntitlements = {
   maxDomains?: number | null;
   maxUsers?: number | null;
   maxForms?: number | null;
+
   bookingEnabled?: boolean;
+
+  analytics?: "overview" | "full" | "advanced" | "none";
+  searchConsole?: "overview" | "full" | "none";
+  businessProfile?: boolean;
+  leadsEnabled?: boolean;
+  reports?: "basic" | "full" | "advanced" | "none";
+  automations?: "none" | "standard" | "advanced";
+
   crmEnabled?: boolean;
+  clientManagementEnabled?: boolean;
+  teamEnabled?: boolean;
+
   [key: string]: unknown;
 };
 
