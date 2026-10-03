@@ -156,6 +156,214 @@ export default function GoogleAnalyticsForm({
       className="sa-privacy-form"
       onSubmit={submit}
     >
+      <details className="sa-card sa-ga4-guide">
+        <summary className="sa-ga4-guide__summary">
+          <span>
+            <span className="sa-card__eyebrow">
+              Setup guide
+            </span>
+
+            <strong>
+              How to connect Google Analytics 4
+            </strong>
+
+            <small>
+              Measurement ID, Property ID and
+              reporting access in a few steps.
+            </small>
+          </span>
+
+          <span
+            className="sa-ga4-guide__chevron"
+            aria-hidden="true"
+          >
+            ↓
+          </span>
+        </summary>
+
+        <div className="sa-ga4-guide__content">
+          <ol className="sa-ga4-guide__steps">
+            <li>
+              <span className="sa-ga4-guide__number">
+                1
+              </span>
+
+              <div>
+                <strong>
+                  Open Google Analytics
+                </strong>
+
+                <p>
+                  Sign in to Google Analytics and
+                  open the GA4 property for this
+                  website. Create a GA4 property
+                  first if the website does not
+                  already have one.
+                </p>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                2
+              </span>
+
+              <div>
+                <strong>
+                  Copy the Measurement ID
+                </strong>
+
+                <p>
+                  In Google Analytics, open
+                  Admin → Data streams → Web and
+                  select the website stream.
+                </p>
+
+                <p>
+                  Copy the ID beginning with
+                  <code>G-</code> and paste it
+                  into Measurement ID above.
+                </p>
+
+                <div className="sa-ga4-guide__example">
+                  Example:
+                  <code>G-XXXXXXXXXX</code>
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                3
+              </span>
+
+              <div>
+                <strong>
+                  Copy the Property ID
+                </strong>
+
+                <p>
+                  Open Admin and select the same
+                  GA4 property. Find its numeric
+                  Property ID and paste it into
+                  Property ID above.
+                </p>
+
+                <div className="sa-ga4-guide__example">
+                  Example:
+                  <code>123456789</code>
+                </div>
+
+                <p className="sa-note">
+                  The Property ID is not the same
+                  as the G- Measurement ID.
+                </p>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                4
+              </span>
+
+              <div>
+                <strong>
+                  Give Staark reporting access
+                </strong>
+
+                <p>
+                  In Google Analytics, open
+                  Admin → Property access
+                  management → Add users.
+                </p>
+
+                <p>
+                  Add the Staark service account
+                  below and give it the
+                  <strong> Viewer </strong>
+                  role.
+                </p>
+
+                <div className="sa-ga4-guide__service-account">
+                  <span>
+                    Staark service account
+                  </span>
+
+                  <code>
+                    {serviceAccountEmail ??
+                      "Service account unavailable"}
+                  </code>
+                </div>
+
+                <p className="sa-note">
+                  Viewer access is enough. Staark
+                  does not need Editor or
+                  Administrator access.
+                </p>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                5
+              </span>
+
+              <div>
+                <strong>
+                  Test the reporting connection
+                </strong>
+
+                <p>
+                  Return here and press
+                  <strong> Test connection</strong>.
+                  A successful connection will
+                  show the timezone returned by
+                  your GA4 property.
+                </p>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                6
+              </span>
+
+              <div>
+                <strong>
+                  Enable and save
+                </strong>
+
+                <p>
+                  Enable Google Analytics, keep
+                  analytics consent enabled, and
+                  press
+                  <strong> Save Google Analytics</strong>.
+                </p>
+
+                <p>
+                  Staark will load the GA4 tag
+                  only after the visitor accepts
+                  Analytics cookies when consent
+                  is required.
+                </p>
+              </div>
+            </li>
+          </ol>
+
+          <div className="sa-ga4-guide__done">
+            <strong>
+              Done
+            </strong>
+
+            <span>
+              Reporting data will then appear in
+              the Analytics dashboard. New GA4
+              properties may need some time before
+              reports contain traffic data.
+            </span>
+          </div>
+        </div>
+      </details>
       <section className="sa-card">
         <div className="sa-card__header">
           <p className="sa-card__eyebrow">

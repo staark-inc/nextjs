@@ -5403,3 +5403,324 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
     grid-column: 2;
   }
 }
+
+
+/* GA4 setup guide + card spacing polish */
+
+.sa-card > hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid var(--sa-line);
+}
+
+.sa-card__header {
+  padding-bottom: 18px;
+}
+
+.sa-card__header + hr {
+  margin-top: 0;
+}
+
+.sa-privacy-form {
+  display: grid;
+  gap: 18px;
+}
+
+.sa-privacy-form > .sa-card {
+  margin-bottom: 0;
+}
+
+.sa-privacy-toggle,
+.sa-privacy-field {
+  position: relative;
+}
+
+.sa-privacy-toggle + .sa-privacy-toggle,
+.sa-privacy-toggle + .sa-privacy-field,
+.sa-privacy-field + .sa-privacy-toggle,
+.sa-privacy-field + .sa-privacy-field {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--sa-line);
+}
+
+.sa-ga4-guide {
+  overflow: hidden;
+}
+
+.sa-ga4-guide__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  list-style: none;
+  cursor: pointer;
+}
+
+.sa-ga4-guide__summary::-webkit-details-marker {
+  display: none;
+}
+
+.sa-ga4-guide__summary > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.sa-ga4-guide__summary strong {
+  color: var(--sa-ink);
+  font-size: 16px;
+}
+
+.sa-ga4-guide__summary small {
+  color: var(--sa-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sa-ga4-guide__chevron {
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+
+  flex: 0 0 auto;
+
+  border: 1px solid var(--sa-line);
+  border-radius: 8px;
+
+  color: var(--sa-muted);
+  font-size: 15px;
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.sa-ga4-guide[open] .sa-ga4-guide__chevron {
+  transform: rotate(180deg);
+  border-color: var(--sa-primary-line);
+  color: var(--sa-primary);
+}
+
+.sa-ga4-guide__content {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--sa-line);
+}
+
+.sa-ga4-guide__steps {
+  display: grid;
+  gap: 0;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.sa-ga4-guide__steps > li {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 14px;
+
+  padding: 0 0 24px;
+}
+
+.sa-ga4-guide__steps > li:not(:last-child)::before {
+  content: "";
+
+  position: absolute;
+  top: 34px;
+  bottom: 0;
+  left: 16px;
+
+  width: 1px;
+
+  background: var(--sa-line);
+}
+
+.sa-ga4-guide__number {
+  position: relative;
+  z-index: 1;
+
+  display: grid;
+  place-items: center;
+
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid var(--sa-primary-line);
+  border-radius: 10px;
+
+  background: var(--sa-primary-soft);
+  color: var(--sa-primary);
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sa-ga4-guide__steps strong {
+  display: inline-block;
+  margin-bottom: 5px;
+
+  color: var(--sa-ink);
+  font-size: 13px;
+}
+
+.sa-ga4-guide__steps p {
+  max-width: 760px;
+  margin: 0 0 8px;
+
+  color: var(--sa-muted);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.sa-ga4-guide__steps code,
+.sa-ga4-guide__service-account code {
+  font-family:
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    monospace;
+}
+
+.sa-ga4-guide__example {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  width: fit-content;
+
+  margin-top: 8px;
+  padding: 8px 10px;
+
+  border: 1px solid var(--sa-line);
+  border-radius: 8px;
+
+  background: var(--sa-surface-soft);
+
+  color: var(--sa-muted);
+  font-size: 11px;
+}
+
+.sa-ga4-guide__example code {
+  color: var(--sa-ink);
+  font-weight: 700;
+}
+
+.sa-ga4-guide__service-account {
+  display: grid;
+  gap: 5px;
+
+  max-width: 760px;
+
+  margin: 10px 0;
+  padding: 12px 14px;
+
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+
+  background: var(--sa-surface-soft);
+}
+
+.sa-ga4-guide__service-account span {
+  color: var(--sa-muted);
+
+  font-size: 9.5px;
+  font-weight: 800;
+
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.sa-ga4-guide__service-account code {
+  overflow-wrap: anywhere;
+
+  color: var(--sa-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sa-ga4-guide__done {
+  display: grid;
+  gap: 4px;
+
+  margin-top: 2px;
+  padding: 14px 16px;
+
+  border: 1px solid var(--sa-success-line);
+  border-radius: 10px;
+
+  background: var(--sa-success-soft);
+}
+
+.sa-ga4-guide__done strong {
+  color: var(--sa-success);
+  font-size: 12px;
+}
+
+.sa-ga4-guide__done span {
+  color: var(--sa-ink-soft);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* Make connection result read like a status, not random helper text. */
+.sa-analytics-test-row {
+  padding-top: 18px;
+  border-top: 1px solid var(--sa-line);
+}
+
+.sa-analytics-test-row > span {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 34px;
+  padding: 7px 10px;
+
+  border-radius: 8px;
+
+  background: var(--sa-surface-soft);
+  color: var(--sa-ink-soft);
+
+  font-weight: 650;
+}
+
+/* Give the cards proper visual separation from the action row. */
+.sa-privacy-actions {
+  margin-top: 2px;
+  padding-top: 4px;
+}
+
+@media (max-width: 760px) {
+  .sa-ga4-guide__summary {
+    align-items: flex-start;
+  }
+
+  .sa-ga4-guide__steps > li {
+    grid-template-columns:
+      30px minmax(0, 1fr);
+    gap: 11px;
+  }
+
+  .sa-ga4-guide__number {
+    width: 30px;
+    height: 30px;
+  }
+
+  .sa-ga4-guide__steps > li:not(:last-child)::before {
+    top: 30px;
+    left: 14px;
+  }
+
+  .sa-ga4-guide__example {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
