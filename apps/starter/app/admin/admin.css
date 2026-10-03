@@ -5261,3 +5261,145 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
     flex-direction: column;
   }
 }
+
+
+/* GA4 Data API dashboard */
+
+.sa-analytics-data-api {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sa-analytics-data-api > div {
+  display: grid;
+  gap: 4px;
+
+  padding: 16px;
+
+  border:
+    1px solid
+    rgba(127, 127, 127, .14);
+
+  border-radius: 12px;
+}
+
+.sa-analytics-data-api span {
+  opacity: .65;
+  font-size: .82rem;
+}
+
+.sa-analytics-data-api strong {
+  overflow-wrap: anywhere;
+}
+
+.sa-analytics-test-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  margin-top: 16px;
+}
+
+.sa-analytics-test-row span {
+  font-size: .88rem;
+  opacity: .72;
+}
+
+.sa-ga4-section-heading {
+  margin-top: 34px;
+}
+
+.sa-ga4-stat-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.sa-ga4-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 18px;
+
+  margin-top: 18px;
+}
+
+.sa-ga4-list {
+  display: grid;
+  margin-top: 14px;
+}
+
+.sa-ga4-list-row {
+  display: grid;
+  grid-template-columns:
+    28px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+
+  padding: 12px 0;
+
+  border-bottom:
+    1px solid
+    rgba(127, 127, 127, .14);
+}
+
+.sa-ga4-list-row:last-child {
+  border-bottom: 0;
+}
+
+.sa-ga4-list-row > span {
+  opacity: .45;
+}
+
+.sa-ga4-list-row small {
+  opacity: .65;
+}
+
+.sa-ga4-empty {
+  display: grid;
+  gap: 7px;
+}
+
+.sa-ga4-empty span {
+  max-width: 620px;
+  opacity: .68;
+}
+
+.sa-ga4-empty a {
+  width: fit-content;
+  margin-top: 4px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 1000px) {
+  .sa-ga4-stat-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .sa-analytics-data-api,
+  .sa-ga4-grid,
+  .sa-ga4-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sa-analytics-test-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sa-ga4-list-row {
+    grid-template-columns:
+      24px minmax(0, 1fr);
+  }
+
+  .sa-ga4-list-row small {
+    grid-column: 2;
+  }
+}

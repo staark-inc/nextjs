@@ -35,6 +35,13 @@
     "bookingDeclineEnabled": true,
     "contactNotificationEnabled": true
   },
+  "analytics": {
+    "googleAnalytics": {
+      "enabled": true,
+      "measurementId": "G-W8H6PZE1Y8",
+      "consentRequired": true
+    }
+  },
   "privacy": {
     "cookieBannerEnabled": true,
     "analyticsConsentEnabled": true,

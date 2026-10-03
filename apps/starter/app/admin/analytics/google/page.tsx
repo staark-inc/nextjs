@@ -6,6 +6,9 @@ import {
 import {
   resolveGoogleAnalyticsSettings,
 } from "@/lib/google-analytics-settings";
+import {
+  googleAnalyticsServiceSummary,
+} from "@/lib/google-analytics-data";
 
 import GoogleAnalyticsForm from "./GoogleAnalyticsForm";
 
@@ -20,6 +23,9 @@ export default async function GoogleAnalyticsPage() {
     resolveGoogleAnalyticsSettings(
       site,
     );
+
+  const service =
+    googleAnalyticsServiceSummary();
 
   return (
     <>
@@ -68,6 +74,12 @@ export default async function GoogleAnalyticsPage() {
         analyticsConsentEnabled={
           site.privacy
             .analyticsConsentEnabled
+        }
+        dataApiConfigured={
+          service.configured
+        }
+        serviceAccountEmail={
+          service.clientEmail
         }
       />
     </>

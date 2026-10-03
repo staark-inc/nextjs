@@ -122,6 +122,15 @@ export const SiteSettingsSchema = z.object({
             )
             .optional(),
 
+          propertyId: z
+            .string()
+            .trim()
+            .regex(
+              /^\d+$/,
+              "Google Analytics Property ID must contain numbers only.",
+            )
+            .optional(),
+
           consentRequired: z.boolean().default(true),
         })
         .prefault({}),
