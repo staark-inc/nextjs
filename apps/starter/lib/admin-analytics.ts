@@ -4,6 +4,7 @@ import {
 } from "./feature-access";
 import { getPrismaClient } from "./db/prisma";
 import { requireAdminTenantContext } from "./admin-tenant";
+import { resolvePublicContentConfig } from "./content-source";
 
 export type AnalyticsDay = {
   date: string;
@@ -37,6 +38,61 @@ function dateKey(value: Date): string {
 }
 
 export async function readAdminAnalytics(): Promise<AdminAnalytics> {
+  const contentConfig =
+    resolvePublicContentConfig();
+
+  if (
+    contentConfig.source !==
+    "postgres"
+  ) {
+    const days = 30;
+
+    return {
+      access: {
+        feature: "analytics",
+        enabled: true,
+        level: "overview",
+        entitlementKey: "analytics",
+      },
+
+      days,
+      totalPageViews: 0,
+      activeDays: 0,
+      trackedPages: 0,
+      averagePerDay: 0,
+
+      daily: Array.from(
+        { length: days },
+        (_, index) => {
+          const date = new Date();
+
+          date.setUTCHours(
+            0,
+            0,
+            0,
+            0,
+          );
+
+          date.setUTCDate(
+            date.getUTCDate() -
+              (days - index - 1),
+          );
+
+          return {
+            date:
+              date
+                .toISOString()
+                .slice(0, 10),
+
+            pageViews: 0,
+          };
+        },
+      ),
+
+      topPages: [],
+    };
+  }
+
   const tenant = await requireAdminTenantContext();
 
   const access = getPlanFeatureAccess(

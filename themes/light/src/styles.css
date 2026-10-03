@@ -1655,3 +1655,15 @@ li.sk-steps__item > div > p {
     transition: none;
   }
 }
+
+
+.staark-policy-page__intro {
+  max-width: 68ch;
+  margin-top: 18px;
+
+  color:
+    var(--sk-color-muted, #667085);
+
+  font-size: 1.08rem;
+  line-height: 1.7;
+}

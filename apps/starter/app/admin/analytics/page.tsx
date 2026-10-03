@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { readAdminAnalytics } from "@/lib/admin-analytics";
+import { readAdminSiteSettings } from "@/lib/admin-site-settings";
+import { resolveGoogleAnalyticsSettings } from "@/lib/google-analytics-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +25,12 @@ export default async function AnalyticsPage() {
     ReturnType<typeof readAdminAnalytics>
   >;
 
+  const site =
+    await readAdminSiteSettings();
+
+  const googleAnalytics =
+    resolveGoogleAnalyticsSettings(site);
+
   try {
     analytics =
       await readAdminAnalytics();
@@ -42,7 +51,7 @@ export default async function AnalyticsPage() {
       : analytics.daily;
 
   return (
-    <>
+    <div className="sa-analytics-page">
       <div className="sa-page-header">
         <div>
           <p className="sa-page-eyebrow">
@@ -59,9 +68,22 @@ export default async function AnalyticsPage() {
           </p>
         </div>
 
-        <span className="sa-plan-status sa-plan-status--success">
-          {analytics.access.level}
-        </span>
+        <div className="sa-analytics-header-actions">
+          <Link
+            href="/admin/analytics/google"
+            className="sa-btn"
+          >
+            Google Analytics
+            {googleAnalytics.enabled &&
+            googleAnalytics.measurementId
+              ? " · Connected"
+              : ""}
+          </Link>
+
+          <span className="sa-plan-status sa-plan-status--success">
+            {analytics.access.level}
+          </span>
+        </div>
       </div>
 
       <div className="sa-plan-usage-grid">
@@ -123,48 +145,62 @@ export default async function AnalyticsPage() {
           </span>
         </div>
 
-        <div className="sa-analytics-chart">
-          {chart.map((item) => {
-            const height =
-              item.pageViews === 0
-                ? 2
-                : Math.max(
-                    8,
-                    Math.round(
-                      (item.pageViews /
-                        maxViews) *
-                        100,
-                    ),
-                  );
+        {analytics.totalPageViews === 0 ? (
+          <div className="sa-analytics-empty-chart">
+            <div className="sa-analytics-empty-chart__icon">
+              ↗
+            </div>
 
-            return (
-              <div
-                className="sa-analytics-bar-column"
-                key={item.date}
-                title={`${formatDate(
-                  item.date,
-                )}: ${
-                  item.pageViews
-                } page views`}
-              >
-                <div className="sa-analytics-bar-space">
-                  <span
-                    className="sa-analytics-bar"
-                    style={{
-                      height: `${height}%`,
-                    }}
-                  />
+            <strong>
+              No traffic recorded yet
+            </strong>
+
+            <span>
+              Page views will appear here as
+              visitors browse the public website.
+            </span>
+          </div>
+        ) : (
+          <div className="sa-analytics-chart">
+            {chart.map((item) => {
+              const height = Math.max(
+                8,
+                Math.round(
+                  (item.pageViews /
+                    maxViews) *
+                    100,
+                ),
+              );
+
+              return (
+                <div
+                  className="sa-analytics-bar-column"
+                  key={item.date}
+                  title={`${formatDate(
+                    item.date,
+                  )}: ${
+                    item.pageViews
+                  } page views`}
+                >
+                  <div className="sa-analytics-bar-space">
+                    <span
+                      className="sa-analytics-bar"
+                      style={{
+                        height: `${height}%`,
+                      }}
+                    />
+                  </div>
+
+                  <small>
+                    {chart.length <= 31
+                      ? formatDate(item.date)
+                      : ""}
+                  </small>
                 </div>
-
-                <small>
-                  {chart.length <= 31
-                    ? formatDate(item.date)
-                    : ""}
-                </small>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="sa-card sa-analytics-card">
@@ -226,6 +262,6 @@ export default async function AnalyticsPage() {
           </span>
         </div>
       </section>
-    </>
+    </div>
   );
 }

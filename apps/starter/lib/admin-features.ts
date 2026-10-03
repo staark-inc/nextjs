@@ -150,6 +150,7 @@ const API_FEATURES: Array<[string, AdminFeature]> = [
   ["/api/admin/themes/config", "design"],
   ["/api/admin/themes", "themes"],
   ["/api/admin/seo", "seo"],
+  ["/api/admin/analytics", "analytics"],
   ["/api/admin/redirects", "redirects"],
   ["/api/admin/health", "health"],
   ["/api/admin/backups", "backups"],

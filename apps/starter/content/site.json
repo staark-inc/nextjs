@@ -43,7 +43,23 @@
     "bannerTitle": "Vi använder cookies",
     "bannerDescription": "Vi använder nödvändiga cookies för att webbplatsen ska fungera. Med ditt samtycke kan vi också använda analyscookies för att förstå hur webbplatsen används.",
     "privacyPolicyPath": "/integritet",
-    "cookiePolicyPath": "/cookies"
+    "cookiePolicyPath": "/cookies",
+    "privacyPolicy": {
+      "title": "Integritetspolicy",
+      "intro": "Här beskriver vi hur personuppgifter behandlas när du använder webbplatsen eller kontaktar oss.",
+      "personalData": "Vi behandlar de personuppgifter som du själv lämnar via webbplatsens formulär, till exempel namn, e-postadress, telefonnummer och meddelanden.",
+      "purpose": "Uppgifterna används för att kunna svara på förfrågningar, hantera bokningar och tillhandahålla den tjänst du kontaktar oss om.",
+      "analytics": "Webbplatsen kan samla in integritetsvänlig aggregerad trafikstatistik. Externa analystjänster som kräver cookies aktiveras först efter ditt samtycke.",
+      "rights": "Du kan kontakta oss om du vill veta vilka personuppgifter vi behandlar om dig eller begära rättelse eller radering när detta är tillämpligt."
+    },
+    "cookiePolicy": {
+      "title": "Cookiepolicy",
+      "intro": "Här förklarar vi vilka typer av cookies och lokal lagring som kan användas på webbplatsen.",
+      "necessary": "Nödvändiga funktioner kan användas för säkerhet, inloggning och för att komma ihåg dina cookieinställningar.",
+      "analytics": "Staarks egen trafikmätning använder aggregerade sidvisningar och kräver inte analyscookies. Externa analystjänster, exempelvis Google Analytics, får endast använda analyslagring när du har godkänt detta.",
+      "marketing": "Marknadsföringsrelaterad lagring används endast när du uttryckligen har godkänt marknadsföring.",
+      "choices": "Du kan neka valfria cookies i cookiebannern och senare ändra ditt val via länken Cookieinställningar i sidfoten."
+    }
   },
   "navigation": {
     "primary": [
