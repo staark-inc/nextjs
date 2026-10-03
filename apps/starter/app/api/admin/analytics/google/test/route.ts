@@ -46,7 +46,7 @@ export async function POST(
       ? body.propertyId.trim()
       : "";
 
-  if (!/^\\d+$/.test(propertyId)) {
+  if (!/^\d+$/.test(propertyId)) {
     return NextResponse.json(
       {
         ok: false,

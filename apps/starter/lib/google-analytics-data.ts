@@ -279,7 +279,7 @@ export async function runGoogleAnalyticsReport(
   propertyId: string,
   request: GaRunReportRequest,
 ): Promise<GaRunReportResponse> {
-  if (!/^\\d+$/.test(propertyId)) {
+  if (!/^\d+$/.test(propertyId)) {
     throw new GoogleAnalyticsDataError(
       "Invalid Google Analytics Property ID.",
     );
