@@ -5414,7 +5414,7 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 }
 
 .sa-card__header {
-  padding-bottom: 18px;
+  margin-bottom: 18px;
 }
 
 .sa-card__header + hr {
