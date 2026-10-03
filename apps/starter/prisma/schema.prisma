@@ -34,6 +34,7 @@ model Site {
   domains        Domain[]
   usage          SiteUsage?
   subscriptions  Subscription[]
+  analyticsDaily AnalyticsDaily[]
 
   @@index([organizationId], map: "sites_organization_id_idx")
   @@map("sites")
@@ -330,6 +331,26 @@ model SiteUsage {
   site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "site_usage_site_id_fkey")
 
   @@map("site_usage")
+}
+
+
+/// Privacy-friendly daily website analytics.
+///
+/// No IP addresses, cookies or raw visitor identifiers are stored.
+/// Public requests increment an aggregate counter per site/date/path.
+model AnalyticsDaily {
+  siteId    String   @map("site_id") @db.Uuid
+  date      DateTime @db.Date
+  path      String   @db.VarChar(1024)
+  pageViews Int      @default(0) @map("page_views")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "analytics_daily_site_id_fkey")
+
+  @@id([siteId, date, path], map: "analytics_daily_pkey")
+  @@index([siteId, date], map: "analytics_daily_site_id_date_idx")
+  @@map("analytics_daily")
 }
 
 /// Stripe webhook audit/idempotency ledger.

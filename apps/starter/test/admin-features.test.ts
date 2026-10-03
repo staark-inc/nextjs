@@ -46,3 +46,59 @@ test("design, technical and unknown admin routes are classified correctly", () =
   assert.equal(featureForAdminPath("/admin/future-tool"), "system");
   assert.equal(featureForAdminPath("/api/admin/future-tool"), "system");
 });
+
+
+test("analytics is plan entitlement driven for clients", () => {
+  assert.equal(
+    canAccessAdminFeature(
+      "client",
+      "analytics",
+      [],
+    ),
+    false,
+  );
+
+  assert.equal(
+    canAccessAdminFeature(
+      "client",
+      "analytics",
+      ["analytics"],
+    ),
+    true,
+  );
+
+  assert.equal(
+    featureForAdminPath(
+      "/admin/analytics",
+    ),
+    "analytics",
+  );
+});
+
+
+test("privacy settings are a core client feature", () => {
+  const features =
+    resolveAccessibleAdminFeatures(
+      "client",
+      {},
+    );
+
+  assert.equal(
+    features.includes("privacy"),
+    true,
+  );
+
+  assert.equal(
+    featureForAdminPath(
+      "/admin/privacy",
+    ),
+    "privacy",
+  );
+
+  assert.equal(
+    featureForAdminPath(
+      "/api/admin/privacy",
+    ),
+    "privacy",
+  );
+});

@@ -40,6 +40,10 @@ export function adminFeaturesFromPlanEntitlements(
     features.push("booking");
   }
 
+  if (canUsePlanFeature(entitlements, "analytics")) {
+    features.push("analytics");
+  }
+
   return features;
 }
 

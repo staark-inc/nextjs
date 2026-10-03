@@ -79,7 +79,13 @@ async function readLegacySiteSettings(): Promise<SiteSettings> {
 export async function readAdminSiteSettings(): Promise<SiteSettings> {
   if (!adminSiteSettingsUsePostgres()) return readLegacySiteSettings();
   const site = await requirePostgresSite(createPostgresRepositories());
-  return site.settings;
+
+  // Existing tenants may predate newer SiteSettings fields.
+  // Always parse on read so schema defaults are applied without requiring
+  // a destructive data migration.
+  return SiteSettingsSchema.parse(
+    site.settings,
+  );
 }
 
 export async function writeAdminSiteSettings(

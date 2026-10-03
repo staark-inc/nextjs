@@ -1,4 +1,5 @@
 import { getPrismaClient } from "./db/prisma";
+import { resolvePublicContentConfig } from "./content-source";
 import { verifyPassword } from "./password";
 import {
   resolveTenantContext,
@@ -10,6 +11,15 @@ export async function resolveSaasLoginAccount(
   username: string,
   password: string,
 ) {
+  const config = resolvePublicContentConfig();
+
+  // SaaS customer authentication only exists in PostgreSQL mode.
+  // Legacy/local development must not initialize Prisma just to render/login
+  // to the classic admin.
+  if (config.source !== "postgres") {
+    return null;
+  }
+
   const tenant = await resolveTenantContext(request);
   if (!tenant?.organizationId) return null;
 

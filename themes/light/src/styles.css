@@ -1221,3 +1221,449 @@ li.sk-steps__item > div > p {
     gap: 42px;
   }
 }
+
+
+/* ==========================================================
+ * Shared legal footer + Staark Consent
+ * Used by every runtime theme.
+ * ======================================================== */
+
+.sk-footer__legal-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 20px;
+}
+
+.sk-footer__legal-copy {
+  min-width: 0;
+}
+
+.sk-footer__legal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.sk-footer__legal-nav a {
+  color: inherit;
+  text-decoration: none;
+  opacity: .82;
+  transition:
+    opacity .15s ease,
+    color .15s ease;
+}
+
+.sk-footer__legal-nav a:hover {
+  color: var(--sk-color-white, #fff);
+  opacity: 1;
+}
+
+.sk-footer--light .sk-footer__legal-nav a,
+.sk-footer--minimal .sk-footer__legal-nav a {
+  color: var(--sk-color-muted, #667085);
+}
+
+.sk-footer--light .sk-footer__legal-nav a:hover,
+.sk-footer--minimal .sk-footer__legal-nav a:hover {
+  color: var(--sk-color-primary, #2457f5);
+}
+
+/* ----------------------------------------------------------
+ * Cookie / consent panel
+ * -------------------------------------------------------- */
+
+.staark-consent {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  left: 24px;
+  z-index: 2147483000;
+
+  display: flex;
+  justify-content: center;
+
+  pointer-events: none;
+}
+
+.staark-consent__card {
+  width: min(760px, 100%);
+
+  padding: 24px;
+
+  border:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--sk-color-line, #e4e7ec) 85%,
+      transparent
+    );
+
+  border-radius:
+    var(--sk-radius-md, 18px);
+
+  background:
+    color-mix(
+      in srgb,
+      var(--sk-color-paper, #fff) 97%,
+      transparent
+    );
+
+  color:
+    var(--sk-color-ink, #101828);
+
+  box-shadow:
+    0 8px 24px rgba(16, 24, 40, .08),
+    0 28px 80px -20px rgba(16, 24, 40, .34);
+
+  backdrop-filter: blur(18px);
+
+  pointer-events: auto;
+}
+
+.staark-consent__copy {
+  display: grid;
+  gap: 8px;
+}
+
+.staark-consent__copy > strong {
+  color:
+    var(--sk-color-ink, #101828);
+
+  font-family:
+    var(
+      --sk-font-display,
+      var(--sk-font-body, system-ui, sans-serif)
+    );
+
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.staark-consent__copy p {
+  max-width: 68ch;
+  margin: 0;
+
+  color:
+    var(--sk-color-muted, #667085);
+
+  font-size: .94rem;
+  line-height: 1.6;
+}
+
+.staark-consent__links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  margin-top: 3px;
+
+  font-size: .84rem;
+}
+
+.staark-consent__links a {
+  color:
+    var(--sk-color-primary, #2457f5);
+
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.staark-consent__links a:hover {
+  text-decoration: underline;
+}
+
+/* Preferences */
+
+.staark-consent__preferences {
+  display: grid;
+  gap: 0;
+
+  margin-top: 20px;
+  padding-top: 10px;
+
+  border-top:
+    1px solid
+    var(--sk-color-line, #e4e7ec);
+}
+
+.staark-consent__preferences label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  padding: 12px 0;
+
+  cursor: pointer;
+}
+
+.staark-consent__preferences label + label {
+  border-top:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--sk-color-line, #e4e7ec) 65%,
+      transparent
+    );
+}
+
+.staark-consent__preferences label > span {
+  display: grid;
+  gap: 2px;
+}
+
+.staark-consent__preferences strong {
+  color:
+    var(--sk-color-ink, #101828);
+
+  font-size: .93rem;
+}
+
+.staark-consent__preferences small {
+  color:
+    var(--sk-color-muted, #667085);
+
+  font-size: .79rem;
+}
+
+.staark-consent__preferences input {
+  width: 20px;
+  height: 20px;
+
+  flex: 0 0 auto;
+
+  accent-color:
+    var(--sk-color-primary, #2457f5);
+}
+
+/* Actions */
+
+.staark-consent__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  gap: 10px;
+  flex-wrap: wrap;
+
+  margin-top: 20px;
+}
+
+.staark-consent__actions button {
+  min-height: 43px;
+
+  padding: 10px 16px;
+
+  border-radius:
+    var(--sk-radius-button, 10px);
+
+  font:
+    650 .9rem
+    var(--sk-font-body, system-ui, sans-serif);
+
+  cursor: pointer;
+
+  transition:
+    transform .15s ease,
+    background .15s ease,
+    border-color .15s ease;
+}
+
+.staark-consent__actions button:hover {
+  transform: translateY(-1px);
+}
+
+.staark-consent__primary {
+  border:
+    1px solid
+    var(--sk-color-primary, #2457f5);
+
+  background:
+    var(--sk-color-primary, #2457f5);
+
+  color:
+    var(--sk-color-white, #fff);
+}
+
+.staark-consent__primary:hover {
+  background:
+    var(
+      --sk-color-primary-dark,
+      var(--sk-color-primary, #2457f5)
+    );
+}
+
+.staark-consent__secondary {
+  border:
+    1px solid
+    var(--sk-color-line, #e4e7ec);
+
+  background:
+    transparent;
+
+  color:
+    var(--sk-color-ink, #101828);
+}
+
+.staark-consent__secondary:hover {
+  border-color:
+    var(--sk-color-primary, #2457f5);
+
+  color:
+    var(--sk-color-primary, #2457f5);
+}
+
+/* ----------------------------------------------------------
+ * Public legal pages
+ * -------------------------------------------------------- */
+
+.staark-policy-page {
+  width:
+    min(
+      820px,
+      calc(100% - 48px)
+    );
+
+  margin-inline: auto;
+
+  padding-block:
+    clamp(64px, 8vw, 112px);
+}
+
+.staark-policy-page header {
+  margin-bottom:
+    clamp(42px, 6vw, 68px);
+}
+
+.staark-policy-page header > p {
+  margin: 0 0 10px;
+
+  color:
+    var(--sk-color-primary, #2457f5);
+
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.staark-policy-page h1 {
+  margin: 0;
+
+  color:
+    var(--sk-color-ink, #101828);
+
+  font-size:
+    clamp(2.4rem, 6vw, 4.5rem);
+
+  line-height: 1;
+  letter-spacing: -.035em;
+}
+
+.staark-policy-page section {
+  padding-block: 28px;
+
+  border-top:
+    1px solid
+    var(--sk-color-line, #e4e7ec);
+}
+
+.staark-policy-page section h2 {
+  margin-bottom: 12px;
+
+  font-size:
+    clamp(1.25rem, 2vw, 1.55rem);
+}
+
+.staark-policy-page section p {
+  max-width: 70ch;
+  margin: 0;
+
+  color:
+    var(--sk-color-muted, #667085);
+
+  line-height: 1.75;
+}
+
+.staark-policy-page a {
+  color:
+    var(--sk-color-primary, #2457f5);
+
+  font-weight: 600;
+}
+
+/* Mobile */
+
+@media (max-width: 720px) {
+  .sk-footer__legal-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sk-footer__legal-nav {
+    justify-content: flex-start;
+    gap: 12px 18px;
+  }
+
+  .staark-consent {
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .staark-consent__card {
+    max-height:
+      calc(100dvh - 20px);
+
+    overflow-y: auto;
+
+    padding: 18px;
+
+    border-radius: 15px;
+  }
+
+  .staark-consent__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+
+    width: 100%;
+  }
+
+  .staark-consent__actions button {
+    width: 100%;
+  }
+
+  .staark-policy-page {
+    width:
+      min(
+        100% - 32px,
+        820px
+      );
+
+    padding-block: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staark-consent__actions button {
+    transition: none;
+  }
+}
+
+
+.staark-policy-page__intro {
+  max-width: 68ch;
+  margin-top: 18px;
+
+  color:
+    var(--sk-color-muted, #667085);
+
+  font-size: 1.08rem;
+  line-height: 1.7;
+}

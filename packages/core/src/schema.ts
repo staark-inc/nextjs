@@ -107,6 +107,161 @@ export const SiteSettingsSchema = z.object({
       contactNotificationEnabled: z.boolean().default(true),
     })
     .prefault({}),
+  analytics: z
+    .object({
+      googleAnalytics: z
+        .object({
+          enabled: z.boolean().default(false),
+
+          measurementId: z
+            .string()
+            .trim()
+            .regex(
+              /^G-[A-Z0-9]+$/,
+              "Google Analytics Measurement ID must look like G-XXXXXXXXXX.",
+            )
+            .optional(),
+
+          consentRequired: z.boolean().default(true),
+        })
+        .prefault({}),
+    })
+    .prefault({}),
+
+  privacy: z
+    .object({
+      cookieBannerEnabled: z.boolean().default(true),
+      analyticsConsentEnabled: z.boolean().default(true),
+      marketingConsentEnabled: z.boolean().default(false),
+      consentVersion: z.string().trim().min(1).max(40).default("1"),
+      bannerTitle: z
+        .string()
+        .trim()
+        .min(1)
+        .max(120)
+        .default("Vi använder cookies"),
+      bannerDescription: z
+        .string()
+        .trim()
+        .min(1)
+        .max(1000)
+        .default(
+          "Vi använder nödvändiga cookies för att webbplatsen ska fungera. Med ditt samtycke kan vi också använda analyscookies för att förstå hur webbplatsen används."
+        ),
+      privacyPolicyPath: z
+        .string()
+        .trim()
+        .regex(/^\/[a-z0-9\-/]*$/i)
+        .default("/integritet"),
+      cookiePolicyPath: z
+        .string()
+        .trim()
+        .regex(/^\/[a-z0-9\-/]*$/i)
+        .default("/cookies"),
+
+      privacyPolicy: z
+        .object({
+          title: z
+            .string()
+            .trim()
+            .min(1)
+            .max(160)
+            .default("Integritetspolicy"),
+
+          intro: z
+            .string()
+            .trim()
+            .max(3000)
+            .default(
+              "Här beskriver vi hur personuppgifter behandlas när du använder webbplatsen eller kontaktar oss."
+            ),
+
+          personalData: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Vi behandlar de personuppgifter som du själv lämnar via webbplatsens formulär, till exempel namn, e-postadress, telefonnummer och meddelanden."
+            ),
+
+          purpose: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Uppgifterna används för att kunna svara på förfrågningar, hantera bokningar och tillhandahålla den tjänst du kontaktar oss om."
+            ),
+
+          analytics: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Webbplatsen kan samla in integritetsvänlig aggregerad trafikstatistik. Externa analystjänster som kräver cookies aktiveras först efter ditt samtycke."
+            ),
+
+          rights: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Du kan kontakta oss om du vill veta vilka personuppgifter vi behandlar om dig eller begära rättelse eller radering när detta är tillämpligt."
+            ),
+        })
+        .prefault({}),
+
+      cookiePolicy: z
+        .object({
+          title: z
+            .string()
+            .trim()
+            .min(1)
+            .max(160)
+            .default("Cookiepolicy"),
+
+          intro: z
+            .string()
+            .trim()
+            .max(3000)
+            .default(
+              "Här förklarar vi vilka typer av cookies och lokal lagring som kan användas på webbplatsen."
+            ),
+
+          necessary: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Nödvändiga funktioner kan användas för säkerhet, inloggning och för att komma ihåg dina cookieinställningar."
+            ),
+
+          analytics: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Staarks egen trafikmätning använder aggregerade sidvisningar och kräver inte analyscookies. Externa analystjänster, exempelvis Google Analytics, får endast använda analyslagring när du har godkänt detta."
+            ),
+
+          marketing: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Marknadsföringsrelaterad lagring används endast när du uttryckligen har godkänt marknadsföring."
+            ),
+
+          choices: z
+            .string()
+            .trim()
+            .max(5000)
+            .default(
+              "Du kan neka valfria cookies i cookiebannern och senare ändra ditt val via länken Cookieinställningar i sidfoten."
+            ),
+        })
+        .prefault({}),
+    })
+    .prefault({}),
   navigation: z
     .object({
       primary: z.array(LinkSchema).default([]),
