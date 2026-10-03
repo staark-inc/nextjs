@@ -1,4 +1,5 @@
 import type { AdminFeature } from "./admin-features";
+import { canUsePlanFeature } from "./feature-access";
 import type { TenantEntitlements } from "./tenant-context";
 
 export class PlanLimitError extends Error {
@@ -35,7 +36,7 @@ export function adminFeaturesFromPlanEntitlements(
 ): AdminFeature[] {
   const features: AdminFeature[] = [];
 
-  if (entitlementBoolean(entitlements, "bookingEnabled")) {
+  if (canUsePlanFeature(entitlements, "booking")) {
     features.push("booking");
   }
 
