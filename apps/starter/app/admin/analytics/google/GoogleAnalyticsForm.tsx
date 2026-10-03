@@ -8,15 +8,20 @@ import {
 type Configuration = {
   enabled: boolean;
   measurementId?: string;
+  propertyId?: string;
   consentRequired: boolean;
 };
 
 export default function GoogleAnalyticsForm({
   initial,
   analyticsConsentEnabled,
+  dataApiConfigured,
+  serviceAccountEmail,
 }: {
   initial: Configuration;
   analyticsConsentEnabled: boolean;
+  dataApiConfigured: boolean;
+  serviceAccountEmail: string | null;
 }) {
   const [value, setValue] =
     useState(initial);
@@ -25,6 +30,12 @@ export default function GoogleAnalyticsForm({
     useState(false);
 
   const [message, setMessage] =
+    useState("");
+
+  const [testing, setTesting] =
+    useState(false);
+
+  const [testMessage, setTestMessage] =
     useState("");
 
   async function submit(
@@ -84,6 +95,59 @@ export default function GoogleAnalyticsForm({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function testConnection() {
+    setTesting(true);
+    setTestMessage("");
+
+    try {
+      const response =
+        await fetch(
+          "/api/admin/analytics/google/test",
+          {
+            method: "POST",
+
+            headers: {
+              "content-type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                propertyId:
+                  value.propertyId
+                    ?.trim(),
+              }),
+          },
+        );
+
+      const result =
+        await response
+          .json()
+          .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            "Connection test failed.",
+        );
+      }
+
+      setTestMessage(
+        result.timeZone
+          ? `Connected · ${result.timeZone}`
+          : "Connected successfully.",
+      );
+    } catch (error) {
+      setTestMessage(
+        error instanceof Error
+          ? error.message
+          : "Connection test failed.",
+      );
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -156,6 +220,36 @@ export default function GoogleAnalyticsForm({
           </small>
         </label>
 
+        <label className="sa-privacy-field">
+          <span>Property ID</span>
+
+          <input
+            value={
+              value.propertyId ?? ""
+            }
+            placeholder="123456789"
+            inputMode="numeric"
+            spellCheck={false}
+            onChange={(event) =>
+              setValue({
+                ...value,
+
+                propertyId:
+                  event.target.value
+                    .replace(
+                      /[^0-9]/g,
+                      "",
+                    ),
+              })
+            }
+          />
+
+          <small>
+            Numeric GA4 Property ID used by
+            the Analytics Data API.
+          </small>
+        </label>
+
         <label className="sa-privacy-toggle">
           <span>
             <strong>
@@ -201,6 +295,67 @@ export default function GoogleAnalyticsForm({
           </a>
         </section>
       ) : null}
+
+      <section className="sa-card">
+        <div className="sa-card__header">
+          <p className="sa-card__eyebrow">
+            Analytics Data API
+          </p>
+
+          <h2>Reporting connection</h2>
+
+          <p className="sa-note">
+            Grant this service account Viewer
+            access to the GA4 property, then
+            test the Property ID.
+          </p>
+        </div>
+
+        <div className="sa-analytics-data-api">
+          <div>
+            <span>Runtime credentials</span>
+
+            <strong>
+              {dataApiConfigured
+                ? "Configured"
+                : "Not configured"}
+            </strong>
+          </div>
+
+          <div>
+            <span>Service account</span>
+
+            <strong>
+              {serviceAccountEmail ??
+                "Unavailable"}
+            </strong>
+          </div>
+        </div>
+
+        <div className="sa-analytics-test-row">
+          <button
+            className="sa-btn"
+            type="button"
+            disabled={
+              testing ||
+              !value.propertyId
+            }
+            onClick={
+              testConnection
+            }
+          >
+            {testing
+              ? "Testing..."
+              : "Test connection"}
+          </button>
+
+          {testMessage ? (
+            <span>
+              {testMessage}
+            </span>
+          ) : null}
+        </div>
+      </section>
 
       <section className="sa-card">
         <div className="sa-card__header">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { readAdminAnalytics } from "@/lib/admin-analytics";
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
 import { resolveGoogleAnalyticsSettings } from "@/lib/google-analytics-settings";
+import { readAdminGoogleAnalytics } from "@/lib/admin-google-analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,12 @@ export default async function AnalyticsPage() {
     analytics.daily.length > 60
       ? analytics.daily.slice(-60)
       : analytics.daily;
+
+  const ga4 =
+    await readAdminGoogleAnalytics(
+      site,
+      analytics.access.level,
+    );
 
   return (
     <div className="sa-analytics-page">
@@ -243,6 +250,276 @@ export default async function AnalyticsPage() {
           </p>
         )}
       </section>
+
+      <div className="sa-plan-section-heading sa-ga4-section-heading">
+        <div>
+          <p className="sa-card__eyebrow">
+            Google Analytics 4
+          </p>
+
+          <h2>Audience & acquisition</h2>
+        </div>
+
+        <Link
+          href="/admin/analytics/google"
+          className="sa-btn"
+        >
+          Configure GA4
+        </Link>
+      </div>
+
+      {!ga4.configured ? (
+        <section className="sa-card sa-ga4-empty">
+          <strong>
+            Connect a GA4 Property
+          </strong>
+
+          <span>
+            Add the numeric Property ID to
+            load users, sessions, traffic
+            sources, devices and landing
+            pages.
+          </span>
+
+          <Link href="/admin/analytics/google">
+            Open Google Analytics settings →
+          </Link>
+        </section>
+      ) : ga4.error ? (
+        <section className="sa-analytics-google-warning">
+          <strong>
+            Google Analytics data unavailable
+          </strong>
+
+          <span>
+            {ga4.error}
+          </span>
+
+          <Link href="/admin/analytics/google">
+            Check connection →
+          </Link>
+        </section>
+      ) : (
+        <>
+          <div className="sa-ga4-stat-grid">
+            <article className="sa-plan-usage-card">
+              <span>Active users</span>
+
+              <strong>
+                {formatNumber(
+                  ga4.metrics
+                    .activeUsers,
+                )}
+              </strong>
+
+              <p>
+                Last {ga4.days} days
+              </p>
+            </article>
+
+            <article className="sa-plan-usage-card">
+              <span>Sessions</span>
+
+              <strong>
+                {formatNumber(
+                  ga4.metrics.sessions,
+                )}
+              </strong>
+
+              <p>
+                Google Analytics sessions
+              </p>
+            </article>
+
+            <article className="sa-plan-usage-card">
+              <span>Views</span>
+
+              <strong>
+                {formatNumber(
+                  ga4.metrics.pageViews,
+                )}
+              </strong>
+
+              <p>
+                Pages and screen views
+              </p>
+            </article>
+
+            <article className="sa-plan-usage-card">
+              <span>Engagement rate</span>
+
+              <strong>
+                {formatNumber(
+                  ga4.metrics
+                    .engagementRate *
+                    100,
+                )}%
+              </strong>
+
+              <p>
+                Engaged sessions
+              </p>
+            </article>
+          </div>
+
+          {analytics.access.level !==
+          "overview" ? (
+            <div className="sa-ga4-grid">
+              <section className="sa-card">
+                <div className="sa-card__header">
+                  <p className="sa-card__eyebrow">
+                    Acquisition
+                  </p>
+
+                  <h2>
+                    Traffic sources
+                  </h2>
+                </div>
+
+                <div className="sa-ga4-list">
+                  {ga4.sources.length ? (
+                    ga4.sources.map(
+                      (
+                        item,
+                        index,
+                      ) => (
+                        <div
+                          key={
+                            item.label
+                          }
+                          className="sa-ga4-list-row"
+                        >
+                          <span>
+                            {index + 1}
+                          </span>
+
+                          <strong>
+                            {item.label}
+                          </strong>
+
+                          <small>
+                            {formatNumber(
+                              item.value,
+                            )}{" "}
+                            sessions
+                          </small>
+                        </div>
+                      ),
+                    )
+                  ) : (
+                    <p className="sa-note">
+                      No acquisition data yet.
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              <section className="sa-card">
+                <div className="sa-card__header">
+                  <p className="sa-card__eyebrow">
+                    Audience
+                  </p>
+
+                  <h2>Devices</h2>
+                </div>
+
+                <div className="sa-ga4-list">
+                  {ga4.devices.length ? (
+                    ga4.devices.map(
+                      (
+                        item,
+                        index,
+                      ) => (
+                        <div
+                          key={
+                            item.label
+                          }
+                          className="sa-ga4-list-row"
+                        >
+                          <span>
+                            {index + 1}
+                          </span>
+
+                          <strong>
+                            {item.label}
+                          </strong>
+
+                          <small>
+                            {formatNumber(
+                              item.value,
+                            )}{" "}
+                            sessions
+                          </small>
+                        </div>
+                      ),
+                    )
+                  ) : (
+                    <p className="sa-note">
+                      No device data yet.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </div>
+          ) : null}
+
+          {analytics.access.level !==
+          "overview" ? (
+            <section className="sa-card sa-analytics-card">
+              <div className="sa-card__header">
+                <p className="sa-card__eyebrow">
+                  Acquisition
+                </p>
+
+                <h2>
+                  Top landing pages
+                </h2>
+              </div>
+
+              <div className="sa-analytics-pages">
+                {ga4.landingPages.length ? (
+                  ga4.landingPages.map(
+                    (
+                      page,
+                      index,
+                    ) => (
+                      <div
+                        className="sa-analytics-page-row"
+                        key={
+                          page.path
+                        }
+                      >
+                        <span>
+                          {index + 1}
+                        </span>
+
+                        <strong>
+                          {page.path}
+                        </strong>
+
+                        <small>
+                          {formatNumber(
+                            page.sessions,
+                          )}{" "}
+                          sessions ·{" "}
+                          {formatNumber(
+                            page.activeUsers,
+                          )}{" "}
+                          users
+                        </small>
+                      </div>
+                    ),
+                  )
+                ) : (
+                  <p className="sa-note">
+                    No landing page data yet.
+                  </p>
+                )}
+              </div>
+            </section>
+          ) : null}
+        </>
+      )}
 
       <section className="sa-plan-billing-note">
         <div>

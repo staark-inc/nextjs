@@ -2,23 +2,18 @@
 
 import {
   useEffect,
-  useRef,
   useState,
 } from "react";
-import { usePathname } from "next/navigation";
+
+import {
+  GoogleAnalytics as NextGoogleAnalytics,
+} from "@next/third-parties/google";
 
 import {
   parseStoredConsent,
   STAARK_CONSENT_STORAGE_KEY,
   type ConsentPreferences,
 } from "@/lib/privacy-consent";
-
-declare global {
-  interface Window {
-    dataLayer?: unknown[];
-    gtag?: (...args: unknown[]) => void;
-  }
-}
 
 type Props = {
   enabled: boolean;
@@ -27,12 +22,12 @@ type Props = {
   consentVersion: string;
 };
 
-function currentConsent(
+function readConsent(
   version: string,
 ): ConsentPreferences | null {
   try {
     return parseStoredConsent(
-      localStorage.getItem(
+      window.localStorage.getItem(
         STAARK_CONSENT_STORAGE_KEY,
       ),
       version,
@@ -42,7 +37,7 @@ function currentConsent(
   }
 }
 
-function mayLoadAnalytics(
+function canLoad(
   consentRequired: boolean,
   consent: ConsentPreferences | null,
 ): boolean {
@@ -59,14 +54,6 @@ export default function GoogleAnalytics({
   consentRequired,
   consentVersion,
 }: Props) {
-  const pathname = usePathname();
-
-  const initialized =
-    useRef(false);
-
-  const lastPath =
-    useRef<string | null>(null);
-
   const [allowed, setAllowed] =
     useState(false);
 
@@ -75,27 +62,27 @@ export default function GoogleAnalytics({
       !enabled ||
       !measurementId
     ) {
+      setAllowed(false);
       return;
     }
 
-    const consent =
-      currentConsent(
-        consentVersion,
-      );
-
-    queueMicrotask(() => {
+    const updateFromStorage = () => {
       setAllowed(
-        mayLoadAnalytics(
+        canLoad(
           consentRequired,
-          consent,
+          readConsent(
+            consentVersion,
+          ),
         ),
       );
-    });
+    };
+
+    updateFromStorage();
 
     function onConsentChanged(
       event: Event,
     ) {
-      const detail =
+      const consent =
         (
           event as CustomEvent<
             ConsentPreferences
@@ -103,9 +90,9 @@ export default function GoogleAnalytics({
         ).detail;
 
       setAllowed(
-        mayLoadAnalytics(
+        canLoad(
           consentRequired,
-          detail,
+          consent,
         ),
       );
     }
@@ -115,11 +102,12 @@ export default function GoogleAnalytics({
       onConsentChanged,
     );
 
-    return () =>
+    return () => {
       window.removeEventListener(
         "staark:consent-changed",
         onConsentChanged,
       );
+    };
   }, [
     enabled,
     measurementId,
@@ -127,106 +115,17 @@ export default function GoogleAnalytics({
     consentVersion,
   ]);
 
-  useEffect(() => {
-    if (
-      !enabled ||
-      !measurementId ||
-      !allowed ||
-      initialized.current
-    ) {
-      return;
-    }
+  if (
+    !enabled ||
+    !measurementId ||
+    !allowed
+  ) {
+    return null;
+  }
 
-    window.dataLayer =
-      window.dataLayer || [];
-
-    window.gtag =
-      window.gtag ||
-      function gtag(
-        ...args: unknown[]
-      ) {
-        window.dataLayer?.push(
-          args,
-        );
-      };
-
-    const existing =
-      document.querySelector(
-        `script[data-staark-ga="${measurementId}"]`,
-      );
-
-    if (!existing) {
-      const script =
-        document.createElement(
-          "script",
-        );
-
-      script.async = true;
-
-      script.src =
-        `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(
-          measurementId,
-        )}`;
-
-      script.dataset.staarkGa =
-        measurementId;
-
-      document.head.appendChild(
-        script,
-      );
-    }
-
-    window.gtag(
-      "js",
-      new Date(),
-    );
-
-    window.gtag(
-      "config",
-      measurementId,
-      {
-        send_page_view: false,
-      },
-    );
-
-    initialized.current = true;
-
-    setAllowed(true);
-  }, [
-    enabled,
-    measurementId,
-    allowed,
-  ]);
-
-  useEffect(() => {
-    if (
-      !initialized.current ||
-      !allowed ||
-      !measurementId ||
-      !pathname ||
-      lastPath.current === pathname
-    ) {
-      return;
-    }
-
-    lastPath.current = pathname;
-
-    window.gtag?.(
-      "event",
-      "page_view",
-      {
-        page_path: pathname,
-        page_location:
-          window.location.href,
-        page_title:
-          document.title,
-      },
-    );
-  }, [
-    pathname,
-    allowed,
-    measurementId,
-  ]);
-
-  return null;
+  return (
+    <NextGoogleAnalytics
+      gaId={measurementId}
+    />
+  );
 }

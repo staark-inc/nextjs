@@ -22,6 +22,7 @@
     "db:seed:saas": "tsx scripts/seed-saas-plans.ts"
   },
   "dependencies": {
+    "@next/third-parties": "^16.3.8",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "@staark/core": "workspace:*",
