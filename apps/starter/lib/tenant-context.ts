@@ -1,11 +1,5 @@
 import { getPrismaClient } from "@/lib/db/prisma";
-
-const ACTIVE_SUBSCRIPTION_STATUSES: string[] = [
-  "trialing",
-  "active",
-  "past_due",
-  "canceling",
-];
+import { hasPublicSubscriptionAccess } from "./subscription-access";
 
 export type TenantEntitlements = {
   storageBytes?: number;
@@ -30,6 +24,7 @@ export type TenantContext = {
   planKey: string | null;
   subscriptionId: string | null;
   subscriptionStatus: string | null;
+  publicAccess: boolean;
   entitlements: TenantEntitlements;
 };
 
@@ -96,6 +91,10 @@ function contextFromSite(
     planKey: subscription?.plan.key ?? null,
     subscriptionId: subscription?.id ?? null,
     subscriptionStatus: subscription?.status ?? null,
+    publicAccess:
+      hasPublicSubscriptionAccess(
+        subscription?.status,
+      ),
     entitlements: asEntitlements(subscription?.plan.entitlements),
   };
 }
@@ -108,11 +107,6 @@ const siteTenantInclude = {
     },
   },
   subscriptions: {
-    where: {
-      status: {
-        in: [...ACTIVE_SUBSCRIPTION_STATUSES],
-      },
-    },
     include: {
       plan: {
         select: {

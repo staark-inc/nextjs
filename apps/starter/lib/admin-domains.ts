@@ -396,41 +396,188 @@ async function ensureCloudflareHostname(domain: StoredDomain) {
 export async function checkAdminCustomDomainDns(
   id: string,
 ): Promise<AdminDomainVerificationResult> {
-  const tenant = await requireAdminTenantContext();
-  const prisma = getPrismaClient();
+  const tenant =
+    await requireAdminTenantContext();
 
-  const domain = (await prisma.domain.findFirst({
-    where: { id, siteId: tenant.siteId, type: "custom" },
-  })) as StoredDomain | null;
+  const prisma =
+    getPrismaClient();
+
+  const domain =
+    (await prisma.domain.findFirst({
+      where: {
+        id,
+        siteId:
+          tenant.siteId,
+        type:
+          "custom",
+      },
+    })) as StoredDomain | null;
 
   if (!domain) {
-    throw new Error("Custom domain not found.");
+    throw new Error(
+      "Custom domain not found.",
+    );
   }
 
-  const remote = await ensureCloudflareHostname(domain);
-  const current = (await prisma.domain.findUnique({
-    where: { id: domain.id },
-  })) as StoredDomain;
-  const staarkVerified = await hasStaarkVerificationRecord(current);
-  const updated = await prisma.domain.update({
-    where: { id: domain.id },
-    data: {
-      ...providerData(remote),
-      verified: staarkVerified,
-    },
-  });
-  const serialized = serializeDomain(updated as StoredDomain);
+  const remote =
+    await ensureCloudflareHostname(
+      domain,
+    );
+
+  const current =
+    (await prisma.domain.findUnique({
+      where: {
+        id:
+          domain.id,
+      },
+    })) as StoredDomain;
+
+  const staarkVerified =
+    await hasStaarkVerificationRecord(
+      current,
+    );
+
+  const updated =
+    await prisma.domain.update({
+      where: {
+        id:
+          domain.id,
+      },
+
+      data: {
+        ...providerData(remote),
+
+        verified:
+          staarkVerified,
+      },
+    });
+
+  let serialized =
+    serializeDomain(
+      updated as StoredDomain,
+    );
+
+  const connected =
+    serialized.verified &&
+    serialized.providerStatus ===
+      "active" &&
+    serialized.sslStatus ===
+      "active";
+
+  if (connected) {
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.domain.updateMany({
+          where: {
+            siteId:
+              tenant.siteId,
+
+            id: {
+              not:
+                domain.id,
+            },
+          },
+
+          data: {
+            primaryDomain:
+              false,
+          },
+        });
+
+        await tx.domain.update({
+          where: {
+            id:
+              domain.id,
+          },
+
+          data: {
+            primaryDomain:
+              true,
+
+            blockedAt:
+              null,
+
+            releaseAt:
+              null,
+
+            releasedAt:
+              null,
+          },
+        });
+
+        const site =
+          await tx.site.findUnique({
+            where: {
+              id:
+                tenant.siteId,
+            },
+
+            select: {
+              settings:
+                true,
+            },
+          });
+
+        const settings =
+          site?.settings &&
+          typeof site.settings === "object" &&
+          !Array.isArray(site.settings)
+            ? {
+                ...site.settings,
+              }
+            : {};
+
+        await tx.site.update({
+          where: {
+            id:
+              tenant.siteId,
+          },
+
+          data: {
+            settings: {
+              ...settings,
+
+              url:
+                `https://${domain.hostname}`,
+            },
+          },
+        });
+      },
+    );
+
+    const finalDomain =
+      await prisma.domain.findUnique({
+        where: {
+          id:
+            domain.id,
+        },
+      });
+
+    if (finalDomain) {
+      serialized =
+        serializeDomain(
+          finalDomain as StoredDomain,
+        );
+    }
+  }
 
   return {
-    verified: serialized.verified,
-    connected:
-      serialized.verified &&
-      serialized.providerStatus === "active" &&
-      serialized.sslStatus === "active",
-    providerStatus: serialized.providerStatus,
-    sslStatus: serialized.sslStatus,
-    providerError: serialized.providerError,
-    records: serialized.dnsRecords,
+    verified:
+      serialized.verified,
+
+    connected,
+
+    providerStatus:
+      serialized.providerStatus,
+
+    sslStatus:
+      serialized.sslStatus,
+
+    providerError:
+      serialized.providerError,
+
+    records:
+      serialized.dnsRecords,
   };
 }
 

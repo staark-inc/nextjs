@@ -1,4 +1,7 @@
-import { createHash } from "node:crypto";
+import {
+  createHash,
+  randomUUID,
+} from "node:crypto";
 
 import { getPrismaClient } from "./db/prisma";
 import {
@@ -6,6 +9,12 @@ import {
   type FirstSetupInput,
 } from "./first-setup";
 import { issueSetupClaimForSite } from "./setup-claim";
+import { isReservedPlatformSubdomain } from "./platform-subdomains";
+import {
+  createCloudflareCustomHostname,
+  findCloudflareCustomHostname,
+  type CloudflareCustomHostname,
+} from "./cloudflare-saas";
 
 export type HubProvisioningInput = {
   hubSubscriptionId: string;
@@ -30,6 +39,11 @@ export type HubProvisioningInput = {
 
   hostname?: string;
   domainType?: "platform";
+
+  domainMode?: "platform" | "custom";
+  platformHostname?: string;
+  customHostname?: string | null;
+
   setup?: FirstSetupInput;
 };
 
@@ -74,6 +88,153 @@ function optionalDate(value: string | null | undefined): Date | null {
 
 function subscriptionStatus(value: string): string {
   return required(value, "status").toLowerCase();
+}
+
+const HOST_LABEL =
+  /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+function normalizeCustomHostname(
+  value: string | null | undefined,
+): string {
+  if (!value) {
+    throw new Error(
+      "customHostname is required for custom domain provisioning.",
+    );
+  }
+
+  let hostname =
+    value.trim().toLowerCase();
+
+  hostname =
+    hostname.replace(/^https?:\/\//, "");
+
+  hostname =
+    hostname.replace(/\/.*$/, "");
+
+  hostname =
+    hostname.replace(/\.$/, "");
+
+  if (
+    !hostname ||
+    hostname.length > 253 ||
+    !hostname.includes(".")
+  ) {
+    throw new Error(
+      "customHostname must be a valid domain name.",
+    );
+  }
+
+  if (
+    hostname.includes(":") ||
+    hostname.includes("_")
+  ) {
+    throw new Error(
+      "customHostname must not contain a port or underscore.",
+    );
+  }
+
+  const labels = hostname.split(".");
+
+  if (
+    labels.some(
+      (label) =>
+        !label ||
+        label.length > 63 ||
+        !HOST_LABEL.test(label),
+    )
+  ) {
+    throw new Error(
+      "customHostname contains an invalid hostname label.",
+    );
+  }
+
+  if (
+    hostname === "staark.app" ||
+    hostname.endsWith(".staark.app")
+  ) {
+    throw new Error(
+      "staark.app addresses cannot be used as custom domains.",
+    );
+  }
+
+  return hostname;
+}
+
+function providerErrorMessage(
+  hostname: CloudflareCustomHostname,
+): string | null {
+  const errors = [
+    ...(hostname.verification_errors ?? []),
+
+    ...(hostname.ssl?.validation_errors ?? [])
+      .map((entry) => entry.message)
+      .filter(
+        (value): value is string =>
+          Boolean(value),
+      ),
+  ];
+
+  return errors.length
+    ? errors.join(" ").slice(0, 2000)
+    : null;
+}
+
+function providerData(
+  hostname: CloudflareCustomHostname,
+) {
+  return {
+    provider: "cloudflare",
+
+    providerHostnameId:
+      hostname.id,
+
+    providerStatus:
+      hostname.status ?? "pending",
+
+    providerError:
+      providerErrorMessage(hostname),
+
+    ownershipVerificationName:
+      hostname.ownership_verification
+        ?.name ?? null,
+
+    ownershipVerificationValue:
+      hostname.ownership_verification
+        ?.value ?? null,
+
+    sslValidationRecords:
+      JSON.parse(
+        JSON.stringify(
+          hostname.ssl
+            ?.validation_records ??
+            [],
+        ),
+      ),
+
+    providerLastSyncAt:
+      new Date(),
+
+    sslStatus:
+      hostname.ssl?.status ??
+      "pending",
+  };
+}
+
+function planAllowsCustomDomain(
+  entitlements: unknown,
+): boolean {
+  if (
+    !entitlements ||
+    typeof entitlements !== "object" ||
+    Array.isArray(entitlements)
+  ) {
+    return false;
+  }
+
+  return (
+    (entitlements as Record<string, unknown>)
+      .customDomain === true
+  );
 }
 
 export async function provisionFromHub(raw: HubProvisioningInput) {
@@ -127,21 +288,35 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
   const fallbackHostname =
     `${nameSlug}-${suffix}.${platformDomain}`;
 
-  const hostname =
-    raw.hostname?.trim().toLowerCase() ||
-    fallbackHostname;
+  const domainMode =
+    raw.domainMode === "custom"
+      ? "custom"
+      : "platform";
+
+  const platformHostname =
+    (
+      raw.platformHostname ??
+      raw.hostname ??
+      fallbackHostname
+    )
+      .trim()
+      .toLowerCase();
 
   const platformSuffix =
     `.${platformDomain}`;
 
-  if (!hostname.endsWith(platformSuffix)) {
+  if (
+    !platformHostname.endsWith(
+      platformSuffix,
+    )
+  ) {
     throw new Error(
-      `hostname must be a subdomain of ${platformDomain}.`,
+      `platformHostname must be a subdomain of ${platformDomain}.`,
     );
   }
 
   const hostnameLabel =
-    hostname.slice(
+    platformHostname.slice(
       0,
       -platformSuffix.length,
     );
@@ -151,17 +326,37 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
     hostnameLabel.includes(".") ||
     hostnameLabel.length > 63 ||
     hostnameLabel.includes("--") ||
-    !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(
+    !HOST_LABEL.test(hostnameLabel)
+  ) {
+    throw new Error(
+      "platformHostname contains an invalid platform subdomain.",
+    );
+  }
+
+  if (
+    isReservedPlatformSubdomain(
       hostnameLabel,
     )
   ) {
     throw new Error(
-      "hostname contains an invalid platform subdomain.",
+      `Platform hostname "${platformHostname}" is reserved.`,
     );
   }
 
+  const customHostname =
+    domainMode === "custom"
+      ? normalizeCustomHostname(
+          raw.customHostname,
+        )
+      : null;
+
+  // The platform hostname is always the safe technical
+  // address during provisioning and DNS propagation.
+  const hostname =
+    platformHostname;
+
   const siteUrl =
-    `https://${hostname}`;
+    `https://${platformHostname}`;
 
   const ownerEmail =
     raw.setup?.owner?.email
@@ -183,6 +378,17 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
     if (!plan) {
       throw new Error(
         `Plan "${planKey}" does not exist. Run db:seed:saas-plans first.`,
+      );
+    }
+
+    if (
+      domainMode === "custom" &&
+      !planAllowsCustomDomain(
+        plan.entitlements,
+      )
+    ) {
+      throw new Error(
+        "The selected plan does not include a custom domain.",
       );
     }
 
@@ -285,8 +491,97 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
         verified: true,
         primaryDomain: true,
         sslStatus: "active",
+        blockedAt: null,
+        releaseAt: null,
+        releasedAt: null,
       },
     });
+
+    let customDomain = null;
+
+    if (customHostname) {
+      const occupiedCustom =
+        await tx.domain.findUnique({
+          where: {
+            hostname:
+              customHostname,
+          },
+
+          select: {
+            id: true,
+            siteId: true,
+          },
+        });
+
+      if (
+        occupiedCustom &&
+        occupiedCustom.siteId !== site.id
+      ) {
+        throw new Error(
+          `Custom hostname "${customHostname}" is already in use.`,
+        );
+      }
+
+      customDomain =
+        await tx.domain.upsert({
+          where: {
+            hostname:
+              customHostname,
+          },
+
+          create: {
+            siteId:
+              site.id,
+
+            hostname:
+              customHostname,
+
+            type:
+              "custom",
+
+            verified:
+              false,
+
+            primaryDomain:
+              false,
+
+            verificationToken:
+              randomUUID(),
+
+            sslStatus:
+              "pending",
+
+            provider:
+              "cloudflare",
+
+            providerStatus:
+              "provisioning",
+          },
+
+          update: {
+            siteId:
+              site.id,
+
+            type:
+              "custom",
+
+            primaryDomain:
+              false,
+
+            provider:
+              "cloudflare",
+
+            blockedAt:
+              null,
+
+            releaseAt:
+              null,
+
+            releasedAt:
+              null,
+          },
+        });
+    }
 
     const subscription = await tx.subscription.upsert({
       where: {
@@ -333,8 +628,71 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
       organization,
       site,
       subscription,
+      customDomain,
     };
   });
+
+  if (
+    customHostname &&
+    result.customDomain
+  ) {
+    try {
+      const remote =
+        (
+          await findCloudflareCustomHostname(
+            customHostname,
+          )
+        ) ??
+        (
+          await createCloudflareCustomHostname(
+            customHostname,
+          )
+        );
+
+      await prisma.domain.update({
+        where: {
+          id:
+            result.customDomain.id,
+        },
+
+        data:
+          providerData(remote),
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Cloudflare custom hostname provisioning failed.";
+
+      // Keep the website alive on its Staark fallback.
+      // The customer can retry domain verification later.
+      await prisma.domain.update({
+        where: {
+          id:
+            result.customDomain.id,
+        },
+
+        data: {
+          providerStatus:
+            "error",
+
+          providerError:
+            message.slice(
+              0,
+              2000,
+            ),
+
+          providerLastSyncAt:
+            new Date(),
+        },
+      });
+
+      console.error(
+        "[STAARK] Custom hostname provisioning deferred:",
+        error,
+      );
+    }
+  }
 
   let setupCompleted =
     Boolean(result.site.setupCompletedAt);
@@ -378,7 +736,17 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
       result.site.id,
 
     siteKey,
-    hostname,
+
+    hostname:
+      platformHostname,
+
+    platformHostname,
+
+    customHostname,
+
+    customDomainPending:
+      Boolean(customHostname),
+
     siteUrl,
 
     adminUrl:
@@ -387,10 +755,14 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
         : null,
 
     domainType:
-      "platform",
+      customHostname
+        ? "custom"
+        : "platform",
 
     domainVerified:
-      true,
+      customHostname
+        ? false
+        : true,
 
     setupUrl:
       setupClaim

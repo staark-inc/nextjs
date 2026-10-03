@@ -6,6 +6,7 @@ import {
 import { NextResponse } from "next/server";
 
 import { getPrismaClient } from "@/lib/db/prisma";
+import { hasPublicSubscriptionAccess } from "@/lib/subscription-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -169,6 +170,9 @@ export async function POST(
               verified: true,
               primaryDomain: true,
               sslStatus: true,
+              blockedAt: true,
+              releaseAt: true,
+              releasedAt: true,
             },
           },
 
@@ -258,8 +262,29 @@ export async function POST(
               pageCount:
                 site.pages.length,
 
+              publicAccess:
+                hasPublicSubscriptionAccess(
+                  site.subscriptions[0]?.status,
+                ),
+
               domains:
-                site.domains,
+                site.domains.map(
+                  (domain) => ({
+                    ...domain,
+                    blockedAt:
+                      domain.blockedAt
+                        ?.toISOString() ??
+                      null,
+                    releaseAt:
+                      domain.releaseAt
+                        ?.toISOString() ??
+                      null,
+                    releasedAt:
+                      domain.releasedAt
+                        ?.toISOString() ??
+                      null,
+                  }),
+                ),
 
               usage: site.usage
                 ? {
