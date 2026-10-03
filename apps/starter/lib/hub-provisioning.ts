@@ -34,7 +34,6 @@ export type HubProvisioningInput = {
 
   currentPeriodStart?: string | null;
   currentPeriodEnd?: string | null;
-  trialEnd?: string | null;
   cancelAtPeriodEnd?: boolean;
 
   hostname?: string;
@@ -599,7 +598,7 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
           raw.billingInterval === "YEAR" ? "yearly" : "monthly",
         currentPeriodStart: optionalDate(raw.currentPeriodStart),
         currentPeriodEnd: optionalDate(raw.currentPeriodEnd),
-        trialEndsAt: optionalDate(raw.trialEnd),
+        trialEndsAt: null,
         cancelAtPeriodEnd: Boolean(raw.cancelAtPeriodEnd),
       },
       update: {
@@ -612,7 +611,7 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
           raw.billingInterval === "YEAR" ? "yearly" : "monthly",
         currentPeriodStart: optionalDate(raw.currentPeriodStart),
         currentPeriodEnd: optionalDate(raw.currentPeriodEnd),
-        trialEndsAt: optionalDate(raw.trialEnd),
+        trialEndsAt: null,
         cancelAtPeriodEnd: Boolean(raw.cancelAtPeriodEnd),
       },
     });
