@@ -5,7 +5,12 @@ import { presetToCssVars, cssVarsToString, resolvePreset } from "@staark/theme-k
 import { content } from "@/lib/staark";
 import { resolveThemeRuntime, SiteHeader, SiteFooter } from "@/staark.config";
 import { resolveTenantContext } from "@/lib/tenant-context";
+import { resolvePublicContentConfig } from "@/lib/content-source";
 import { SaasAccessBlocked } from "./SaasAccessBlocked";
+import ConsentMode from "./ConsentMode";
+import CookieConsent from "./CookieConsent";
+import PublicAnalytics from "./PublicAnalytics";
+import { canUsePlanFeature } from "@/lib/feature-access";
 import "@staark/theme-light/styles.css";
 import "@staark/theme-salong/styles.css";
 import "@staark/theme-skonhet/styles.css";
@@ -23,6 +28,12 @@ import "@staark/theme-kreator/styles.css";
 export const dynamic = "force-dynamic";
 
 async function currentTenant() {
+  const config = resolvePublicContentConfig();
+
+  if (config.source !== "postgres") {
+    return null;
+  }
+
   try {
     const requestHeaders = await headers();
 
@@ -73,6 +84,38 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SiteHeader site={site} variant={components.header ?? "solid"} />
       <main>{children}</main>
       <SiteFooter site={site} variant={components.footer ?? "dark"} />
+
+      <ConsentMode />
+
+      <CookieConsent
+        settings={{
+          cookieBannerEnabled:
+            site.privacy.cookieBannerEnabled,
+          analyticsConsentEnabled:
+            site.privacy.analyticsConsentEnabled,
+          marketingConsentEnabled:
+            site.privacy.marketingConsentEnabled,
+          consentVersion:
+            site.privacy.consentVersion,
+          bannerTitle:
+            site.privacy.bannerTitle,
+          bannerDescription:
+            site.privacy.bannerDescription,
+          privacyPolicyPath:
+            site.privacy.privacyPolicyPath,
+          cookiePolicyPath:
+            site.privacy.cookiePolicyPath,
+        }}
+      />
+      <PublicAnalytics
+        enabled={Boolean(
+          tenant &&
+            canUsePlanFeature(
+              tenant.entitlements,
+              "analytics",
+            ),
+        )}
+      />
     </>
   );
 }

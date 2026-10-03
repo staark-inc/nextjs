@@ -110,6 +110,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "search google titles descriptions",
   },
   {
+    href: "/admin/analytics",
+    feature: "analytics",
+    label: "Analytics",
+    description: "Traffic & top pages",
+    icon: "M4 19V9 M10 19V5 M16 19v-8 M22 19V3",
+    group: "Growth",
+    keywords: "analytics traffic visitors page views stats statistics",
+  },
+  {
     href: "/admin/redirects",
     feature: "redirects",
     label: "Redirects",
@@ -153,6 +162,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     icon: "M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Zm0 0h18 M12 3a15 15 0 0 1 0 18 M12 3a15 15 0 0 0 0 18",
     group: "System",
     keywords: "domain hostname dns custom domain staark app ssl",
+  },
+  {
+    href: "/admin/privacy",
+    feature: "privacy",
+    label: "Privacy & consent",
+    description: "Cookies & policies",
+    icon: "M12 3 4 6v5c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6l-8-3Z M9 12l2 2 4-5",
+    group: "System",
+    keywords: "privacy cookies consent gdpr analytics policy",
   },
   {
     href: "/admin/plan",

@@ -107,6 +107,38 @@ export const SiteSettingsSchema = z.object({
       contactNotificationEnabled: z.boolean().default(true),
     })
     .prefault({}),
+  privacy: z
+    .object({
+      cookieBannerEnabled: z.boolean().default(true),
+      analyticsConsentEnabled: z.boolean().default(true),
+      marketingConsentEnabled: z.boolean().default(false),
+      consentVersion: z.string().trim().min(1).max(40).default("1"),
+      bannerTitle: z
+        .string()
+        .trim()
+        .min(1)
+        .max(120)
+        .default("Vi använder cookies"),
+      bannerDescription: z
+        .string()
+        .trim()
+        .min(1)
+        .max(1000)
+        .default(
+          "Vi använder nödvändiga cookies för att webbplatsen ska fungera. Med ditt samtycke kan vi också använda analyscookies för att förstå hur webbplatsen används."
+        ),
+      privacyPolicyPath: z
+        .string()
+        .trim()
+        .regex(/^\/[a-z0-9\-/]*$/i)
+        .default("/integritet"),
+      cookiePolicyPath: z
+        .string()
+        .trim()
+        .regex(/^\/[a-z0-9\-/]*$/i)
+        .default("/cookies"),
+    })
+    .prefault({}),
   navigation: z
     .object({
       primary: z.array(LinkSchema).default([]),

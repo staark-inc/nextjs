@@ -1,5 +1,6 @@
 import { getPrismaClient } from "./db/prisma";
 import { requireAdminTenantContext } from "./admin-tenant";
+import { resolvePublicContentConfig } from "./content-source";
 import { listMediaFiles } from "./admin-media";
 
 export type AdminPlanSummary = {
@@ -36,6 +37,36 @@ function bigintToSafeNumber(value: bigint): number {
 }
 
 export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
+  const contentConfig = resolvePublicContentConfig();
+
+  // Local/legacy development has no SaaS tenant/subscription database.
+  // Keep the Plan page renderable so UI work does not require PostgreSQL.
+  if (contentConfig.source !== "postgres") {
+    return {
+      planKey: "local",
+      planName: "Local development",
+      description:
+        "Local legacy mode. SaaS billing and live usage require PostgreSQL.",
+      monthlyPriceCents: null,
+      yearlyPriceCents: null,
+      currency: "SEK",
+      billingInterval: "monthly",
+      subscriptionStatus: "development",
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      trialEndsAt: null,
+      cancelAtPeriodEnd: false,
+      canceledAt: null,
+      storageUsedBytes: 0,
+      mediaCount: 0,
+      pagesCount: 0,
+      submissionsCount: 0,
+      usersCount: 0,
+      domainsCount: 0,
+      entitlements: {},
+    };
+  }
+
   const tenant = await requireAdminTenantContext();
   const prisma = getPrismaClient();
 

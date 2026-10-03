@@ -8,7 +8,9 @@ export const ADMIN_FEATURES = [
   "navigation",
   "design",
   "seo",
+  "analytics",
   "settings",
+  "privacy",
   "plan",
   "booking",
   "services",
@@ -35,7 +37,9 @@ export const ADMIN_FEATURE_REGISTRY: Record<AdminFeature, AdminFeatureDefinition
   navigation: { label: "Navigation", access: "core" },
   design: { label: "Design", access: "core" },
   seo: { label: "SEO", access: "core" },
+  analytics: { label: "Analytics", access: "entitlement" },
   settings: { label: "Settings", access: "core" },
+  privacy: { label: "Privacy & consent", access: "core" },
   plan: { label: "Plan & usage", access: "core" },
 
   // Optional client capability. The dedicated Bookings UI is added later.
@@ -125,11 +129,13 @@ const PAGE_FEATURES: Array<[string, AdminFeature]> = [
   ["/admin/themes/studio", "themes"],
   ["/admin/themes", "design"],
   ["/admin/seo", "seo"],
+  ["/admin/analytics", "analytics"],
   ["/admin/redirects", "redirects"],
   ["/admin/health", "health"],
   ["/admin/backups", "backups"],
   ["/admin/domains", "settings"],
   ["/admin/site", "settings"],
+  ["/admin/privacy", "privacy"],
   ["/admin/plan", "plan"],
 ];
 
@@ -151,6 +157,7 @@ const API_FEATURES: Array<[string, AdminFeature]> = [
   ["/api/admin/billing", "plan"],
   ["/api/admin/domains", "settings"],
   ["/api/admin/site", "settings"],
+  ["/api/admin/privacy", "privacy"],
   ["/api/admin/shell", "dashboard"],
 ];
 

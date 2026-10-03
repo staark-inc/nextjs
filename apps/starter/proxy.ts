@@ -12,6 +12,7 @@ import {
   resolveClientFeatures,
 } from "@/lib/website-profile";
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
+import { resolvePublicContentConfig } from "@/lib/content-source";
 import { resolveTenantContext } from "@/lib/tenant-context";
 import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import {
@@ -240,10 +241,16 @@ export async function proxy(req: NextRequest) {
     }
     const feature = featureForAdminPath(pathname);
 
-    const tenant = await resolveTenantContext({
-      host: req.headers.get("host"),
-      forwardedHost: req.headers.get("x-forwarded-host"),
-    });
+    const contentConfig =
+      resolvePublicContentConfig();
+
+    const tenant =
+      contentConfig.source === "postgres"
+        ? await resolveTenantContext({
+            host: req.headers.get("host"),
+            forwardedHost: req.headers.get("x-forwarded-host"),
+          })
+        : null;
 
     const planFeatures =
       adminFeaturesFromPlanEntitlements(

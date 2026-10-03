@@ -67,8 +67,28 @@ export function SiteFooter({ site, variant }: { site: SiteSettings; variant: str
         )}
       </div>
       <div className="sk-footer__legal">
-        <div className="sk-container sk-container--wide">
-          {site.brand.copyright ?? `© ${year} ${site.name}`} · <span>Byggd och driftad av Staark Inc.</span>
+        <div className="sk-container sk-container--wide sk-footer__legal-inner">
+          <div className="sk-footer__legal-copy">
+            {site.brand.copyright ?? `© ${year} ${site.name}`} ·{" "}
+            <span>Byggd och driftad av Staark Inc.</span>
+          </div>
+
+          <nav
+            className="sk-footer__legal-nav"
+            aria-label="Integritet och cookies"
+          >
+            <a href={site.privacy.privacyPolicyPath}>
+              Integritetspolicy
+            </a>
+
+            <a href={site.privacy.cookiePolicyPath}>
+              Cookiepolicy
+            </a>
+
+            <a href="#cookie-settings">
+              Cookieinställningar
+            </a>
+          </nav>
         </div>
       </div>
     </footer>
