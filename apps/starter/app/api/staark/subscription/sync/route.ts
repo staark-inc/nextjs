@@ -133,7 +133,6 @@ export async function POST(request: Request) {
       status?: unknown;
       currentPeriodStart?: unknown;
       currentPeriodEnd?: unknown;
-      trialEnd?: unknown;
       cancelAtPeriodEnd?: unknown;
     };
 
@@ -227,9 +226,7 @@ export async function POST(request: Request) {
               body.currentPeriodEnd,
             ),
           trialEndsAt:
-            optionalDate(
-              body.trialEnd,
-            ),
+            null,
           cancelAtPeriodEnd:
             body.cancelAtPeriodEnd === true,
         },
