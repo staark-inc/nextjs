@@ -13,6 +13,7 @@ import "@staark/theme-el/styles.css";
 import "@staark/theme-gastfrihet/styles.css";
 import "@staark/theme-byra/styles.css";
 import "@staark/theme-webb/styles.css";
+import "@staark/theme-verkstad/styles.css";
 
 import "@staark/theme-kreator/styles.css";
 /**

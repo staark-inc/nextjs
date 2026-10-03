@@ -34,6 +34,7 @@
     "@staark/theme-light": "workspace:*",
     "@staark/theme-salong": "workspace:*",
     "@staark/theme-skonhet": "workspace:*",
+    "@staark/theme-verkstad": "workspace:*",
     "@staark/theme-webb": "workspace:*",
     "iron-session": "^9.0.1",
     "next": "^16.3.6",

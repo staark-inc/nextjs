@@ -34,6 +34,7 @@ const THEMES = [
   ["byra", "Byrå"],
   ["webb", "Webb"],
   ["kreator", "Kreatör"],
+  ["verkstad", "Verkstad"],
 ] as const;
 
 const RECOMMENDED_THEME: Record<WebsiteType, string> = {
@@ -41,7 +42,7 @@ const RECOMMENDED_THEME: Record<WebsiteType, string> = {
   salon: "salong",
   restaurant: "light",
   hotel: "gastfrihet",
-  automotive: "light",
+  automotive: "verkstad",
   portfolio: "kreator",
   custom: "light",
 };

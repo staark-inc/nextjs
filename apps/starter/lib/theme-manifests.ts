@@ -7,6 +7,7 @@ import webbManifest from "@staark/theme-webb/manifest";
 import skonhetManifest from "@staark/theme-skonhet/manifest";
 import elManifest from "@staark/theme-el/manifest";
 import kreatorManifest from "@staark/theme-kreator/manifest";
+import verkstadManifest from "@staark/theme-verkstad/manifest";
 
 const MANIFESTS: Record<string, ThemeManifest> = {
   light: lightManifest,
@@ -17,6 +18,7 @@ const MANIFESTS: Record<string, ThemeManifest> = {
   skonhet: skonhetManifest,
   el: elManifest,
   kreator: kreatorManifest,
+  verkstad: verkstadManifest,
 };
 
 export function resolveThemeManifest(themeId: string): ThemeManifest {

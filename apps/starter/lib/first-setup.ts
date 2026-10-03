@@ -24,6 +24,7 @@ export const FIRST_SETUP_THEMES = [
   "byra",
   "webb",
   "kreator",
+  "verkstad",
 ] as const;
 
 export type FirstSetupTheme = (typeof FIRST_SETUP_THEMES)[number];
@@ -278,6 +279,15 @@ export async function createFirstSetup(
   const locale = normalizeLocale(raw.locale);
   const websiteType = WebsiteTypeSchema.parse(raw.websiteType);
   const theme = parseTheme(raw.theme);
+
+  if (
+    websiteType === "automotive" &&
+    theme !== "verkstad"
+  ) {
+    throw new Error(
+      'Automotive websites must use the "verkstad" theme.',
+    );
+  }
 
   let owner:
     | { name: string; email: string; password: string; passwordHash: string }

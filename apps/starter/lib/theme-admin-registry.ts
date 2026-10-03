@@ -17,6 +17,10 @@ import {
   kreatorBlockTemplates,
   kreatorPageTemplates,
 } from "@staark/theme-kreator/admin";
+
+import {
+  verkstadPageTemplates,
+} from "@staark/theme-verkstad/admin";
 export type ThemeBlockTemplate = LegacyBlockTemplate;
 
 export type ThemePageBlock = {
@@ -176,6 +180,9 @@ const KREATOR_BLOCKS =
 
 const KREATOR_PAGES =
   kreatorPageTemplates as unknown as ThemePageTemplate[];
+
+const VERKSTAD_PAGES =
+  verkstadPageTemplates as unknown as ThemePageTemplate[];
 
 
 /* ==========================================================
@@ -571,6 +578,7 @@ const PAGES: Record<string, ThemePageTemplate[]> = {
   el: EL_PAGES,gastfrihet: GASTFRIHET_PAGES,
   byra: BYRA_PAGES,
   webb: WEBB_PAGES,
+  verkstad: VERKSTAD_PAGES,
 };
 
 export function themeBlockTemplatesFor(

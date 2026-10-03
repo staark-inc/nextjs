@@ -7,6 +7,8 @@ import {
 import {
   resolvePublicContentConfig,
 } from "./content-source";
+import { headers } from "next/headers";
+import { resolveTenantContext } from "./tenant-context";
 import {
   createPostgresRepositories,
 } from "./repositories";
@@ -283,14 +285,42 @@ async function postgresCatalogContext() {
   const repositories =
     createPostgresRepositories();
 
+  let tenant = null;
+
+  try {
+    const requestHeaders =
+      await headers();
+
+    tenant =
+      await resolveTenantContext({
+        host:
+          requestHeaders.get("host"),
+
+        forwardedHost:
+          requestHeaders.get(
+            "x-forwarded-host",
+          ),
+      });
+  } catch {
+    // Non-request jobs may still use the explicit site-key fallback.
+  }
+
   const site =
-    await repositories.sites.findByKey(
-      config.siteKey,
-    );
+    tenant
+      ? await repositories.sites.findById(
+          tenant.siteId,
+        )
+      : config.siteKey
+        ? await repositories.sites.findByKey(
+            config.siteKey,
+          )
+        : null;
 
   if (!site) {
     throw new Error(
-      `PostgreSQL site "${config.siteKey}" was not found.`,
+      tenant
+        ? `PostgreSQL site "${tenant.siteId}" was not found.`
+        : "No PostgreSQL tenant could be resolved for the service catalog.",
     );
   }
 
