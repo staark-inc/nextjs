@@ -21,6 +21,49 @@ declare global {
   }
 }
 
+function clearGoogleAnalyticsCookies() {
+  const cookieNames =
+    document.cookie
+      .split(";")
+      .map((part) =>
+        part
+          .split("=")[0]
+          ?.trim(),
+      )
+      .filter(
+        (name): name is string =>
+          Boolean(name) &&
+          (
+            name === "_ga" ||
+            name.startsWith("_ga_") ||
+            name === "_gid" ||
+            name === "_gat"
+          ),
+      );
+
+  for (const name of cookieNames) {
+    const expires =
+      "Thu, 01 Jan 1970 00:00:00 GMT";
+
+    document.cookie =
+      `${name}=; expires=${expires}; path=/`;
+
+    document.cookie =
+      `${name}=; expires=${expires}; path=/; domain=${window.location.hostname}`;
+
+    const hostnameParts =
+      window.location.hostname.split(".");
+
+    if (hostnameParts.length > 2) {
+      const parentDomain =
+        `.${hostnameParts.slice(-2).join(".")}`;
+
+      document.cookie =
+        `${name}=; expires=${expires}; path=/; domain=${parentDomain}`;
+    }
+  }
+}
+
 function applyGoogleConsent(
   consent: ConsentPreferences,
 ) {
@@ -45,6 +88,10 @@ function applyGoogleConsent(
         ? "granted"
         : "denied",
   });
+
+  if (!consent.analytics) {
+    clearGoogleAnalyticsCookies();
+  }
 
   window.dispatchEvent(
     new CustomEvent(
