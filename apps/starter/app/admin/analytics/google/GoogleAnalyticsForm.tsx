@@ -17,13 +17,11 @@ export default function GoogleAnalyticsForm({
   analyticsConsentEnabled,
   dataApiConfigured,
   serviceAccountEmail,
-  editable,
 }: {
   initial: Configuration;
   analyticsConsentEnabled: boolean;
   dataApiConfigured: boolean;
   serviceAccountEmail: string | null;
-  editable: boolean;
 }) {
   const [value, setValue] =
     useState(initial);
@@ -366,20 +364,6 @@ export default function GoogleAnalyticsForm({
           </div>
         </div>
       </details>
-      {!editable ? (
-        <section className="sa-analytics-google-warning">
-          <strong>
-            GA4 binding is managed by Staark
-          </strong>
-
-          <span>
-            Your website can view its own Google Analytics connection,
-            but Measurement ID and Property ID are locked to this tenant.
-            Contact Staark if the GA4 property needs to be changed.
-          </span>
-        </section>
-      ) : null}
-
       <section className="sa-card">
         <div className="sa-card__header">
           <p className="sa-card__eyebrow">
@@ -389,8 +373,9 @@ export default function GoogleAnalyticsForm({
           <h2>Tracking configuration</h2>
 
           <p className="sa-note">
-            Each customer website uses its
-            own GA4 Measurement ID.
+            Connect the GA4 property that belongs
+            to this website. The verified connection
+            is bound only to this tenant.
           </p>
         </div>
 
@@ -408,7 +393,6 @@ export default function GoogleAnalyticsForm({
 
           <input
             type="checkbox"
-            disabled={!editable}
             checked={value.enabled}
             onChange={(event) =>
               setValue({
@@ -424,7 +408,6 @@ export default function GoogleAnalyticsForm({
           <span>Measurement ID</span>
 
           <input
-            disabled={!editable}
             value={
               value.measurementId ?? ""
             }
@@ -450,7 +433,6 @@ export default function GoogleAnalyticsForm({
           <span>Property ID</span>
 
           <input
-            disabled={!editable}
             value={
               value.propertyId ?? ""
             }
@@ -491,7 +473,6 @@ export default function GoogleAnalyticsForm({
 
           <input
             type="checkbox"
-            disabled={!editable}
             checked={
               value.consentRequired
             }
@@ -565,7 +546,6 @@ export default function GoogleAnalyticsForm({
             className="sa-btn"
             type="button"
             disabled={
-              !editable ||
               testing ||
               !value.propertyId
             }
@@ -624,10 +604,7 @@ export default function GoogleAnalyticsForm({
       <div className="sa-privacy-actions">
         <button
           className="sa-btn sa-btn--primary"
-          disabled={
-            !editable ||
-            saving
-          }
+          disabled={saving}
           type="submit"
         >
           {saving

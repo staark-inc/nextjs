@@ -99,6 +99,58 @@ export async function resolveTenantGoogleAnalyticsSettings(
   );
 }
 
+export class GoogleAnalyticsBindingConflictError
+extends Error {
+  constructor() {
+    super(
+      "This GA4 Measurement ID or Property ID is already bound to another Staark website.",
+    );
+
+    this.name =
+      "GoogleAnalyticsBindingConflictError";
+  }
+}
+
+async function ensureBindingAvailable(
+  input: {
+    siteId: string;
+    measurementId: string;
+    propertyId: string;
+  },
+): Promise<void> {
+  const conflict =
+    await getPrismaClient()
+      .googleAnalyticsBinding
+      .findFirst({
+        where: {
+          siteId: {
+            not:
+              input.siteId,
+          },
+
+          OR: [
+            {
+              measurementId:
+                input.measurementId,
+            },
+
+            {
+              propertyId:
+                input.propertyId,
+            },
+          ],
+        },
+
+        select: {
+          siteId: true,
+        },
+      });
+
+  if (conflict) {
+    throw new GoogleAnalyticsBindingConflictError();
+  }
+}
+
 export async function bindGoogleAnalyticsProperty(
   input: {
     siteId: string;
@@ -108,6 +160,17 @@ export async function bindGoogleAnalyticsProperty(
     consentRequired: boolean;
   },
 ): Promise<TenantGoogleAnalyticsSettings> {
+  await ensureBindingAvailable({
+    siteId:
+      input.siteId,
+
+    measurementId:
+      input.measurementId,
+
+    propertyId:
+      input.propertyId,
+  });
+
   const saved =
     await getPrismaClient()
       .googleAnalyticsBinding

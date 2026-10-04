@@ -3,7 +3,7 @@ import {
 } from "next/server";
 
 import {
-  requireManager,
+  requirePlanFeature,
 } from "../../../guard";
 
 import {
@@ -12,7 +12,9 @@ import {
 } from "@/lib/google-analytics-data";
 
 async function guard() {
-  return requireManager();
+  return requirePlanFeature(
+    "analytics",
+  );
 }
 
 export async function POST(

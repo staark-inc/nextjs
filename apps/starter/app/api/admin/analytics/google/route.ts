@@ -24,7 +24,6 @@ import {
 } from "@/lib/google-analytics-data";
 
 import {
-  requireManager,
   requirePlanFeature,
 } from "../../guard";
 
@@ -66,7 +65,9 @@ export async function PUT(
   request: Request,
 ) {
   const blocked =
-    await requireManager();
+    await requirePlanFeature(
+      "analytics",
+    );
 
   if (blocked) {
     return blocked;
@@ -176,8 +177,11 @@ export async function PUT(
 
   try {
     /*
-     * A binding can only be committed by a trusted Staark Manager and only
-     * after the platform service account proves it can access the Property.
+     * The authenticated tenant may connect its own GA4 property.
+     *
+     * The siteId is never accepted from the request body: it comes exclusively
+     * from the validated tenant context. The property is tested with Google
+     * before the binding is committed.
      */
     await testGoogleAnalyticsProperty(
       propertyId,
