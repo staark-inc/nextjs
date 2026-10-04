@@ -70,7 +70,11 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const tenant = await currentTenant();
 
   if (tenant && !tenant.publicAccess) {
-    return <SaasAccessBlocked />;
+    return (
+      <SaasAccessBlocked
+        status={tenant.subscriptionStatus}
+      />
+    );
   }
 
   const site = await content.getSite();

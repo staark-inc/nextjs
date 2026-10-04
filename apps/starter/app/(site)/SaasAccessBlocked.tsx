@@ -1,4 +1,52 @@
-export function SaasAccessBlocked() {
+type Props = {
+  status?: string | null;
+};
+
+function messageForStatus(status?: string | null) {
+  const normalized =
+    status?.trim().toLowerCase() ?? "";
+
+  switch (normalized) {
+    case "unpaid":
+    case "past_due":
+    case "suspended":
+    case "paused":
+      return {
+        title: "Webbplatsen är tillfälligt pausad",
+        description:
+          "Webbplatsen är tillfälligt otillgänglig på grund av abonnemangets status. Kontakta webbplatsens ägare eller Staark om du behöver hjälp.",
+      };
+
+    case "incomplete":
+    case "incomplete_expired":
+      return {
+        title: "Webbplatsen är inte aktiverad ännu",
+        description:
+          "Abonnemanget eller betalningen är ännu inte färdigställd. Kontakta webbplatsens ägare eller Staark om du behöver hjälp.",
+      };
+
+    case "canceled":
+      return {
+        title: "Webbplatsen är inte längre aktiv",
+        description:
+          "Abonnemanget för webbplatsen är avslutat. Kontakta webbplatsens ägare eller Staark om du behöver hjälp.",
+      };
+
+    default:
+      return {
+        title: "Webbplatsen är tillfälligt inaktiverad",
+        description:
+          "Webbplatsen är för närvarande inte tillgänglig. Kontakta webbplatsens ägare eller Staark om du behöver hjälp.",
+      };
+  }
+}
+
+export function SaasAccessBlocked({
+  status,
+}: Props) {
+  const message =
+    messageForStatus(status);
+
   return (
     <main
       style={{
@@ -47,7 +95,7 @@ export function SaasAccessBlocked() {
             lineHeight: 1.15,
           }}
         >
-          Webbplatsen är tillfälligt inaktiverad
+          {message.title}
         </h1>
 
         <p
@@ -59,9 +107,7 @@ export function SaasAccessBlocked() {
             lineHeight: 1.7,
           }}
         >
-          Webbplatsen är för närvarande inte tillgänglig.
-          Kontakta webbplatsens ägare eller Staark om du
-          behöver hjälp.
+          {message.description}
         </p>
 
         <a

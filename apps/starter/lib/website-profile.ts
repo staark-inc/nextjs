@@ -126,6 +126,7 @@ const BASE_CLIENT_FEATURES: readonly AdminFeature[] = [
   "seo",
   "redirects",
   "settings",
+  "privacy",
   "plan",
 ];
 
@@ -237,6 +238,15 @@ export function resolveClientFeatures(
 ): readonly AdminFeature[] {
   const type = normalizeWebsiteType(value);
   const result = [...CLIENT_FEATURES_BY_PROFILE[type]];
+
+  // Commercial tenant-owner capabilities remain plan-driven.
+  // A client is the owner of the tenant, not a restricted editor.
+  if (
+    availableFeatures.includes("analytics") &&
+    !result.includes("analytics")
+  ) {
+    result.push("analytics");
+  }
 
   // Generic/custom installs may enable booking as an optional entitlement.
   // Vertical products that require bookings already include it in their profile.

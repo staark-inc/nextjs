@@ -13,6 +13,7 @@ import {
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
 import { resolveAdminTenantContext } from "@/lib/admin-tenant";
 import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
+import { getSubscriptionAccessPolicy } from "@/lib/subscription-access";
 import AdminShell from "./AdminShell";
 import "./admin.css";
 
@@ -97,6 +98,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const displayName =
     await resolveDisplayName(session.username, role);
 
+  const subscriptionPolicy =
+    getSubscriptionAccessPolicy(
+      tenant?.subscriptionStatus,
+    );
+
   const initialNow = Date.now();
 
   const sessionExpiresAt =
@@ -114,6 +120,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       sessionExpiresAt={sessionExpiresAt}
       initialNow={initialNow}
       initialStatus={status}
+      subscriptionStatus={
+        tenant?.subscriptionStatus ?? null
+      }
+      billingWarning={
+        subscriptionPolicy.billingWarning
+      }
+      subscriptionSuspended={
+        subscriptionPolicy.suspended
+      }
       development={process.env.NODE_ENV !== "production"}
     >
       {children}

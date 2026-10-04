@@ -5728,3 +5728,155 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
 .sa-ga4-guide__steps p > strong {
   margin: 0 5px !important;
 }
+
+/* Billing lifecycle alert */
+.sa-billing-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 15px 17px;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.sa-billing-alert > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.sa-billing-alert strong {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.sa-billing-alert span {
+  color: var(--sa-muted, #667085);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.sa-billing-alert--danger {
+  border-color: rgba(220, 38, 38, 0.25);
+  background: rgba(220, 38, 38, 0.07);
+}
+
+.sa-billing-alert__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.sa-billing-alert__actions small {
+  color: var(--sa-muted, #667085);
+  font-size: 12px;
+}
+
+.sa-billing-alert__actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: 9px;
+  background: #111827;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .sa-billing-alert {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sa-billing-alert__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* ----------------------------------------------------------
+   Plan quota UX
+---------------------------------------------------------- */
+
+.sa-quota-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  margin-bottom: 18px;
+  padding: 14px 16px;
+
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+
+  background: var(--sa-surface-soft);
+}
+
+.sa-quota-notice > div {
+  display: grid;
+  gap: 3px;
+}
+
+.sa-quota-notice strong {
+  font-size: 13px;
+}
+
+.sa-quota-notice span {
+  color: var(--sa-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sa-quota-notice > a {
+  flex: 0 0 auto;
+
+  color: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.sa-quota-notice--warning {
+  border-color: rgba(245, 158, 11, .32);
+  background: rgba(245, 158, 11, .07);
+}
+
+.sa-quota-notice--danger {
+  border-color: rgba(220, 38, 38, .28);
+  background: rgba(220, 38, 38, .06);
+}
+
+.sa-plan-usage-card--warning {
+  border-color: rgba(245, 158, 11, .28);
+}
+
+.sa-plan-usage-card--danger {
+  border-color: rgba(220, 38, 38, .28);
+}
+
+.sa-plan-usage-card--warning .sa-plan-progress > span {
+  opacity: .78;
+}
+
+.sa-plan-usage-card--danger .sa-plan-progress > span {
+  opacity: 1;
+}
+
+.sa-plan-usage-card .sa-plan-progress {
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .sa-quota-notice {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

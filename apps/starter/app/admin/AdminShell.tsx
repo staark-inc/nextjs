@@ -32,6 +32,9 @@ type AdminShellProps = {
   sessionExpiresAt: number;
   initialNow: number;
   initialStatus: AdminShellStatus;
+  subscriptionStatus: string | null;
+  billingWarning: boolean;
+  subscriptionSuspended: boolean;
   development: boolean;
 };
 
@@ -93,7 +96,22 @@ function NavBadges({ item, status }: { item: AdminNavItem; status: AdminShellSta
   return null;
 }
 
-export default function AdminShell({ websiteType, children, siteName, username, role, features, entitlements, sessionExpiresAt, initialNow, initialStatus, development }: AdminShellProps) {
+export default function AdminShell({
+  websiteType,
+  children,
+  siteName,
+  username,
+  role,
+  features,
+  entitlements,
+  sessionExpiresAt,
+  initialNow,
+  initialStatus,
+  subscriptionStatus,
+  billingWarning,
+  subscriptionSuspended,
+  development,
+}: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -379,7 +397,46 @@ export default function AdminShell({ websiteType, children, siteName, username, 
         </header>
 
         <main className="sa-main sa-main--v2">
-          <div className="sa-main__inner">{children}</div>
+          <div className="sa-main__inner">
+            {billingWarning || subscriptionSuspended ? (
+              <div
+                className={`sa-billing-alert${
+                  subscriptionSuspended
+                    ? " sa-billing-alert--danger"
+                    : ""
+                }`}
+                role="status"
+              >
+                <div>
+                  <strong>
+                    {subscriptionSuspended
+                      ? "Website access is suspended"
+                      : "Payment needs attention"}
+                  </strong>
+
+                  <span>
+                    {subscriptionSuspended
+                      ? "Your public website is temporarily unavailable. Update the subscription or payment details to restore access."
+                      : "There is a billing issue with this subscription. Your website is still online, but payment should be resolved."}
+                  </span>
+                </div>
+
+                <div className="sa-billing-alert__actions">
+                  {subscriptionStatus ? (
+                    <small>
+                      Status: {subscriptionStatus}
+                    </small>
+                  ) : null}
+
+                  <Link href="/admin/plan">
+                    Manage billing
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+
+            {children}
+          </div>
         </main>
       </div>
 
