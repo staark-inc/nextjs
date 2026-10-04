@@ -123,20 +123,27 @@ const postgresSite = cache(async (): Promise<SiteSettings> => {
 const postgresPages = cache(async (): Promise<PageSummary[]> => {
   const siteKey = await postgresSiteKey();
   const site = await postgresSiteRecord(siteKey);
-  const pages = await repositories().pages.list(site.id);
+  const publications =
+    await repositories().publications.list(site.id);
 
-  return pages.map(({ page }) => ({
-    path: page.path,
-    updatedAt: page.updatedAt,
-    noindex: page.seo.noindex,
+  return publications.map((publication) => ({
+    path: publication.path,
+    updatedAt: publication.publishedAt,
+    noindex: publication.page.seo.noindex,
   }));
 });
 
 const postgresPage = cache(async (pagePath: string): Promise<Page | null> => {
   const siteKey = await postgresSiteKey();
   const site = await postgresSiteRecord(siteKey);
-  const record = await repositories().pages.findByPath(site.id, pagePath);
-  return record?.page ?? null;
+
+  const publication =
+    await repositories().publications.findByPath(
+      site.id,
+      pagePath,
+    );
+
+  return publication?.page ?? null;
 });
 
 
@@ -196,13 +203,13 @@ const postgresContent: StaarkContent = {
     const pagePath = normalizePath(input);
 
     try {
-      const page = await postgresPage(pagePath);
-      if (page || publicContentConfig.fallback !== "legacy") return page;
-
-      warnFallback(pagePath, "page does not exist in PostgreSQL");
-      return legacyContent.getPage(pagePath);
+      // A missing publication is intentionally a public 404.
+      // Never revive an unpublished/deleted page from legacy storage.
+      return await postgresPage(pagePath);
     } catch (error) {
-      if (publicContentConfig.fallback !== "legacy") throw error;
+      if (publicContentConfig.fallback !== "legacy") {
+        throw error;
+      }
 
       warnFallback(pagePath, errorDetail(error));
       return legacyContent.getPage(pagePath);

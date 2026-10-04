@@ -119,14 +119,10 @@ export async function PUT(req: Request, ctx: Ctx) {
         return NextResponse.json({ error: "Page not found." }, { status: 404 });
       }
 
-      revalidatePath("/", "layout");
-      revalidatePath(saved.record.page.path);
-      if (saved.pathChanged) revalidatePath(saved.previousPath);
-
       return NextResponse.json({
         ok: true,
         page: saved.record.page,
-        redirectCreated: saved.pathChanged,
+        redirectCreated: false,
       });
     } catch (error) {
       const status = error instanceof AdminPageConflictError
@@ -185,13 +181,29 @@ export async function DELETE(_req: Request, ctx: Ctx) {
 
   if (adminPagesUsePostgres()) {
     try {
-      const deleted = await deletePostgresAdminPage(requested);
+      const deleted =
+        await deletePostgresAdminPage(requested);
+
       if (!deleted) {
-        return NextResponse.json({ error: "Page not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Page not found" },
+          { status: 404 },
+        );
       }
+
       revalidatePath("/", "layout");
-      revalidatePath(deleted.page.path);
-      return NextResponse.json({ ok: true });
+
+      if (deleted.unpublishedPath) {
+        revalidatePath(
+          deleted.unpublishedPath,
+        );
+      }
+
+      return NextResponse.json({
+        ok: true,
+        unpublished:
+          Boolean(deleted.unpublishedPath),
+      });
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message || "Could not delete page." },

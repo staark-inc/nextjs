@@ -31,4 +31,9 @@ export interface PublicationRepository {
   list(siteId: string): Promise<PagePublicationRecord[]>;
 
   publish(input: PublishPageInput): Promise<PagePublicationRecord>;
+
+  unpublish(
+    siteId: string,
+    pageId: string,
+  ): Promise<boolean>;
 }

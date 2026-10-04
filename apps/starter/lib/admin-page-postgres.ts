@@ -482,6 +482,21 @@ async function assertPathAvailable(
   pathname: string,
   currentPageId?: string,
 ): Promise<PageRecord | null> {
+  const published =
+    await repositories.publications.findByPath(
+      siteId,
+      pathname,
+    );
+
+  if (
+    published &&
+    published.pageId !== currentPageId
+  ) {
+    throw new AdminPageConflictError(
+      `Path ${pathname} is already used by another published page.`,
+    );
+  }
+
   const existing = await repositories.pages.findByPath(siteId, pathname, {
     includeDeleted: true,
   });
@@ -563,9 +578,6 @@ export async function listPostgresAdminPages(): Promise<{
 
 export async function createPostgresAdminPage(input: {
   page: unknown;
-  addToPrimary: boolean;
-  addToFooter: boolean;
-  navigationLabel: string;
 }): Promise<PageRecord> {
   const page = normalizePage(input.page);
 
@@ -584,17 +596,6 @@ export async function createPostgresAdminPage(input: {
       record = restored;
     } else {
       record = await repositories.pages.upsertByPath(site.id, page);
-    }
-
-    if (input.addToPrimary || input.addToFooter) {
-      const settings = withNavigation(
-        site.settings,
-        record.page.path,
-        input.navigationLabel.trim() || record.page.title,
-        input.addToPrimary,
-        input.addToFooter,
-      );
-      await repositories.sites.upsertByKey({ key: site.key, settings });
     }
 
     return record;
@@ -650,22 +651,6 @@ export async function savePostgresAdminPage(
     if (!saved) throw new AdminPageNotFoundError();
 
     const pathChanged = current.page.path !== saved.page.path;
-    if (pathChanged) {
-      const settings = replaceNavigationPath(
-        site.settings,
-        current.page.path,
-        saved.page.path,
-      );
-      await repositories.sites.upsertByKey({ key: site.key, settings });
-      await upsertPostgresRedirectWithRepositories(
-        repositories,
-        site.id,
-        current.page.path,
-        saved.page.path,
-        301,
-        "page-path-change",
-      );
-    }
 
     return {
       record: saved,
@@ -677,13 +662,31 @@ export async function savePostgresAdminPage(
 
 export async function deletePostgresAdminPage(
   pageId: string,
-): Promise<PageRecord | null> {
+): Promise<{
+  record: PageRecord;
+  unpublishedPath: string | null;
+} | null> {
   if (!isPageId(pageId)) return null;
 
   return withPostgresTransaction(async (repositories) => {
     const site = await requireSite(repositories);
-    const current = await repositories.pages.findById(site.id, pageId);
+
+    const current =
+      await repositories.pages.findById(
+        site.id,
+        pageId,
+      );
+
     if (!current) return null;
+
+    const publication =
+      await repositories.publications.findByPageId(
+        site.id,
+        pageId,
+      );
+
+    const publicPath =
+      publication?.path ?? null;
 
     await repositories.revisions.create({
       siteId: site.id,
@@ -695,24 +698,45 @@ export async function deletePostgresAdminPage(
     const deletedContext =
       captureDeletedNavigationContext(
         site.settings,
-        current.page.path,
+        publicPath ?? current.page.path,
       );
 
-    const deleted = await repositories.pages.softDelete(
-      site.id,
-      pageId,
-      undefined,
-      deletedContext,
-    );
-    if (!deleted) throw new AdminPageNotFoundError();
+    const deleted =
+      await repositories.pages.softDelete(
+        site.id,
+        pageId,
+        undefined,
+        deletedContext,
+      );
 
-    const settings = withoutNavigationPath(
-      site.settings,
-      current.page.path,
-    );
-    await repositories.sites.upsertByKey({ key: site.key, settings });
+    if (!deleted) {
+      throw new AdminPageNotFoundError();
+    }
 
-    return deleted;
+    if (publication) {
+      await repositories.publications.unpublish(
+        site.id,
+        pageId,
+      );
+    }
+
+    if (publicPath) {
+      const settings =
+        withoutNavigationPath(
+          site.settings,
+          publicPath,
+        );
+
+      await repositories.sites.upsertByKey({
+        key: site.key,
+        settings,
+      });
+    }
+
+    return {
+      record: deleted,
+      unpublishedPath: publicPath,
+    };
   });
 }
 
@@ -760,23 +784,6 @@ export async function restorePostgresAdminPage(
       throw new AdminPageNotFoundError();
     }
 
-    const settings =
-      restoreDeletedNavigationContext(
-        site.settings,
-        restored.page.path,
-        current.deletedContext,
-      );
-
-    if (
-      JSON.stringify(settings) !==
-      JSON.stringify(site.settings)
-    ) {
-      await repositories.sites.upsertByKey({
-        key: site.key,
-        settings,
-      });
-    }
-
     return restored;
   });
 }
@@ -801,6 +808,27 @@ export async function publishPostgresAdminPage(
       throw new AdminPageNotFoundError();
     }
 
+    const previousPublication =
+      await repositories.publications.findByPageId(
+        site.id,
+        pageId,
+      );
+
+    const pathOwner =
+      await repositories.publications.findByPath(
+        site.id,
+        current.page.path,
+      );
+
+    if (
+      pathOwner &&
+      pathOwner.pageId !== pageId
+    ) {
+      throw new AdminPageConflictError(
+        `Path ${current.page.path} is already published by another page.`,
+      );
+    }
+
     await repositories.revisions.create({
       siteId: site.id,
       pageId,
@@ -808,11 +836,47 @@ export async function publishPostgresAdminPage(
       page: current.page,
     });
 
-    return repositories.publications.publish({
-      siteId: site.id,
-      pageId,
-      page: current.page,
-    });
+    const publication =
+      await repositories.publications.publish({
+        siteId: site.id,
+        pageId,
+        page: current.page,
+      });
+
+    const previousPublishedPath =
+      previousPublication?.path ?? null;
+
+    const pathChanged =
+      previousPublishedPath !== null &&
+      previousPublishedPath !== publication.path;
+
+    if (pathChanged) {
+      const settings = replaceNavigationPath(
+        site.settings,
+        previousPublishedPath,
+        publication.path,
+      );
+
+      await repositories.sites.upsertByKey({
+        key: site.key,
+        settings,
+      });
+
+      await upsertPostgresRedirectWithRepositories(
+        repositories,
+        site.id,
+        previousPublishedPath,
+        publication.path,
+        301,
+        "page-path-change",
+      );
+    }
+
+    return {
+      publication,
+      previousPublishedPath,
+      pathChanged,
+    };
   });
 }
 
@@ -874,23 +938,6 @@ export async function restorePostgresAdminPageRevision(
 
     const restored = await repositories.pages.replace(site.id, pageId, target);
     if (!restored) throw new AdminPageNotFoundError();
-
-    if (current.page.path !== restored.page.path) {
-      const settings = replaceNavigationPath(
-        site.settings,
-        current.page.path,
-        restored.page.path,
-      );
-      await repositories.sites.upsertByKey({ key: site.key, settings });
-      await upsertPostgresRedirectWithRepositories(
-        repositories,
-        site.id,
-        current.page.path,
-        restored.page.path,
-        301,
-        "page-path-change",
-      );
-    }
 
     return restored.page;
   });

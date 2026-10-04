@@ -117,4 +117,18 @@ export class PostgresPublicationRepository
 
     return mapPublication(row);
   }
+
+  async unpublish(
+    siteId: string,
+    pageId: string,
+  ): Promise<boolean> {
+    const result = await this.db.pagePublication.deleteMany({
+      where: {
+        siteId,
+        pageId,
+      },
+    });
+
+    return result.count > 0;
+  }
 }

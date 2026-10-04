@@ -252,12 +252,6 @@ export async function POST(req: Request) {
         blocks: blocksFor(theme, templateId, title),
         updatedAt: new Date().toISOString(),
       };
-      const addToPrimary = body.addToPrimary === true && pathname !== "/";
-      const addToFooter = body.addToFooter === true && pathname !== "/";
-      const navigationLabel = typeof body.navigationLabel === "string" && body.navigationLabel.trim()
-        ? body.navigationLabel.trim()
-        : title;
-
       await assertAdminSiteQuota(
         "pages",
         1,
@@ -265,9 +259,6 @@ export async function POST(req: Request) {
 
       const created = await createPostgresAdminPage({
         page,
-        addToPrimary,
-        addToFooter,
-        navigationLabel,
       });
 
       revalidatePath("/", "layout");

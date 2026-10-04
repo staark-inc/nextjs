@@ -38,6 +38,7 @@ export default function PageEditorClient({
   const [openBlock, setOpenBlock] = useState<string | null>(null);
   const [mode, setMode] = useState<"visual" | "seo" | "json">("visual");
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [blockErrors, setBlockErrors] = useState<Record<string, FieldError[]>>({});
   const [templates, setTemplates] = useState<BlockTemplate[]>([]);
@@ -191,6 +192,39 @@ export default function PageEditorClient({
     showToast(data.error ?? "Failed to save.", false);
   }
 
+  async function publish() {
+    setPublishing(true);
+
+    const res = await fetch(
+      `/api/admin/pages/${file}/publish`,
+      {
+        method: "POST",
+      },
+    );
+
+    setPublishing(false);
+
+    const data: {
+      error?: string;
+      redirectCreated?: boolean;
+    } = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      showToast(
+        data.error ?? "Failed to publish.",
+        false,
+      );
+      return;
+    }
+
+    showToast(
+      data.redirectCreated
+        ? "Page published! Redirect created."
+        : "Page published!",
+      true,
+    );
+  }
+
   if (!page) {
     return (
       <>
@@ -270,9 +304,21 @@ export default function PageEditorClient({
         </div>
         <span className="sa-toolbar--right" />
         <Link href={`/admin/pages/${file}/revisions`} className="sa-btn sa-btn--ghost sa-btn--sm">History</Link>
-        <a href={page.path} target="_blank" rel="noopener" className="sa-btn sa-btn--ghost sa-btn--sm">Preview &rarr;</a>
-        <button className="sa-btn sa-btn--primary" onClick={save} disabled={saving}>
+        <a href={page.path} target="_blank" rel="noopener" className="sa-btn sa-btn--ghost sa-btn--sm">View live &rarr;</a>
+        <button
+          className="sa-btn sa-btn--ghost"
+          onClick={save}
+          disabled={saving || publishing}
+        >
           {saving ? "Saving..." : "Save"}
+        </button>
+
+        <button
+          className="sa-btn sa-btn--primary"
+          onClick={publish}
+          disabled={saving || publishing}
+        >
+          {publishing ? "Publishing..." : "Publish"}
         </button>
       </div>
 
