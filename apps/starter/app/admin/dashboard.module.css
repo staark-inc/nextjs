@@ -540,3 +540,55 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+
+/* ---- Staark News & Updates --------------------------------------------- */
+
+.updates {
+  display: grid;
+  gap: 0;
+}
+
+.updateItem {
+  display: grid;
+  gap: 5px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--sa-line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.updateItem:last-child {
+  border-bottom: 0;
+}
+
+.updateItem:hover strong {
+  color: var(--sa-primary);
+}
+
+.updateMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--sa-muted);
+  font-size: 11px;
+}
+
+.updateMeta > span {
+  color: var(--sa-primary);
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.updateItem strong {
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.updateItem small {
+  color: var(--sa-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}

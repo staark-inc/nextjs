@@ -36,6 +36,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "home overview",
   },
   {
+    href: "/admin/updates",
+    feature: "dashboard",
+    label: "News & Updates",
+    description: "What's new at Staark",
+    icon: "M4 5h16v14H4V5Zm4 4h8 M8 12h8 M8 15h5",
+    group: "Overview",
+    keywords: "news updates announcements releases features maintenance staark",
+  },
+  {
     href: "/admin/forms",
     feature: "inbox",
     label: "Inbox",

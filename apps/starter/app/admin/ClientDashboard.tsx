@@ -13,6 +13,7 @@ import AdminIcon from "./AdminIcon";
 import Greeting from "./Greeting";
 import NeedsYou from "./NeedsYou";
 import styles from "./dashboard.module.css";
+import type { TenantAnnouncement } from "@/lib/hub-announcements";
 
 const ARROW = "M5 12h14 M13 6l6 6-6 6";
 
@@ -45,11 +46,13 @@ export default function ClientDashboard({
   username,
   websiteType,
   bookingEnabled,
+  updates,
 }: {
   data: DashboardData;
   username: string;
   websiteType: WebsiteType;
   bookingEnabled: boolean;
+  updates: TenantAnnouncement[];
 }) {
   const navigation = resolveClientNavigation(websiteType);
   const profile = resolveWebsiteProfile(websiteType);
@@ -327,6 +330,78 @@ export default function ClientDashboard({
         </div>
 
         <aside className={styles.column}>
+          <section className="sa-card">
+            <div className="sa-card__header">
+              <div>
+                <span className="sa-card__eyebrow">
+                  News & Updates
+                </span>
+
+                <h2>
+                  Latest from Staark
+                </h2>
+              </div>
+
+              <Link href="/admin/updates">
+                View all
+                {" "}
+                <AdminIcon d={ARROW} size={16} />
+              </Link>
+            </div>
+
+            {updates.length ? (
+              <div className={styles.updates}>
+                {updates.map(
+                  (update) => (
+                    <Link
+                      key={update.id}
+                      href="/admin/updates"
+                      className={styles.updateItem}
+                    >
+                      <span className={styles.updateMeta}>
+                        <span>
+                          {update.kind === "feature"
+                            ? "New feature"
+                            : update.kind === "maintenance"
+                              ? "Maintenance"
+                              : update.kind === "security"
+                                ? "Security"
+                                : "Announcement"}
+                        </span>
+
+                        <time dateTime={update.publishedAt}>
+                          {new Intl.DateTimeFormat(
+                            "en",
+                            {
+                              month: "short",
+                              day: "numeric",
+                            },
+                          ).format(
+                            new Date(
+                              update.publishedAt,
+                            ),
+                          )}
+                        </time>
+                      </span>
+
+                      <strong>
+                        {update.title}
+                      </strong>
+
+                      <small>
+                        {update.summary}
+                      </small>
+                    </Link>
+                  ),
+                )}
+              </div>
+            ) : (
+              <p className={styles.emptyNote}>
+                Product news and important announcements will appear here.
+              </p>
+            )}
+          </section>
+
           <section className="sa-card">
             <div className="sa-card__header">
               <div>

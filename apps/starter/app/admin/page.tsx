@@ -19,6 +19,7 @@ import ManagerDashboard from "./ManagerDashboard";
 import { getPrismaClient } from "@/lib/db/prisma";
 import { resolveAdminTenantContext } from "@/lib/admin-tenant";
 import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
+import { readAdminAnnouncements } from "@/lib/hub-announcements";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,11 @@ export default async function AdminDashboard() {
 
   const data =
     await loadDashboard();
+
+  const tenantUpdates =
+    await readAdminAnnouncements(
+      3,
+    );
 
   const websiteType =
     data.websiteType;
@@ -113,6 +119,7 @@ export default async function AdminDashboard() {
           "booking",
         )
       }
+      updates={tenantUpdates.items}
     />
   );
 }
