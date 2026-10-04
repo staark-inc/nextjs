@@ -338,7 +338,7 @@ export default function ClientDashboard({
                 </span>
 
                 <h2>
-                  Latest from Staark
+                  Latest from Staark Inc.
                 </h2>
               </div>
 

@@ -18,7 +18,30 @@ import AdminShell from "./AdminShell";
 import "./admin.css";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Staark Hub · NextJS Platform", robots: "noindex" };
+
+export async function generateMetadata(): Promise<Metadata> {
+  let siteName =
+    "Staark";
+
+  try {
+    const site =
+      await readAdminSiteSettings();
+
+    siteName =
+      site.name?.trim() ||
+      siteName;
+  } catch {
+    // Keep a safe title when tenant settings are unavailable.
+  }
+
+  return {
+    title:
+      `${siteName} · Staark Inc Platform`,
+
+    robots:
+      "noindex",
+  };
+}
 
 async function resolveDisplayName(
   username: string | undefined,
