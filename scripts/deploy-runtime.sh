@@ -102,9 +102,26 @@ fi
 
 sudo docker run   --rm   --network "$RUNTIME_NETWORK"   -e DATABASE_URL="$DATABASE_URL"   "$MIGRATION_IMAGE"   pnpm --filter @staark/starter db:migrate:deploy
 
+PREVIOUS_IMAGE="$(
+  sudo docker inspect \
+    "$CURRENT_CONTAINER" \
+    --format '{{.Config.Image}}'
+)"
+
+if [ -z "$PREVIOUS_IMAGE" ]; then
+  echo "ERROR: unable to determine previous runtime image."
+  exit 1
+fi
+
 echo
 echo "==> 8/8 Update runtime compose image"
-sudo python3 - "$COMPOSE_FILE" "$IMAGE" <<'PY2'
+echo "    previous image: $PREVIOUS_IMAGE"
+echo "    new image     : $IMAGE"
+
+update_compose_image() {
+  local target_image="$1"
+
+  sudo python3 - "$COMPOSE_FILE" "$target_image" <<'PY2'
 from pathlib import Path
 import re
 import sys
@@ -129,12 +146,44 @@ if count != 1:
 path.write_text(updated)
 print(f"runtime image -> {image}")
 PY2
+}
+
+update_compose_image "$IMAGE"
 
 echo
 echo "==> Recreate runtime"
 cd "$COMPOSE_DIR"
 
 sudo docker compose up -d --force-recreate runtime
+
+echo
+echo "==> Readiness / smoke gate"
+
+if ! "$REPO_DIR/scripts/smoke-runtime.sh" staark-saas-runtime; then
+  echo
+  echo "ERROR: new runtime failed readiness."
+  echo "Rolling back to: $PREVIOUS_IMAGE"
+
+  update_compose_image "$PREVIOUS_IMAGE"
+
+  sudo docker compose up -d --force-recreate runtime
+
+  echo
+  echo "==> Verify rollback"
+
+  if ! "$REPO_DIR/scripts/smoke-runtime.sh" staark-saas-runtime; then
+    echo
+    echo "CRITICAL: rollback runtime also failed readiness."
+    sudo docker compose logs --tail=120 runtime
+    exit 2
+  fi
+
+  echo
+  echo "Rollback successful."
+  sudo docker compose ps runtime
+  sudo docker compose logs --tail=60 runtime
+  exit 1
+fi
 
 echo
 echo "==> Container status"
@@ -155,4 +204,5 @@ sudo docker compose logs --tail=60 runtime
 echo
 echo "========================================"
 echo " Runtime deploy complete: $IMAGE"
+echo " Readiness: PASS"
 echo "========================================"
