@@ -120,6 +120,7 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
 }
 
 const PAGE_FEATURES: Array<[string, AdminFeature]> = [
+  ["/admin/updates", "dashboard"],
   ["/admin/forms", "inbox"],
   ["/admin/bookings", "booking"],
   ["/admin/services", "services"],
