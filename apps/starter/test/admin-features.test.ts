@@ -7,16 +7,94 @@ import {
   resolveAdminEntitlements,
 } from "../lib/admin-features.ts";
 
-test("client gets core features, not manager features", () => {
-  const features = resolveAccessibleAdminFeatures("client", {});
-  assert.equal(features.includes("dashboard"), true);
-  assert.equal(features.includes("pages"), true);
-  assert.equal(features.includes("design"), true);
-  assert.equal(features.includes("seo"), true);
-  assert.equal(features.includes("themes"), false);
-  assert.equal(features.includes("redirects"), true);
-  assert.equal(features.includes("health"), false);
-  assert.equal(features.includes("backups"), false);
+test("client gets core features, not entitlement or manager features", () => {
+  const features =
+    resolveAccessibleAdminFeatures(
+      "client",
+      {},
+    );
+
+  assert.equal(
+    features.includes("dashboard"),
+    true,
+  );
+
+  assert.equal(
+    features.includes("pages"),
+    true,
+  );
+
+  assert.equal(
+    features.includes("design"),
+    true,
+  );
+
+  assert.equal(
+    features.includes("redirects"),
+    true,
+  );
+
+  assert.equal(
+    features.includes("privacy"),
+    true,
+  );
+
+  assert.equal(
+    features.includes("plan"),
+    true,
+  );
+
+  assert.equal(
+    features.includes("profile"),
+    true,
+  );
+
+  // Commercial capabilities require plan entitlements.
+  assert.equal(
+    features.includes("inbox"),
+    false,
+  );
+
+  assert.equal(
+    features.includes("seo"),
+    false,
+  );
+
+  assert.equal(
+    features.includes("analytics"),
+    false,
+  );
+
+  assert.equal(
+    features.includes("domains"),
+    false,
+  );
+
+  assert.equal(
+    features.includes("booking"),
+    false,
+  );
+
+  // Technical capabilities remain manager-only.
+  assert.equal(
+    features.includes("themes"),
+    false,
+  );
+
+  assert.equal(
+    features.includes("health"),
+    false,
+  );
+
+  assert.equal(
+    features.includes("backups"),
+    false,
+  );
+
+  assert.equal(
+    features.includes("system"),
+    false,
+  );
 });
 
 test("manager gets all registered features", () => {
@@ -26,6 +104,26 @@ test("manager gets all registered features", () => {
   assert.equal(features.includes("health"), true);
   assert.equal(features.includes("backups"), true);
   assert.equal(features.includes("system"), true);
+});
+
+test("seo is entitlement-driven for clients", () => {
+  assert.equal(
+    canAccessAdminFeature(
+      "client",
+      "seo",
+      [],
+    ),
+    false,
+  );
+
+  assert.equal(
+    canAccessAdminFeature(
+      "client",
+      "seo",
+      ["seo"],
+    ),
+    true,
+  );
 });
 
 test("booking is entitlement-driven for clients", () => {

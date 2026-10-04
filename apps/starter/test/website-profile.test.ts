@@ -26,21 +26,111 @@ test("website profile registry exposes every 11A profile", () => {
 
 
 test("website profile features stay vertical and entitlement-aware", () => {
-  const salon = resolveClientFeatures("salon", []);
-  assert.equal(salon.includes("booking"), true);
-  assert.equal(salon.includes("services"), true);
+  const salon =
+    resolveClientFeatures(
+      "salon",
+      [],
+    );
 
-  const business = resolveClientFeatures("business", []);
-  assert.equal(business.includes("booking"), false);
-  assert.equal(business.includes("services"), false);
-
-  const businessWithBooking = resolveClientFeatures(
-    "business",
-    ["booking"],
+  // Services are vertical functionality.
+  assert.equal(
+    salon.includes("services"),
+    true,
   );
-  assert.equal(businessWithBooking.includes("booking"), true);
 
-  assert.equal(supportsServicesCatalog("salon"), true);
-  assert.equal(supportsServicesCatalog("business"), false);
-  assert.equal(supportsServicesCatalog("automotive"), false);
+  // Booking is commercial functionality and must never
+  // be granted only because the tenant is a salon.
+  assert.equal(
+    salon.includes("booking"),
+    false,
+  );
+
+  const salonWithBooking =
+    resolveClientFeatures(
+      "salon",
+      ["booking"],
+    );
+
+  assert.equal(
+    salonWithBooking.includes("booking"),
+    true,
+  );
+
+  assert.equal(
+    salonWithBooking.includes("services"),
+    true,
+  );
+
+  const business =
+    resolveClientFeatures(
+      "business",
+      [],
+    );
+
+  assert.equal(
+    business.includes("booking"),
+    false,
+  );
+
+  assert.equal(
+    business.includes("services"),
+    false,
+  );
+
+  const businessWithBooking =
+    resolveClientFeatures(
+      "business",
+      ["booking"],
+    );
+
+  assert.equal(
+    businessWithBooking.includes("booking"),
+    true,
+  );
+
+  const businessWithCommercialFeatures =
+    resolveClientFeatures(
+      "business",
+      [
+        "inbox",
+        "seo",
+        "analytics",
+        "domains",
+      ],
+    );
+
+  assert.equal(
+    businessWithCommercialFeatures.includes("inbox"),
+    true,
+  );
+
+  assert.equal(
+    businessWithCommercialFeatures.includes("seo"),
+    true,
+  );
+
+  assert.equal(
+    businessWithCommercialFeatures.includes("analytics"),
+    true,
+  );
+
+  assert.equal(
+    businessWithCommercialFeatures.includes("domains"),
+    true,
+  );
+
+  assert.equal(
+    supportsServicesCatalog("salon"),
+    true,
+  );
+
+  assert.equal(
+    supportsServicesCatalog("business"),
+    false,
+  );
+
+  assert.equal(
+    supportsServicesCatalog("automotive"),
+    false,
+  );
 });

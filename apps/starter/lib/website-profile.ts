@@ -236,40 +236,46 @@ export function resolveClientFeatures(
   const type = normalizeWebsiteType(value);
   const result = [...CLIENT_FEATURES_BY_PROFILE[type]];
 
-  // Commercial tenant-owner capabilities remain plan-driven.
-  // A client is the owner of the tenant, not a restricted editor.
-  if (
-    availableFeatures.includes("analytics") &&
-    !result.includes("analytics")
-  ) {
-    result.push("analytics");
-  }
-
   // Commercial capabilities are always plan-driven.
-  // A website profile may describe whether a module makes sense for that
-  // vertical, but it must never bypass the subscription entitlement.
-  if (
-    availableFeatures.includes("booking") &&
-    !result.includes("booking")
-  ) {
-    result.push("booking");
-  }
-
-  // Remove entitlement-backed features that the current package does not grant.
+  //
+  // Website profiles decide vertical context/copy, while the subscription
+  // decides whether the tenant can actually use each commercial capability.
+  //
+  // Keep this list synchronized with entitlement-backed AdminFeature entries.
   for (const feature of [
     "inbox",
     "seo",
+    "analytics",
     "domains",
+    "booking",
   ] as const) {
-    if (
-      !availableFeatures.includes(feature)
-    ) {
-      const index =
-        result.indexOf(feature);
+    const enabled =
+      availableFeatures.includes(
+        feature,
+      );
 
-      if (index >= 0) {
-        result.splice(index, 1);
-      }
+    const index =
+      result.indexOf(
+        feature,
+      );
+
+    if (
+      enabled &&
+      index < 0
+    ) {
+      result.push(
+        feature,
+      );
+    }
+
+    if (
+      !enabled &&
+      index >= 0
+    ) {
+      result.splice(
+        index,
+        1,
+      );
     }
   }
 
