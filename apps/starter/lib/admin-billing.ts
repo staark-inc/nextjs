@@ -1,8 +1,6 @@
 import { getPrismaClient } from "./db/prisma";
 import { requireAdminTenantContext } from "./admin-tenant";
 import {
-  createStripePortalSession,
-  stripeBillingConfigured,
   stripeCustomerId,
   stripeSubscriptionInterval,
   stripeSubscriptionPeriod,
@@ -11,6 +9,10 @@ import {
   type StripeSubscriptionPayload,
   type StripeWebhookEvent,
 } from "./stripe-billing";
+import {
+  createHubBillingPortalSession,
+  hubBillingConfigured,
+} from "./hub-billing";
 
 export type AdminBillingStatus = {
   configured: boolean;
@@ -31,7 +33,7 @@ export async function readAdminBillingStatus(): Promise<AdminBillingStatus> {
   });
 
   return {
-    configured: stripeBillingConfigured(),
+    configured: hubBillingConfigured(),
     customerAttached: Boolean(subscription?.providerCustomerId),
     subscriptionAttached: Boolean(subscription?.providerSubscriptionId),
   };
@@ -40,39 +42,51 @@ export async function readAdminBillingStatus(): Promise<AdminBillingStatus> {
 export async function createAdminBillingPortalSession(
   returnUrl: string,
 ): Promise<{ url: string }> {
-  const tenant = await requireAdminTenantContext();
-  const prisma = getPrismaClient();
+  const tenant =
+    await requireAdminTenantContext();
 
-  const subscription = await prisma.subscription.findUnique({
-    where: { siteId: tenant.siteId },
-    include: {
-      organization: {
-        select: {
-          id: true,
-          name: true,
-        },
+  const prisma =
+    getPrismaClient();
+
+  const subscription =
+    await prisma.subscription.findUnique({
+      where: {
+        siteId:
+          tenant.siteId,
       },
-    },
-  });
+
+      select: {
+        providerSubscriptionId:
+          true,
+      },
+    });
 
   if (!subscription) {
-    throw new Error("The current tenant does not have an attached subscription.");
-  }
-
-  const customerId = subscription.providerCustomerId;
-
-  if (!customerId) {
     throw new Error(
-      "Billing customer has not been synchronized from Staark Hub yet.",
+      "The current tenant does not have an attached subscription.",
     );
   }
 
-  const session = await createStripePortalSession({
-    customerId,
+  const stripeSubscriptionId =
+    subscription
+      .providerSubscriptionId;
+
+  if (
+    !stripeSubscriptionId
+  ) {
+    throw new Error(
+      "Billing subscription has not been synchronized from Staark Hub yet.",
+    );
+  }
+
+  return createHubBillingPortalSession({
+    runtimeSiteId:
+      tenant.siteId,
+
+    stripeSubscriptionId,
+
     returnUrl,
   });
-
-  return { url: session.url };
 }
 
 async function planForStripePrice(priceId: string | null) {

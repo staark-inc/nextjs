@@ -357,15 +357,42 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
   const siteUrl =
     `https://${platformHostname}`;
 
-  const ownerEmail =
-    raw.setup?.owner?.email
-      ?.trim()
-      .toLowerCase() ||
-    customerEmail;
+  if (
+    raw.setup &&
+    !raw.setup.owner
+  ) {
+    throw new Error(
+      "setup.owner is required when setup is provided.",
+    );
+  }
 
-  const ownerName =
-    raw.setup?.owner?.name?.trim() ||
-    customerName;
+  const owner =
+    raw.setup?.owner
+      ? {
+          email:
+            required(
+              raw.setup.owner.email,
+              "setup.owner.email",
+            ).toLowerCase(),
+
+          name:
+            required(
+              raw.setup.owner.name,
+              "setup.owner.name",
+            ),
+        }
+      : null;
+
+  if (
+    owner &&
+    !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(
+      owner.email,
+    )
+  ) {
+    throw new Error(
+      "setup.owner.email must be valid.",
+    );
+  }
 
   const prisma = getPrismaClient();
 
@@ -391,18 +418,34 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
       );
     }
 
-    const user = await tx.user.upsert({
-      where: { email: ownerEmail },
-      create: {
-        email: ownerEmail,
-        name: ownerName,
-        status: "active",
-      },
-      update: {
-        name: ownerName,
-        status: "active",
-      },
-    });
+    const user =
+      owner
+        ? await tx.user.upsert({
+            where: {
+              email:
+                owner.email,
+            },
+
+            create: {
+              email:
+                owner.email,
+
+              name:
+                owner.name,
+
+              status:
+                "active",
+            },
+
+            update: {
+              name:
+                owner.name,
+
+              status:
+                "active",
+            },
+          })
+        : null;
 
     const organization = await tx.organization.upsert({
       where: { slug: organizationSlug },
@@ -413,22 +456,35 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
       update: {},
     });
 
-    await tx.organizationMember.upsert({
-      where: {
-        organizationId_userId: {
-          organizationId: organization.id,
-          userId: user.id,
+    if (user) {
+      await tx.organizationMember.upsert({
+        where: {
+          organizationId_userId: {
+            organizationId:
+              organization.id,
+
+            userId:
+              user.id,
+          },
         },
-      },
-      create: {
-        organizationId: organization.id,
-        userId: user.id,
-        role: "owner",
-      },
-      update: {
-        role: "owner",
-      },
-    });
+
+        create: {
+          organizationId:
+            organization.id,
+
+          userId:
+            user.id,
+
+          role:
+            "owner",
+        },
+
+        update: {
+          role:
+            "owner",
+        },
+      });
+    }
 
     const site = await tx.site.upsert({
       where: { key: siteKey },
