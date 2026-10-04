@@ -7,12 +7,7 @@ import { resolveThemeRuntime, SiteHeader, SiteFooter } from "@/staark.config";
 import { resolveTenantContext } from "@/lib/tenant-context";
 import { resolvePublicContentConfig } from "@/lib/content-source";
 import { SaasAccessBlocked } from "./SaasAccessBlocked";
-import ConsentMode from "./ConsentMode";
 import CookieConsent from "./CookieConsent";
-import GoogleAnalytics from "./GoogleAnalytics";
-import { resolveGoogleAnalyticsSettings } from "@/lib/google-analytics-settings";
-import PublicAnalytics from "./PublicAnalytics";
-import { canUsePlanFeature } from "@/lib/feature-access";
 import "@staark/theme-light/styles.css";
 import "@staark/theme-salong/styles.css";
 import "@staark/theme-skonhet/styles.css";
@@ -79,9 +74,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   const site = await content.getSite();
 
-  const googleAnalytics =
-    resolveGoogleAnalyticsSettings(site);
-
   const runtime = resolveThemeRuntime(site.theme.family);
   const preset = resolvePreset(runtime.theme, site.theme.preset);
   const vars = presetToCssVars(preset, site.theme.overrides);
@@ -94,23 +86,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SiteHeader site={site} variant={components.header ?? "solid"} />
       <main>{children}</main>
       <SiteFooter site={site} variant={components.footer ?? "dark"} />
-
-      <ConsentMode />
-
-      <GoogleAnalytics
-        enabled={
-          googleAnalytics.enabled
-        }
-        measurementId={
-          googleAnalytics.measurementId
-        }
-        consentRequired={
-          googleAnalytics.consentRequired
-        }
-        consentVersion={
-          site.privacy.consentVersion
-        }
-      />
 
       <CookieConsent
         settings={{
@@ -131,15 +106,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           cookiePolicyPath:
             site.privacy.cookiePolicyPath,
         }}
-      />
-      <PublicAnalytics
-        enabled={Boolean(
-          tenant &&
-            canUsePlanFeature(
-              tenant.entitlements,
-              "analytics",
-            ),
-        )}
       />
     </>
   );

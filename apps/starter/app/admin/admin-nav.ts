@@ -119,15 +119,6 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "search google titles descriptions",
   },
   {
-    href: "/admin/analytics",
-    feature: "analytics",
-    label: "Analytics",
-    description: "Traffic & top pages",
-    icon: "M4 19V9 M10 19V5 M16 19v-8 M22 19V3",
-    group: "Growth",
-    keywords: "analytics traffic visitors page views stats statistics",
-  },
-  {
     href: "/admin/redirects",
     feature: "redirects",
     label: "Redirects",
