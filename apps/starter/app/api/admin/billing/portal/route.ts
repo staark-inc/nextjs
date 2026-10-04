@@ -7,16 +7,33 @@ export async function POST(req: Request) {
   if (blocked) return blocked;
 
   try {
-    const forwardedProto = req.headers.get("x-forwarded-proto") ?? "https";
     const forwardedHost =
-      req.headers.get("x-forwarded-host") ??
-      req.headers.get("host");
+      (
+        req.headers.get("x-forwarded-host") ??
+        req.headers.get("host")
+      )
+        ?.split(",")[0]
+        ?.trim();
 
     if (!forwardedHost) {
       throw new Error("Could not determine public host.");
     }
 
-    const origin = `${forwardedProto}://${forwardedHost}`;
+    const forwardedProto =
+      req.headers
+        .get("x-forwarded-proto")
+        ?.split(",")[0]
+        ?.trim()
+        .toLowerCase();
+
+    const protocol =
+      process.env.NODE_ENV === "production"
+        ? "https"
+        : forwardedProto === "https" || forwardedProto === "http"
+          ? forwardedProto
+          : "http";
+
+    const origin = `${protocol}://${forwardedHost}`;
 
     const session = await createAdminBillingPortalSession(
       `${origin}/admin/plan`,
