@@ -73,8 +73,77 @@ function displayEntitlement(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function usageValue(current: number, limit: number | null): string {
-  return limit === null ? String(current) : `${current} / ${limit}`;
+function usageValue(
+  current: number,
+  limit: number | null,
+): string {
+  return limit === null
+    ? String(current)
+    : `${current} / ${limit}`;
+}
+
+function usagePercent(
+  current: number,
+  limit: number | null,
+): number | null {
+  if (
+    limit === null ||
+    limit <= 0
+  ) {
+    return null;
+  }
+
+  return Math.min(
+    100,
+    Math.round(
+      (current / limit) * 100,
+    ),
+  );
+}
+
+function remainingLabel(
+  current: number,
+  limit: number | null,
+  noun: string,
+): string {
+  if (limit === null) {
+    return "No package limit";
+  }
+
+  const remaining =
+    Math.max(
+      0,
+      limit - current,
+    );
+
+  if (remaining === 0) {
+    return "Limit reached";
+  }
+
+  return `${remaining} ${noun}${
+    remaining === 1 ? "" : "s"
+  } remaining`;
+}
+
+function quotaTone(
+  current: number,
+  limit: number | null,
+): string {
+  const percent =
+    usagePercent(
+      current,
+      limit,
+    );
+
+  if (limit !== null && current >= limit) {
+    return "danger";
+  }
+
+  if (percent !== null && percent >= 80) {
+    return "warning";
+  }
+
+  return "normal";
 }
 
 function statusTone(status: string): string {
@@ -99,6 +168,24 @@ export default async function PlanPage() {
           Math.round((plan.storageUsedBytes / storageLimitBytes) * 100),
         )
       : null;
+
+  const pagesPercent =
+    usagePercent(
+      plan.pagesCount,
+      maxPages,
+    );
+
+  const usersPercent =
+    usagePercent(
+      plan.usersCount,
+      maxUsers,
+    );
+
+  const domainsPercent =
+    usagePercent(
+      plan.domainsCount,
+      maxDomains,
+    );
 
   const annualBilling = plan.billingInterval === "yearly";
   const displayedPrice = annualBilling
@@ -188,7 +275,12 @@ export default async function PlanPage() {
       </div>
 
       <div className="sa-plan-usage-grid">
-        <article className="sa-plan-usage-card sa-plan-usage-card--storage">
+        <article
+          className={`sa-plan-usage-card sa-plan-usage-card--storage sa-plan-usage-card--${quotaTone(
+            plan.storageUsedBytes,
+            storageLimitBytes,
+          )}`}
+        >
           <div className="sa-plan-usage-card__top">
             <span>Storage</span>
             <strong>{storagePercent === null ? "—" : `${storagePercent}%`}</strong>
@@ -203,10 +295,43 @@ export default async function PlanPage() {
           <small>Uploaded website assets</small>
         </article>
 
-        <article className="sa-plan-usage-card">
-          <span>Pages</span>
-          <strong>{usageValue(plan.pagesCount, maxPages)}</strong>
-          <p>Active content pages</p>
+        <article
+          className={`sa-plan-usage-card sa-plan-usage-card--${quotaTone(
+            plan.pagesCount,
+            maxPages,
+          )}`}
+        >
+          <div className="sa-plan-usage-card__top">
+            <span>Pages</span>
+            <strong>
+              {pagesPercent === null
+                ? "—"
+                : `${pagesPercent}%`}
+            </strong>
+          </div>
+
+          <strong>
+            {usageValue(
+              plan.pagesCount,
+              maxPages,
+            )}
+          </strong>
+
+          <div className="sa-plan-progress">
+            <span
+              style={{
+                width: `${pagesPercent ?? 0}%`,
+              }}
+            />
+          </div>
+
+          <p>
+            {remainingLabel(
+              plan.pagesCount,
+              maxPages,
+              "page",
+            )}
+          </p>
         </article>
 
         <article className="sa-plan-usage-card">
@@ -215,16 +340,82 @@ export default async function PlanPage() {
           <p>Files currently in media storage</p>
         </article>
 
-        <article className="sa-plan-usage-card">
-          <span>Users</span>
-          <strong>{usageValue(plan.usersCount, maxUsers)}</strong>
-          <p>Organization members</p>
+        <article
+          className={`sa-plan-usage-card sa-plan-usage-card--${quotaTone(
+            plan.usersCount,
+            maxUsers,
+          )}`}
+        >
+          <div className="sa-plan-usage-card__top">
+            <span>Users</span>
+            <strong>
+              {usersPercent === null
+                ? "—"
+                : `${usersPercent}%`}
+            </strong>
+          </div>
+
+          <strong>
+            {usageValue(
+              plan.usersCount,
+              maxUsers,
+            )}
+          </strong>
+
+          <div className="sa-plan-progress">
+            <span
+              style={{
+                width: `${usersPercent ?? 0}%`,
+              }}
+            />
+          </div>
+
+          <p>
+            {remainingLabel(
+              plan.usersCount,
+              maxUsers,
+              "user",
+            )}
+          </p>
         </article>
 
-        <article className="sa-plan-usage-card">
-          <span>Domains</span>
-          <strong>{usageValue(plan.domainsCount, maxDomains)}</strong>
-          <p>Custom domains only</p>
+        <article
+          className={`sa-plan-usage-card sa-plan-usage-card--${quotaTone(
+            plan.domainsCount,
+            maxDomains,
+          )}`}
+        >
+          <div className="sa-plan-usage-card__top">
+            <span>Domains</span>
+            <strong>
+              {domainsPercent === null
+                ? "—"
+                : `${domainsPercent}%`}
+            </strong>
+          </div>
+
+          <strong>
+            {usageValue(
+              plan.domainsCount,
+              maxDomains,
+            )}
+          </strong>
+
+          <div className="sa-plan-progress">
+            <span
+              style={{
+                width: `${domainsPercent ?? 0}%`,
+              }}
+            />
+          </div>
+
+          <p>
+            {remainingLabel(
+              plan.domainsCount,
+              maxDomains,
+              "domain",
+            )}
+          </p>
         </article>
 
         <article className="sa-plan-usage-card">

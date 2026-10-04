@@ -24,16 +24,28 @@ type PageTemplate = {
   theme?: string;
 };
 
+type PageQuota = {
+  resource: "pages";
+  entitlementKey: "maxPages";
+  current: number;
+  limit: number | null;
+  remaining: number | null;
+  allowed: boolean;
+};
+
 type PagesPayload = {
   pages: PageEntry[];
   deletedPages: DeletedPageEntry[];
   theme: string;
   templates: PageTemplate[];
+  quota: PageQuota | null;
 };
 
 export default function PagesIndex() {
   const router = useRouter();
   const [pages, setPages] = useState<PageEntry[]>([]);
+  const [pageQuota, setPageQuota] =
+    useState<PageQuota | null>(null);
   const [deletedPages, setDeletedPages] =
     useState<DeletedPageEntry[]>([]);
   const [restoring, setRestoring] =
@@ -62,6 +74,7 @@ export default function PagesIndex() {
     }
     const data = await res.json() as PagesPayload;
     setPages(data.pages ?? []);
+    setPageQuota(data.quota ?? null);
     setDeletedPages(data.deletedPages ?? []);
     setTheme(data.theme ?? "light");
     setTemplates(data.templates ?? []);
@@ -71,6 +84,28 @@ export default function PagesIndex() {
   }
 
   useEffect(() => { void load(); }, []);
+
+  const pagePercent =
+    pageQuota?.limit &&
+    pageQuota.limit > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (pageQuota.current /
+              pageQuota.limit) *
+              100,
+          ),
+        )
+      : null;
+
+  const pageLimitReached =
+    pageQuota?.limit !== null &&
+    pageQuota?.limit !== undefined &&
+    pageQuota.current >= pageQuota.limit;
+
+  const pageNearLimit =
+    pagePercent !== null &&
+    pagePercent >= 80;
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.id === templateId),
@@ -166,8 +201,24 @@ export default function PagesIndex() {
 
       <div className="sa-card sa-pages-card">
         <div className="sa-card__header sa-card__header--row">
-          <div><p className="sa-card__eyebrow">Existing pages</p><h2>{pages.length} pages</h2></div>
-          <span className="sa-note">Navigation badges reflect the active site settings.</span>
+          <div>
+            <p className="sa-card__eyebrow">Existing pages</p>
+            <h2>
+              {pageQuota?.limit !== null &&
+              pageQuota?.limit !== undefined
+                ? `${pages.length} / ${pageQuota.limit} pages`
+                : `${pages.length} pages`}
+            </h2>
+          </div>
+
+          <span className="sa-note">
+            {pageQuota?.remaining !== null &&
+            pageQuota?.remaining !== undefined
+              ? `${pageQuota.remaining} page${
+                  pageQuota.remaining === 1 ? "" : "s"
+                } remaining`
+              : "Navigation badges reflect the active site settings."}
+          </span>
         </div>
         <ul className="sa-page-list sa-page-list--managed">
           {pages.map((page) => (
@@ -244,6 +295,38 @@ export default function PagesIndex() {
         </div>
       ) : null}
 
+      {pageQuota &&
+      pageQuota.limit !== null &&
+      pageNearLimit ? (
+        <div
+          className={`sa-quota-notice ${
+            pageLimitReached
+              ? "sa-quota-notice--danger"
+              : "sa-quota-notice--warning"
+          }`}
+        >
+          <div>
+            <strong>
+              {pageLimitReached
+                ? "Page limit reached"
+                : "You are close to the page limit"}
+            </strong>
+
+            <span>
+              {pageQuota.current} of {pageQuota.limit} pages used
+              {pageQuota.remaining !== null
+                ? ` · ${pageQuota.remaining} remaining`
+                : ""}
+              .
+            </span>
+          </div>
+
+          <Link href="/admin/plan">
+            View plan
+          </Link>
+        </div>
+      ) : null}
+
       <div className="sa-card">
         <div className="sa-card__header">
           <p className="sa-card__eyebrow">Create new page</p>
@@ -296,7 +379,20 @@ export default function PagesIndex() {
           </div>
 
           <div className="sa-form-actions">
-            <button type="submit" className="sa-btn sa-btn--primary" disabled={creating}>{creating ? "Creating…" : "Create page"}</button>
+            <button
+              type="submit"
+              className="sa-btn sa-btn--primary"
+              disabled={
+                creating ||
+                pageLimitReached
+              }
+            >
+              {creating
+                ? "Creating…"
+                : pageLimitReached
+                  ? "Page limit reached"
+                  : "Create page"}
+            </button>
           </div>
         </form>
       </div>

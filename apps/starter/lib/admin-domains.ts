@@ -5,9 +5,11 @@ import { getPrismaClient } from "./db/prisma";
 import { requireAdminTenantContext } from "./admin-tenant";
 import {
   PlanLimitError,
-  assertWithinPlanLimit,
   entitlementNumber,
 } from "./plan-entitlements";
+import {
+  assertSiteQuotaValue,
+} from "./site-quota";
 import {
   CloudflareSaasError,
   cloudflareSaasCnameTarget,
@@ -313,7 +315,11 @@ export async function createAdminCustomDomain(input: {
       where: { siteId: tenant.siteId, type: "custom" },
     });
 
-    assertWithinPlanLimit(tenant.entitlements, "maxDomains", current);
+    assertSiteQuotaValue(
+      tenant.entitlements,
+      "domains",
+      current,
+    );
 
     const existing = await tx.domain.findUnique({
       where: { hostname },

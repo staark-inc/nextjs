@@ -14,6 +14,9 @@ import {
   writeMediaMetadata,
 } from "@/lib/admin-media";
 import { buildMediaUsageIndex, findMediaUsage } from "@/lib/admin-media-usage";
+import {
+  readAdminSiteQuota,
+} from "@/lib/site-quota";
 import { requireAuth } from "../guard";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -23,17 +26,24 @@ export async function GET() {
   if (blocked) return blocked;
 
   try {
-    const [described, usageIndex] = await Promise.all([
+    const [described, usageIndex, quota] = await Promise.all([
       listMediaFiles(),
       buildMediaUsageIndex(),
+      readAdminSiteQuota("storage"),
     ]);
     const files = described.map((file) => {
       const usage = usageIndex[file.name] ?? [];
       return { ...file, usage, usageCount: usage.length };
     });
-    return NextResponse.json({ files });
+    return NextResponse.json({
+      files,
+      quota,
+    });
   } catch {
-    return NextResponse.json({ files: [] });
+    return NextResponse.json({
+      files: [],
+      quota: null,
+    });
   }
 }
 
@@ -54,6 +64,14 @@ export async function POST(req: NextRequest) {
   const metadata = await readMediaMetadata();
   const uploaded = [];
 
+  const storageQuota =
+    await readAdminSiteQuota(
+      "storage",
+    );
+
+  let projectedStorage =
+    storageQuota?.current ?? 0;
+
   for (const file of files) {
     if (file.size > MAX_FILE_BYTES) {
       return NextResponse.json({ error: `${file.name} is larger than 10 MB.` }, { status: 413 });
@@ -71,19 +89,105 @@ export async function POST(req: NextRequest) {
     }
 
     let name: string;
+    let replacedBytes = 0;
+
     if (replace) {
       name = safeMediaName(targetName);
-      if (!IMAGE_EXTENSION.test(name) || !(await mediaExists(name))) {
-        return NextResponse.json({ error: "The image being replaced no longer exists." }, { status: 404 });
+
+      if (
+        !IMAGE_EXTENSION.test(name) ||
+        !(await mediaExists(name))
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "The image being replaced no longer exists.",
+          },
+          {
+            status:
+              404,
+          },
+        );
       }
-      if (path.extname(name).toLowerCase() !== path.extname(requested).toLowerCase()) {
-        return NextResponse.json({ error: "Replacement image must use the same file extension to preserve its public URL." }, { status: 400 });
+
+      if (
+        path.extname(name).toLowerCase() !==
+        path.extname(requested).toLowerCase()
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Replacement image must use the same file extension to preserve its public URL.",
+          },
+          {
+            status:
+              400,
+          },
+        );
       }
+
+      const existing =
+        await describeMediaFile(
+          name,
+          metadata,
+        );
+
+      replacedBytes =
+        existing?.size ?? 0;
     } else {
-      name = await uniqueMediaName(requested);
+      name =
+        await uniqueMediaName(
+          requested,
+        );
     }
 
-    await writeMediaFile(name, new Uint8Array(await file.arrayBuffer()));
+    if (storageQuota) {
+      const additionalBytes =
+        Math.max(
+          0,
+          file.size -
+            replacedBytes,
+        );
+
+      projectedStorage =
+        projectedStorage +
+        additionalBytes;
+
+      if (
+        storageQuota.limit !== null &&
+        projectedStorage >
+          storageQuota.limit
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Your storage limit has been reached. Delete unused media or upgrade your plan.",
+            code:
+              "PLAN_LIMIT_REACHED",
+            limitKey:
+              "storageBytes",
+            limit:
+              storageQuota.limit,
+            current:
+              projectedStorage -
+              file.size,
+            incoming:
+              file.size,
+          },
+          {
+            status:
+              403,
+          },
+        );
+      }
+    }
+
+    await writeMediaFile(
+      name,
+      new Uint8Array(
+        await file.arrayBuffer(),
+      ),
+    );
     const described = await describeMediaFile(name, metadata);
     if (described) uploaded.push(described);
   }

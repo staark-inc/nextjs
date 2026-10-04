@@ -20,6 +20,15 @@ type MediaFile = {
   usageCount: number;
 };
 
+type StorageQuota = {
+  resource: "storage";
+  entitlementKey: "storageBytes";
+  current: number;
+  limit: number | null;
+  remaining: number | null;
+  allowed: boolean;
+};
+
 type Toast = { msg: string; ok: boolean } | null;
 
 function formatBytes(bytes: number): string {
@@ -48,6 +57,8 @@ function formatDate(iso: string): string {
 
 export default function MediaPage() {
   const [files, setFiles] = useState<MediaFile[]>([]);
+  const [storageQuota, setStorageQuota] =
+    useState<StorageQuota | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -67,6 +78,28 @@ export default function MediaPage() {
   }, [files, query]);
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
 
+  const storagePercent =
+    storageQuota?.limit &&
+    storageQuota.limit > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (storageQuota.current /
+              storageQuota.limit) *
+              100,
+          ),
+        )
+      : null;
+
+  const storageNearLimit =
+    storagePercent !== null &&
+    storagePercent >= 80;
+
+  const storageLimitReached =
+    storageQuota?.limit !== null &&
+    storageQuota?.limit !== undefined &&
+    storageQuota.current >= storageQuota.limit;
+
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
     window.setTimeout(() => setToast(null), 3200);
@@ -80,6 +113,9 @@ export default function MediaPage() {
       if (!res.ok) throw new Error(data.error ?? "Unable to load media.");
       const nextFiles = (data.files ?? []) as MediaFile[];
       setFiles(nextFiles);
+      setStorageQuota(
+        (data.quota ?? null) as StorageQuota | null,
+      );
       const nextSelected = preferredName ?? selectedName;
       if (nextSelected && nextFiles.some((file) => file.name === nextSelected)) {
         setSelectedName(nextSelected);
@@ -193,8 +229,21 @@ export default function MediaPage() {
           <p className="sa-subtitle">Upload, reuse and describe the images used across this deployment.</p>
         </div>
         <div className="sa-page-header__actions">
-          <button className="sa-btn sa-btn--primary" type="button" onClick={() => inputRef.current?.click()} disabled={uploading}>
-            {uploading ? "Uploading…" : "Upload images"}
+          <button
+            className="sa-btn sa-btn--primary"
+            type="button"
+            onClick={() => {
+          if (!storageLimitReached) {
+            inputRef.current?.click();
+          }
+        }}
+            disabled={uploading || storageLimitReached}
+          >
+            {uploading
+              ? "Uploading…"
+              : storageLimitReached
+                ? "Storage limit reached"
+                : "Upload images"}
           </button>
         </div>
       </section>
@@ -207,8 +256,17 @@ export default function MediaPage() {
         </article>
         <article className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Storage</div>
-          <div className="sa-stat__value sa-stat__value--sm">{formatBytes(totalBytes)}</div>
-          <div className="sa-stat__desc">Current local media size</div>
+          <div className="sa-stat__value sa-stat__value--sm">
+            {formatBytes(totalBytes)}
+          </div>
+          <div className="sa-stat__desc">
+            {storageQuota?.limit !== null &&
+            storageQuota?.limit !== undefined
+              ? `${storagePercent ?? 0}% of ${formatBytes(
+                  storageQuota.limit,
+                )}`
+              : "Current local media size"}
+          </div>
         </article>
         <article className="sa-stat sa-stat--v2">
           <div className="sa-stat__label">Protected</div>
@@ -222,6 +280,41 @@ export default function MediaPage() {
         </article>
       </section>
 
+      {storageQuota &&
+      storageQuota.limit !== null &&
+      storageNearLimit ? (
+        <div
+          className={`sa-quota-notice ${
+            storageLimitReached
+              ? "sa-quota-notice--danger"
+              : "sa-quota-notice--warning"
+          }`}
+        >
+          <div>
+            <strong>
+              {storageLimitReached
+                ? "Storage limit reached"
+                : "Storage is running low"}
+            </strong>
+
+            <span>
+              {formatBytes(storageQuota.current)} of{" "}
+              {formatBytes(storageQuota.limit)} used
+              {storageQuota.remaining !== null
+                ? ` · ${formatBytes(
+                    storageQuota.remaining,
+                  )} remaining`
+                : ""}
+              .
+            </span>
+          </div>
+
+          <a href="/admin/plan">
+            View plan
+          </a>
+        </div>
+      ) : null}
+
       <section
         className={`${styles.dropzone} ${dragActive ? styles.dropzoneActive : ""}`}
         onClick={() => inputRef.current?.click()}
@@ -230,7 +323,15 @@ export default function MediaPage() {
         onDragLeave={() => setDragActive(false)}
         role="button"
         tabIndex={0}
-        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") inputRef.current?.click(); }}
+        onKeyDown={(event) => {
+          if (
+            !storageLimitReached &&
+            (event.key === "Enter" ||
+              event.key === " ")
+          ) {
+            inputRef.current?.click();
+          }
+        }}
       >
         <div className={styles.dropIcon} aria-hidden="true">↑</div>
         <div>

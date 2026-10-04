@@ -7,12 +7,11 @@ import {
   getPostgresAdminSiteSettings,
   listPostgresAdminPages,
 } from "@/lib/admin-page-postgres";
-import { getPrismaClient } from "@/lib/db/prisma";
-import { requireAdminTenantContext } from "@/lib/admin-tenant";
+import { PlanLimitError } from "@/lib/plan-entitlements";
 import {
-  PlanLimitError,
-  assertWithinPlanLimit,
-} from "@/lib/plan-entitlements";
+  assertAdminSiteQuota,
+  readAdminSiteQuota,
+} from "@/lib/site-quota";
 import {
   contentExists,
   contentStoragePath,
@@ -175,11 +174,17 @@ export async function GET() {
     try {
       const { site, pages, deletedPages } = await listPostgresAdminPages();
       const theme = resolveThemeRuntime(site.theme.family ?? "light").id;
+      const quota =
+        await readAdminSiteQuota(
+          "pages",
+        );
+
       return NextResponse.json({
         pages,
         deletedPages,
         theme,
         templates: templatesFor(theme),
+        quota,
       });
     } catch (error) {
       return NextResponse.json(
@@ -216,6 +221,7 @@ export async function GET() {
     deletedPages: [],
     theme,
     templates: templatesFor(theme),
+    quota: null,
   });
 }
 
@@ -252,15 +258,10 @@ export async function POST(req: Request) {
         ? body.navigationLabel.trim()
         : title;
 
-      const tenant = await requireAdminTenantContext();
-      const currentPages = await getPrismaClient().page.count({
-        where: {
-          siteId: tenant.siteId,
-          deletedAt: null,
-        },
-      });
-
-      assertWithinPlanLimit(tenant.entitlements, "maxPages", currentPages);
+      await assertAdminSiteQuota(
+        "pages",
+        1,
+      );
 
       const created = await createPostgresAdminPage({
         page,

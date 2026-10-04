@@ -312,6 +312,36 @@ export default function DomainsPage() {
         </article>
       </section>
 
+      {state.customDomainLimit !== null &&
+      state.customDomainLimit > 0 &&
+      state.customDomainRemaining !== null &&
+      state.customDomainRemaining <= 1 ? (
+        <div
+          className={`sa-quota-notice ${
+            state.customDomainRemaining === 0
+              ? "sa-quota-notice--danger"
+              : "sa-quota-notice--warning"
+          }`}
+        >
+          <div>
+            <strong>
+              {state.customDomainRemaining === 0
+                ? "Custom-domain limit reached"
+                : "One custom domain remaining"}
+            </strong>
+
+            <span>
+              {state.customDomainCount} of{" "}
+              {state.customDomainLimit} custom domains used.
+            </span>
+          </div>
+
+          <a href="/admin/plan">
+            View plan
+          </a>
+        </div>
+      ) : null}
+
       <section className={`sa-card ${styles.addCard}`}>
         <div>
           <p className="sa-card__eyebrow">Connect domain</p>
