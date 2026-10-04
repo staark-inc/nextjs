@@ -53,9 +53,10 @@ model Page {
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
   deletedContext Json      @default("{}") @map("deleted_context") @db.JsonB
 
-  site      Site           @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "pages_site_id_fkey")
-  blocks    PageBlock[]
-  revisions PageRevision[]
+  site        Site             @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "pages_site_id_fkey")
+  blocks      PageBlock[]
+  revisions   PageRevision[]
+  publication PagePublication?
 
   // The second unique key lets child rows enforce siteId + pageId together,
   // preventing a tenant id from being paired with another site's page.
@@ -103,6 +104,28 @@ model PageRevision {
 
   @@index([siteId, pageId, createdAt], map: "page_revisions_site_id_page_id_created_at_idx")
   @@map("page_revisions")
+}
+
+
+/// Last explicitly published snapshot of a page.
+///
+/// Page/PageBlock remain the mutable admin draft.
+/// Public traffic reads this snapshot until the next publish.
+model PagePublication {
+  pageId      String   @id @map("page_id") @db.Uuid
+  siteId      String   @map("site_id") @db.Uuid
+  path        String   @db.VarChar(1024)
+  snapshot    Json     @db.JsonB
+  checksum    String   @db.Char(64)
+  publishedAt DateTime @default(now()) @map("published_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  page Page @relation(fields: [siteId, pageId], references: [siteId, id], onDelete: Cascade, map: "page_publications_site_id_page_id_fkey")
+
+  @@unique([siteId, pageId], map: "page_publications_site_id_page_id_key")
+  @@unique([siteId, path], map: "page_publications_site_id_path_key")
+  @@index([siteId, publishedAt], map: "page_publications_site_id_published_at_idx")
+  @@map("page_publications")
 }
 
 

@@ -10,6 +10,11 @@ export {
   type RevisionRepository,
 } from "./revision-repository";
 export type {
+  PagePublicationRecord,
+  PublicationRepository,
+  PublishPageInput,
+} from "./publication-repository";
+export type {
   RedirectRecord,
   RedirectRepository,
   SaveRedirectInput,

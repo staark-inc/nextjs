@@ -1,4 +1,5 @@
 import type { PageRepository } from "./page-repository";
+import type { PublicationRepository } from "./publication-repository";
 import type { RedirectRepository } from "./redirect-repository";
 import type { RevisionRepository } from "./revision-repository";
 import type { SiteRepository } from "./site-repository";
@@ -9,6 +10,7 @@ export type RepositorySet = {
   sites: SiteRepository;
   pages: PageRepository;
   revisions: RevisionRepository;
+  publications: PublicationRepository;
   redirects: RedirectRepository;
   submissions: SubmissionRepository;
   serviceCatalogs: ServiceCatalogRepository;

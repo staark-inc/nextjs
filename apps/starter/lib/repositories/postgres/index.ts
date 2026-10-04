@@ -6,6 +6,7 @@ import type {
 } from "../repository-set";
 import type { RepositoryDbClient } from "./db-client";
 import { PostgresPageRepository } from "./page-repository";
+import { PostgresPublicationRepository } from "./publication-repository";
 import { PostgresRedirectRepository } from "./redirect-repository";
 import { PostgresRevisionRepository } from "./revision-repository";
 import { PostgresSiteRepository } from "./site-repository";
@@ -19,6 +20,7 @@ export function createPostgresRepositories(
     sites: new PostgresSiteRepository(db),
     pages: new PostgresPageRepository(db),
     revisions: new PostgresRevisionRepository(db),
+    publications: new PostgresPublicationRepository(db),
     redirects: new PostgresRedirectRepository(db),
     submissions: new PostgresSubmissionRepository(db),
     serviceCatalogs: new PostgresServiceCatalogRepository(db),

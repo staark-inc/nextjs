@@ -781,6 +781,41 @@ export async function restorePostgresAdminPage(
   });
 }
 
+
+export async function publishPostgresAdminPage(
+  pageId: string,
+) {
+  if (!isPageId(pageId)) {
+    throw new AdminPageNotFoundError();
+  }
+
+  return withPostgresTransaction(async (repositories) => {
+    const site = await requireSite(repositories);
+
+    const current = await repositories.pages.findById(
+      site.id,
+      pageId,
+    );
+
+    if (!current || current.deletedAt) {
+      throw new AdminPageNotFoundError();
+    }
+
+    await repositories.revisions.create({
+      siteId: site.id,
+      pageId,
+      reason: "publish",
+      page: current.page,
+    });
+
+    return repositories.publications.publish({
+      siteId: site.id,
+      pageId,
+      page: current.page,
+    });
+  });
+}
+
 export async function listPostgresAdminPageRevisions(
   pageId: string,
 ): Promise<PostgresAdminRevisionSummary[]> {

@@ -21,7 +21,8 @@
     "db:first-run": "tsx scripts/bootstrap-site.ts",
     "db:seed:saas": "tsx scripts/seed-saas-plans.ts",
     "media:migrate:tenant": "tsx scripts/migrate-tenant-media.ts",
-    "domain:cleanup": "tsx scripts/domain-cleanup.ts"
+    "domain:cleanup": "tsx scripts/domain-cleanup.ts",
+    "db:bootstrap:publications": "tsx scripts/bootstrap-page-publications.ts"
   },
   "dependencies": {
     "@next/third-parties": "^16.3.8",

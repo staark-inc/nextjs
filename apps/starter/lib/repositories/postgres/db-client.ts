@@ -12,6 +12,7 @@ export type RepositoryDbClient = Pick<
   | "site"
   | "page"
   | "pageRevision"
+  | "pagePublication"
   | "siteUsage"
   | "redirect"
   | "submission"
