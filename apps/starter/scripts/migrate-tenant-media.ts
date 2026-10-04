@@ -9,21 +9,109 @@ import {
 
 import {
   getStorage,
-  readStorageJson,
-  writeStorageJson,
-} from "@staark/platform/server";
+  readJson as readStorageJson,
+  writeJson as writeStorageJson,
+} from "@staark/core/storage";
 
-import {
-  stateStoragePath,
-  tenantStateStoragePath,
-  tenantUploadsStoragePath,
-  uploadsStoragePath,
-} from "../lib/storage";
+const IMAGE_EXTENSION =
+  /\.(jpg|jpeg|png|gif|webp|svg|avif|ico)$/i;
 
-import {
-  IMAGE_EXTENSION,
-  type MediaMetadata,
-} from "../lib/admin-media";
+type MediaMetadata =
+  Record<
+    string,
+    {
+      alt?: string;
+    }
+  >;
+
+function portablePath(
+  value: string,
+): string {
+  return value
+    .replace(/\\/g, "/")
+    .replace(/^\/+|\/+$/g, "");
+}
+
+function storagePath(
+  ...parts: string[]
+): string {
+  const joined =
+    parts
+      .map(portablePath)
+      .filter(Boolean)
+      .join("/");
+
+  if (!joined) {
+    throw new Error(
+      "Storage path cannot be empty.",
+    );
+  }
+
+  const normalized =
+    joined
+      .split("/")
+      .filter(
+        (part) =>
+          part &&
+          part !== "." &&
+          part !== "..",
+      )
+      .join("/");
+
+  if (
+    !normalized ||
+    normalized.includes("\0")
+  ) {
+    throw new Error(
+      "Invalid storage path.",
+    );
+  }
+
+  return normalized;
+}
+
+function stateStoragePath(
+  ...parts: string[]
+): string {
+  return storagePath(
+    ".staark",
+    ...parts,
+  );
+}
+
+function uploadsStoragePath(
+  ...parts: string[]
+): string {
+  return storagePath(
+    "public",
+    "uploads",
+    ...parts,
+  );
+}
+
+function tenantStateStoragePath(
+  siteId: string,
+  ...parts: string[]
+): string {
+  return storagePath(
+    "sites",
+    siteId,
+    ".staark",
+    ...parts,
+  );
+}
+
+function tenantUploadsStoragePath(
+  siteId: string,
+  ...parts: string[]
+): string {
+  return storagePath(
+    "sites",
+    siteId,
+    "uploads",
+    ...parts,
+  );
+}
 
 type Options = {
   write: boolean;

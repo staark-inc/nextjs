@@ -124,7 +124,9 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
         type: "custom",
       },
     }),
-    listMediaFiles(),
+    listMediaFiles(
+      tenant.siteId,
+    ),
   ]);
 
   if (!subscription) {

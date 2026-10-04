@@ -1,6 +1,7 @@
 import { PageSchema, SiteSettingsSchema } from "@staark/core";
 import { resolveThemeRuntime } from "./theme-runtime";
 import { listMediaFiles } from "./admin-media";
+import { resolveAdminMediaSiteId } from "./admin-media-scope";
 import { buildMediaUsageIndex } from "./admin-media-usage";
 import { listRedirects, type RedirectRule } from "./admin-redirects";
 import { resolvePublicContentConfig } from "./content-source";
@@ -695,10 +696,16 @@ function addRedirectIssues(
 }
 
 async function addMediaIssues(issues: HealthIssue[]): Promise<void> {
-  const [usageIndex, media] = await Promise.all([
-    buildMediaUsageIndex(),
-    listMediaFiles(),
-  ]);
+  const siteId =
+    await resolveAdminMediaSiteId();
+
+  const [usageIndex, media] =
+    await Promise.all([
+      buildMediaUsageIndex(),
+      listMediaFiles(
+        siteId,
+      ),
+    ]);
   const available = new Set(media.map((file) => file.name));
 
   for (const [name, references] of Object.entries(usageIndex)) {

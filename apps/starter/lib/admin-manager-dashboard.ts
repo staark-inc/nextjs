@@ -1,5 +1,6 @@
 import { listBackupTimes } from "./admin-backups";
 import { listMediaFiles } from "./admin-media";
+import { resolveAdminMediaSiteId } from "./admin-media-scope";
 import { listRedirects } from "./admin-redirects";
 import { runSiteHealth } from "./admin-site-health";
 import { resolvePublicContentConfig } from "./content-source";
@@ -178,6 +179,9 @@ async function loadManagerContent(): Promise<{
 
 export async function loadManagerDashboard():
 Promise<ManagerDashboardData> {
+  const mediaSiteId =
+    await resolveAdminMediaSiteId();
+
   const [
     content,
     health,
@@ -196,7 +200,13 @@ Promise<ManagerDashboardData> {
 
     safe(runSiteHealth, null),
 
-    safe(listMediaFiles, []),
+    safe(
+      () =>
+        listMediaFiles(
+          mediaSiteId,
+        ),
+      [],
+    ),
 
     safe(listRedirects, {
       redirects: [],

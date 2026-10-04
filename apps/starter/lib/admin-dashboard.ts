@@ -1,5 +1,6 @@
 import { listInboxSubmissions, type InboxSubmission } from "@/lib/admin-inbox";
 import { listMediaFiles } from "@/lib/admin-media";
+import { resolveAdminMediaSiteId } from "@/lib/admin-media-scope";
 import { listPageRevisions } from "@/lib/admin-revisions";
 import {
   listAdminContentPages,
@@ -182,6 +183,9 @@ async function safe<T>(load: () => Promise<T>, fallback: T): Promise<T> {
 export async function loadDashboard(): Promise<DashboardData> {
   const now = Date.now();
 
+  const mediaSiteId =
+    await resolveAdminMediaSiteId();
+
   const [
     site,
     pages,
@@ -193,7 +197,13 @@ export async function loadDashboard(): Promise<DashboardData> {
     readAdminSiteSettings(),
     loadPages(),
     safe(listInboxSubmissions, []),
-    safe(listMediaFiles, []),
+    safe(
+      () =>
+        listMediaFiles(
+          mediaSiteId,
+        ),
+      [],
+    ),
     safe(() => listBackupTimes(1), []),
     safe(peekAdminShellStatus, null),
   ]);
