@@ -19,6 +19,10 @@ import {
   validateClientSessionIdentity,
   validateManagerSessionScope,
 } from "@/lib/session-identity";
+
+import {
+  validateAdminRequestOrigin,
+} from "@/lib/admin-request-security";
 import {
   ADMIN_SESSION_COOKIE,
 } from "@/lib/auth";
@@ -157,7 +161,47 @@ export async function proxy(req: NextRequest) {
 
   if (!adminRequest) return NextResponse.next();
 
-  // Auth endpoints enforce their own checks (config, rate limit, credentials).
+  /*
+   * All cookie-authenticated Admin mutations, including login/logout/setup,
+   * must originate from the exact request hostname.
+   *
+   * Run this before the auth endpoint bypass so /api/admin/auth/* cannot become
+   * a CSRF exception.
+   */
+  if (
+    pathname.startsWith(
+      "/api/admin/",
+    )
+  ) {
+    const requestSecurity =
+      validateAdminRequestOrigin(
+        req,
+      );
+
+    if (
+      !requestSecurity.ok
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code:
+            requestSecurity.code,
+          error:
+            "This admin request was blocked by the request security policy.",
+        },
+        {
+          status: 403,
+
+          headers: {
+            "cache-control":
+              "no-store",
+          },
+        },
+      );
+    }
+  }
+
+  // Authentication endpoints still own credentials/rate-limit/session logic.
   if (pathname.startsWith("/api/admin/auth/")) return NextResponse.next();
 
   const isLoginPage = pathname === ADMIN_LOGIN_PATH;

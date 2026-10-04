@@ -26,6 +26,10 @@ import {
   validateManagerSessionScope,
 } from "@/lib/session-identity";
 
+import {
+  validateAdminRequestOrigin,
+} from "@/lib/admin-request-security";
+
 async function validateIdentity() {
   const session =
     await getSession();
@@ -243,4 +247,43 @@ export async function requirePlanFeature(
   }
 
   return null;
+}
+
+
+/**
+ * Route-handler defence-in-depth for mutation endpoints.
+ *
+ * proxy.ts protects every /api/admin mutation centrally. This helper exists
+ * so high-risk handlers and future non-proxied integrations can enforce the
+ * same policy without reimplementing Origin rules.
+ */
+export function requireAdminMutationOrigin(
+  request: Request,
+): NextResponse | null {
+  const result =
+    validateAdminRequestOrigin(
+      request,
+    );
+
+  if (result.ok) {
+    return null;
+  }
+
+  return NextResponse.json(
+    {
+      ok: false,
+      code:
+        result.code,
+      error:
+        "This admin request was blocked by the request security policy.",
+    },
+    {
+      status: 403,
+
+      headers: {
+        "cache-control":
+          "no-store",
+      },
+    },
+  );
 }
