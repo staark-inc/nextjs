@@ -100,12 +100,6 @@ export function canAccessAdminFeature(
   feature: AdminFeature,
   entitlements: readonly AdminFeature[] = [],
 ): boolean {
-  // Analytics is temporarily disabled platform-wide until
-  // tenant ownership/binding and abuse protections are completed.
-  if (feature === "analytics") {
-    return false;
-  }
-
   if (role === "manager") return true;
 
   const definition = ADMIN_FEATURE_REGISTRY[feature];
