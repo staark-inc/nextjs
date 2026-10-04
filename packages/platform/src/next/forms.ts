@@ -53,6 +53,34 @@ export type FormsRouteOptions = {
   successMessage?: string;
   /** Override for tests. */
   minSeconds?: number;
+
+  /**
+   * Optional endpoint-level kind restriction.
+   * Example: generic forms may accept contact + lead while booking uses its
+   * own dedicated endpoint.
+   */
+  acceptedKinds?: readonly SubmissionKind[];
+
+  /**
+   * Called before a token is issued.
+   * Return a Response to block the request, otherwise null/undefined.
+   */
+  authorizeToken?: (
+    request: Request,
+    formId: string,
+  ) => Promise<Response | null | undefined>;
+
+  /**
+   * Called after strict schema parsing but before token verification/storage.
+   * Return a Response to block the request, otherwise null/undefined.
+   */
+  authorizeSubmission?: (
+    request: Request,
+    submission: SubmittedFormNotification & {
+      token: string;
+    },
+  ) => Promise<Response | null | undefined>;
+
   /** Optional post-submit side effect. Failures are logged but never fail the visitor submission. */
   onSubmitted?: (submission: SubmittedFormNotification) => Promise<void>;
 };
@@ -68,6 +96,17 @@ export function createFormsRoute(content: StaarkContent, options: FormsRouteOpti
       if (!/^[a-z0-9\-_]{1,64}$/.test(formId)) {
         return Response.json({ ok: false, error: "Unknown form." }, { status: 400 });
       }
+
+      if (options.authorizeToken) {
+        const blocked =
+          await options.authorizeToken(
+            req,
+            formId,
+          );
+
+        if (blocked) return blocked;
+      }
+
       return Response.json(
         { ok: true, token: issueFormToken(formId, content.connection.secret) },
         { headers: { "Cache-Control": "no-store" } },
@@ -111,6 +150,43 @@ export function createFormsRoute(content: StaarkContent, options: FormsRouteOpti
       }
 
       const submission = parsed.data;
+
+      if (
+        options.acceptedKinds &&
+        !options.acceptedKinds.includes(
+          submission.kind,
+        )
+      ) {
+        return json(
+          {
+            ok: false,
+            error: "Unknown form.",
+          },
+          404,
+        );
+      }
+
+      if (options.authorizeSubmission) {
+        const blocked =
+          await options.authorizeSubmission(
+            req,
+            {
+              formId:
+                submission.formId,
+              kind:
+                submission.kind,
+              fields:
+                submission.fields,
+              pageUrl:
+                submission.pageUrl,
+              token:
+                submission.token,
+            },
+          );
+
+        if (blocked) return blocked;
+      }
+
       const token = checkFormToken(submission.token, submission.formId, content.connection.secret, {
         minSeconds: options.minSeconds,
       });

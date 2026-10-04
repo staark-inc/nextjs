@@ -24,7 +24,7 @@ type Status = { state: "idle" | "loading" | "ok" | "error"; message?: string; fi
 
 const STEPS = ["Bil", "Tjänst & tid", "Kontakt"] as const;
 
-export function ServiceBookingForm({ formId, endpoint = "/api/staark/forms", services, dropOffTimes, loanCar, submitLabel, successMessage, consent }: ServiceBookingFormProps) {
+export function ServiceBookingForm({ formId, endpoint = "/api/staark/bookings", services, dropOffTimes, loanCar, submitLabel, successMessage, consent }: ServiceBookingFormProps) {
   const [token, setToken] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [plate, setPlate] = useState("");

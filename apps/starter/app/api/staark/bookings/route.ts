@@ -15,14 +15,11 @@ import {
   authorizePublicFormToken,
 } from "@/lib/public-form-access";
 
-const FORM_KINDS =
+const BOOKING_KINDS =
   [
-    "contact",
-    "lead",
+    "booking",
   ] as const;
 
-// GET ?form=<id> issues a token only for a configured, currently-available
-// contact/lead form. POST repeats authorization before persistence.
 export const dynamic =
   "force-dynamic";
 
@@ -33,7 +30,7 @@ export const {
   content,
   {
     acceptedKinds:
-      FORM_KINDS,
+      BOOKING_KINDS,
 
     authorizeToken:
       (
@@ -43,7 +40,7 @@ export const {
         authorizePublicFormToken(
           request,
           formId,
-          FORM_KINDS,
+          BOOKING_KINDS,
         ),
 
     authorizeSubmission:
@@ -54,7 +51,7 @@ export const {
         authorizePublicFormSubmission(
           request,
           submission,
-          FORM_KINDS,
+          BOOKING_KINDS,
         ),
 
     onSubmitted:

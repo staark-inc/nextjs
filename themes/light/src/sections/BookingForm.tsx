@@ -45,6 +45,7 @@ export const BookingForm: SectionComponent<z.infer<typeof schema>> = ({ props })
             <ContactForm
               formId={p.formId}
               kind="booking"
+              endpoint="/api/staark/bookings"
               fields={p.fields}
               submitLabel={p.submitLabel}
               successMessage={p.successMessage}
