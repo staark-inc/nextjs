@@ -2,6 +2,11 @@ import { getPrismaClient } from "./db/prisma";
 import { resolvePublicContentConfig } from "./content-source";
 import { verifyPassword } from "./password";
 import {
+  decryptTwoFactorSecret,
+  hashRecoveryCode,
+  verifyTotp,
+} from "./two-factor";
+import {
   resolveTenantContext,
   type TenantRequestInput,
 } from "./tenant-context";
@@ -31,6 +36,9 @@ export async function resolveSaasLoginAccount(
       email: true,
       status: true,
       passwordHash: true,
+      twoFactorEnabled: true,
+      twoFactorSecret: true,
+      twoFactorRecoveryCodes: true,
       memberships: {
         where: { organizationId: tenant.organizationId },
         select: { role: true },
@@ -56,5 +64,96 @@ export async function resolveSaasLoginAccount(
     userId: user.id,
     siteId: tenant.siteId,
     organizationId: tenant.organizationId,
+    twoFactorEnabled:
+      user.twoFactorEnabled,
+    twoFactorSecret:
+      user.twoFactorSecret,
+    twoFactorRecoveryCodes:
+      Array.isArray(
+        user.twoFactorRecoveryCodes,
+      )
+        ? user.twoFactorRecoveryCodes.filter(
+            (
+              value,
+            ): value is string =>
+              typeof value === "string",
+          )
+        : [],
   };
+}
+
+export async function verifySaasSecondFactor(
+  account: {
+    userId: string;
+    twoFactorEnabled: boolean;
+    twoFactorSecret: string | null;
+    twoFactorRecoveryCodes: string[];
+  },
+  token: string,
+): Promise<boolean> {
+  if (
+    !account.twoFactorEnabled ||
+    !account.twoFactorSecret
+  ) {
+    return true;
+  }
+
+  const normalized =
+    token.trim();
+
+  try {
+    const secret =
+      decryptTwoFactorSecret(
+        account.twoFactorSecret,
+      );
+
+    if (
+      verifyTotp(
+        secret,
+        normalized,
+      )
+    ) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  const recoveryHash =
+    hashRecoveryCode(
+      normalized,
+    );
+
+  if (
+    !account
+      .twoFactorRecoveryCodes
+      .includes(
+        recoveryHash,
+      )
+  ) {
+    return false;
+  }
+
+  const remaining =
+    account
+      .twoFactorRecoveryCodes
+      .filter(
+        (value) =>
+          value !==
+          recoveryHash,
+      );
+
+  await getPrismaClient()
+    .user.update({
+      where: {
+        id: account.userId,
+      },
+
+      data: {
+        twoFactorRecoveryCodes:
+          remaining,
+      },
+    });
+
+  return true;
 }

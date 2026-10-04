@@ -128,6 +128,7 @@ const BASE_CLIENT_FEATURES: readonly AdminFeature[] = [
   "settings",
   "privacy",
   "plan",
+  "profile",
 ];
 
 const FLEXIBLE_CLIENT_FEATURES: readonly AdminFeature[] = [

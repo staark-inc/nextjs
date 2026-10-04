@@ -191,6 +191,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "plan package subscription billing price storage limits usage",
   },
   {
+    href: "/admin/profile",
+    feature: "profile",
+    label: "Profile & security",
+    description: "Account & sign-in",
+    icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0 M18 7l2 2 3-4",
+    group: "System",
+    keywords: "profile account password security 2fa two factor authenticator",
+  },
+  {
     href: "/admin/site",
     feature: "settings",
     label: "Settings",

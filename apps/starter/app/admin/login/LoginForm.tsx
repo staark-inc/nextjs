@@ -45,6 +45,8 @@ export default function LoginForm({
 }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -79,11 +81,41 @@ export default function LoginForm({
       res = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, remember }),
+        body: JSON.stringify({
+          username,
+          password,
+          remember,
+          ...(twoFactorRequired
+            ? {
+                twoFactorCode,
+              }
+            : {}),
+        }),
       });
     } catch {
       setLoading(false);
       setNotice({ tone: "error", text: "Couldn't reach the server. Check your connection and try again." });
+      return;
+    }
+
+    const body =
+      (await res
+        .json()
+        .catch(() => ({}))) as
+        LoginErrorBody;
+
+    if (
+      res.status === 202 &&
+      body.code ===
+        "two_factor_required"
+    ) {
+      setLoading(false);
+      setTwoFactorRequired(true);
+      setNotice({
+        tone: "info",
+        text:
+          "Enter the 6-digit code from your authenticator app, or use a recovery code.",
+      });
       return;
     }
 
@@ -94,10 +126,22 @@ export default function LoginForm({
     }
 
     setLoading(false);
-    const body = (await res.json().catch(() => ({}))) as LoginErrorBody;
 
     switch (res.status) {
       case 401: {
+        if (
+          body.code ===
+          "two_factor_invalid"
+        ) {
+          setNotice({
+            tone: "error",
+            text:
+              "That authentication code is not valid. Try again or use a recovery code.",
+          });
+          setTwoFactorCode("");
+          break;
+        }
+
         const remaining = typeof body.remaining === "number" ? body.remaining : null;
         const warning =
           remaining !== null && remaining <= 3
@@ -193,6 +237,30 @@ export default function LoginForm({
         </div>
       </div>
 
+      {twoFactorRequired ? (
+        <div className={styles.field}>
+          <label htmlFor="admin-two-factor">
+            Authentication code
+          </label>
+
+          <input
+            id="admin-two-factor"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={twoFactorCode}
+            onChange={(event) =>
+              setTwoFactorCode(
+                event.target.value,
+              )
+            }
+            placeholder="123456 or recovery code"
+            autoFocus
+            required
+          />
+        </div>
+      ) : null}
+
       <label className={styles.remember}>
         <input
           type="checkbox"
@@ -206,8 +274,25 @@ export default function LoginForm({
         </span>
       </label>
 
-      <button className={styles.submit} type="submit" disabled={loading || locked || !username || !password}>
-        {loading ? "Signing in…" : "Sign in"}
+      <button
+        className={styles.submit}
+        type="submit"
+        disabled={
+          loading ||
+          locked ||
+          !username ||
+          !password ||
+          (
+            twoFactorRequired &&
+            !twoFactorCode
+          )
+        }
+      >
+        {loading
+          ? "Signing in…"
+          : twoFactorRequired
+            ? "Verify & sign in"
+            : "Sign in"}
       </button>
 
       <p className={styles.hint}>

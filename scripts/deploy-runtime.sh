@@ -21,15 +21,19 @@ echo
 
 cd "$REPO_DIR"
 
-echo "==> 1/7 Typecheck"
+echo "==> 1/8 Generate Prisma client"
+DATABASE_URL=postgresql://staark:build-only@127.0.0.1:5432/staark   pnpm --filter @staark/starter db:generate
+
+echo
+echo "==> 2/8 Typecheck"
 pnpm --filter @staark/starter typecheck
 
 echo
-echo "==> 2/7 Git diff check"
+echo "==> 3/8 Git diff check"
 git diff --check
 
 echo
-echo "==> 3/7 Git status"
+echo "==> 4/8 Git status"
 git status --short
 
 if [ -n "$(git status --porcelain)" ]; then
@@ -40,7 +44,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 echo
-echo "==> 4/7 Verify local HEAD is pushed"
+echo "==> 5/8 Verify local HEAD is pushed"
 LOCAL_HEAD="$(git rev-parse HEAD)"
 REMOTE_HEAD="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
 
@@ -52,14 +56,54 @@ if [ "$LOCAL_HEAD" != "$REMOTE_HEAD" ]; then
 fi
 
 echo
-echo "==> 5/7 Build Docker image"
+echo "==> 6/8 Build Docker image"
 sudo docker build \
   -f apps/starter/Dockerfile \
   -t "$IMAGE" \
   .
 
 echo
-echo "==> 6/7 Update runtime compose image"
+echo
+echo "==> 6/8 Build migration image"
+MIGRATION_IMAGE="staark-saas-runtime-migrate:$TAG"
+
+sudo docker build   --target build   -f apps/starter/Dockerfile   -t "$MIGRATION_IMAGE"   .
+
+echo
+echo "==> 7/8 Run Prisma migrations"
+
+CURRENT_CONTAINER="$(
+  cd "$COMPOSE_DIR"
+  sudo docker compose ps -q runtime
+)"
+
+if [ -z "$CURRENT_CONTAINER" ]; then
+  echo "ERROR: current runtime container not found."
+  exit 1
+fi
+
+DATABASE_URL="$(
+  sudo docker inspect     "$CURRENT_CONTAINER"     --format '{{range .Config.Env}}{{println .}}{{end}}'     | sed -n 's/^DATABASE_URL=//p'     | head -1
+)"
+
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: DATABASE_URL not found on current runtime container."
+  exit 1
+fi
+
+RUNTIME_NETWORK="$(
+  sudo docker inspect     "$CURRENT_CONTAINER"     --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}'     | head -1
+)"
+
+if [ -z "$RUNTIME_NETWORK" ]; then
+  echo "ERROR: runtime Docker network not found."
+  exit 1
+fi
+
+sudo docker run   --rm   --network "$RUNTIME_NETWORK"   -e DATABASE_URL="$DATABASE_URL"   "$MIGRATION_IMAGE"   pnpm --filter @staark/starter db:migrate:deploy
+
+echo
+echo "==> 8/8 Update runtime compose image"
 sudo python3 - "$COMPOSE_FILE" "$IMAGE" <<'PY2'
 from pathlib import Path
 import re
@@ -87,7 +131,7 @@ print(f"runtime image -> {image}")
 PY2
 
 echo
-echo "==> 7/7 Recreate runtime"
+echo "==> Recreate runtime"
 cd "$COMPOSE_DIR"
 
 sudo docker compose up -d --force-recreate runtime

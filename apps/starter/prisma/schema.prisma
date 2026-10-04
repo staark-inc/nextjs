@@ -190,8 +190,13 @@ model User {
   email     String   @unique(map: "users_email_key") @db.VarChar(320)
   name      String?  @db.VarChar(200)
   status       String   @default("active") @db.VarChar(30)
-  passwordHash String?  @map("password_hash") @db.VarChar(255)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  passwordHash           String?   @map("password_hash") @db.VarChar(255)
+  twoFactorEnabled       Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorSecret        String?   @map("two_factor_secret") @db.Text
+  twoFactorPendingSecret String?   @map("two_factor_pending_secret") @db.Text
+  twoFactorRecoveryCodes Json      @default("[]") @map("two_factor_recovery_codes") @db.JsonB
+  twoFactorEnabledAt     DateTime? @map("two_factor_enabled_at") @db.Timestamptz(3)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   memberships OrganizationMember[]

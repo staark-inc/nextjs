@@ -11,6 +11,9 @@ export type SessionData = {
   isLoggedIn: boolean;
   username?: string;
   role?: AdminRole;
+  userId?: string;
+  organizationId?: string;
+  siteId?: string;
   loginAt?: number;
   expiresAt?: number;
   remember?: boolean;

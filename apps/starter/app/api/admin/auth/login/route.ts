@@ -11,7 +11,10 @@ import {
   type LoginRateLimiter,
 } from "@staark/platform/server";
 import { getSession } from "@/lib/auth";
-import { resolveSaasLoginAccount } from "@/lib/saas-auth";
+import {
+  resolveSaasLoginAccount,
+  verifySaasSecondFactor,
+} from "@/lib/saas-auth";
 
 // Keep one limiter per server process, also across dev hot reloads.
 const globalForLimiter = globalThis as typeof globalThis & { __staarkLoginLimiter?: LoginRateLimiter };
@@ -42,15 +45,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, code: "bad_request" }, { status: 400 });
   }
 
-  const { username, password, remember } = (body ?? {}) as {
+  const {
+    username,
+    password,
+    remember,
+    twoFactorCode,
+  } = (body ?? {}) as {
     username?: unknown;
     password?: unknown;
     remember?: unknown;
+    twoFactorCode?: unknown;
   };
   if (
     typeof username !== "string" ||
     typeof password !== "string" ||
     (remember !== undefined && typeof remember !== "boolean") ||
+    (twoFactorCode !== undefined && typeof twoFactorCode !== "string") ||
     !username ||
     !password ||
     username.length > MAX_FIELD_LENGTH ||
@@ -59,14 +69,82 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, code: "bad_request" }, { status: 400 });
   }
 
-  let account: { username: string; role: AdminRole } | null = await resolveSaasLoginAccount(
+  const saasAccount =
+    await resolveSaasLoginAccount(
+      {
+        host:
+          req.headers.get(
+            "host",
+          ),
+        forwardedHost:
+          req.headers.get(
+            "x-forwarded-host",
+          ),
+      },
+      username,
+      password,
+    );
+
+  let account:
     {
-      host: req.headers.get("host"),
-      forwardedHost: req.headers.get("x-forwarded-host"),
-    },
-    username,
-    password,
-  );
+      username: string;
+      role: AdminRole;
+    } | null =
+      saasAccount;
+
+  if (
+    saasAccount
+      ?.twoFactorEnabled
+  ) {
+    if (
+      typeof twoFactorCode !==
+        "string" ||
+      !twoFactorCode.trim()
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code:
+            "two_factor_required",
+        },
+        {
+          status: 202,
+        },
+      );
+    }
+
+    const validSecondFactor =
+      await verifySaasSecondFactor(
+        saasAccount,
+        twoFactorCode,
+      );
+
+    if (!validSecondFactor) {
+      const after =
+        limiter.recordFailure(
+          key,
+        );
+
+      if (!after.allowed) {
+        return tooManyAttempts(
+          after.retryAfterSeconds,
+        );
+      }
+
+      return NextResponse.json(
+        {
+          ok: false,
+          code:
+            "two_factor_invalid",
+          remaining:
+            after.remaining,
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+  }
 
   if (!account) {
     try {
@@ -93,6 +171,20 @@ export async function POST(req: NextRequest) {
   session.isLoggedIn = true;
   session.username = account.username;
   session.role = account.role;
+
+  if (
+    saasAccount
+  ) {
+    session.userId =
+      saasAccount.userId;
+
+    session.organizationId =
+      saasAccount.organizationId;
+
+    session.siteId =
+      saasAccount.siteId;
+  }
+
   session.loginAt = loginAt;
   session.expiresAt = loginAt + ttlSeconds * 1000;
   session.remember = remembered;

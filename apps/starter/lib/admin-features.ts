@@ -13,6 +13,7 @@ export const ADMIN_FEATURES = [
   "settings",
   "privacy",
   "plan",
+  "profile",
   "booking",
   "services",
   "themes",
@@ -43,6 +44,7 @@ export const ADMIN_FEATURE_REGISTRY: Record<AdminFeature, AdminFeatureDefinition
   settings: { label: "Settings", access: "core" },
   privacy: { label: "Privacy & consent", access: "core" },
   plan: { label: "Plan & usage", access: "core" },
+  profile: { label: "Profile & security", access: "core" },
 
   // Optional client capability. The dedicated Bookings UI is added later.
   booking: { label: "Bookings", access: "entitlement" },
@@ -140,6 +142,7 @@ const PAGE_FEATURES: Array<[string, AdminFeature]> = [
   ["/admin/site", "settings"],
   ["/admin/privacy", "privacy"],
   ["/admin/plan", "plan"],
+  ["/admin/profile", "profile"],
 ];
 
 const API_FEATURES: Array<[string, AdminFeature]> = [
@@ -162,6 +165,7 @@ const API_FEATURES: Array<[string, AdminFeature]> = [
   ["/api/admin/domains", "domains"],
   ["/api/admin/site", "settings"],
   ["/api/admin/privacy", "privacy"],
+  ["/api/admin/profile", "profile"],
   ["/api/admin/shell", "dashboard"],
 ];
 
