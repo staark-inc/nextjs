@@ -19,10 +19,15 @@ export type AnalyticsPage = {
 export type AdminAnalytics = {
   access: FeatureAccess;
   days: number;
+
   totalPageViews: number;
+  previousPageViews: number;
+  pageViewsChangePercent: number | null;
+
   activeDays: number;
   trackedPages: number;
   averagePerDay: number;
+
   daily: AnalyticsDay[];
   topPages: AnalyticsPage[];
 };
@@ -57,6 +62,8 @@ export async function readAdminAnalytics(): Promise<AdminAnalytics> {
 
       days,
       totalPageViews: 0,
+      previousPageViews: 0,
+      pageViewsChangePercent: null,
       activeDays: 0,
       trackedPages: 0,
       averagePerDay: 0,
@@ -112,12 +119,17 @@ export async function readAdminAnalytics(): Promise<AdminAnalytics> {
   from.setUTCHours(0, 0, 0, 0);
   from.setUTCDate(from.getUTCDate() - (days - 1));
 
+  const previousFrom = new Date(from);
+  previousFrom.setUTCDate(
+    previousFrom.getUTCDate() - days,
+  );
+
   const rows =
     await getPrismaClient().analyticsDaily.findMany({
       where: {
         siteId: tenant.siteId,
         date: {
-          gte: from,
+          gte: previousFrom,
         },
       },
       orderBy: [
@@ -129,7 +141,16 @@ export async function readAdminAnalytics(): Promise<AdminAnalytics> {
   const byDay = new Map<string, number>();
   const byPage = new Map<string, number>();
 
+  let previousPageViews = 0;
+
   for (const row of rows) {
+    if (row.date < from) {
+      previousPageViews +=
+        row.pageViews;
+
+      continue;
+    }
+
     const date = dateKey(row.date);
 
     byDay.set(
@@ -170,6 +191,17 @@ export async function readAdminAnalytics(): Promise<AdminAnalytics> {
     (item) => item.pageViews > 0,
   ).length;
 
+  const pageViewsChangePercent =
+    previousPageViews > 0
+      ? (
+          (totalPageViews -
+            previousPageViews) /
+          previousPageViews
+        ) * 100
+      : totalPageViews > 0
+        ? null
+        : 0;
+
   const topPages = [...byPage.entries()]
     .map(([path, pageViews]) => ({
       path,
@@ -186,6 +218,8 @@ export async function readAdminAnalytics(): Promise<AdminAnalytics> {
     access,
     days,
     totalPageViews,
+    previousPageViews,
+    pageViewsChangePercent,
     activeDays,
     trackedPages: byPage.size,
     averagePerDay:

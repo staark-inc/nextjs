@@ -15,6 +15,22 @@ function formatNumber(value: number): string {
   }).format(value);
 }
 
+function formatTrend(
+  value: number | null,
+): string {
+  if (value === null) {
+    return "New traffic";
+  }
+
+  const formatted =
+    new Intl.NumberFormat("sv-SE", {
+      maximumFractionDigits: 1,
+      signDisplay: "always",
+    }).format(value);
+
+  return `${formatted}%`;
+}
+
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("sv-SE", {
     month: "short",
@@ -76,8 +92,8 @@ export default async function AnalyticsPage() {
           </h1>
 
           <p className="sa-subtitle">
-            Privacy-friendly traffic analytics
-            collected directly by your website.
+            Privacy-friendly analytics for
+            published website traffic only.
           </p>
         </div>
 
@@ -102,43 +118,62 @@ export default async function AnalyticsPage() {
       <div className="sa-plan-usage-grid">
         <article className="sa-plan-usage-card">
           <span>Page views</span>
+
           <strong>
             {formatNumber(
               analytics.totalPageViews,
             )}
           </strong>
+
           <p>
-            Last {analytics.days} days
+            Last {analytics.days} days ·{" "}
+            {formatTrend(
+              analytics.pageViewsChangePercent,
+            )} vs previous period
           </p>
         </article>
 
         <article className="sa-plan-usage-card">
-          <span>Average</span>
+          <span>Previous period</span>
+
+          <strong>
+            {formatNumber(
+              analytics.previousPageViews,
+            )}
+          </strong>
+
+          <p>
+            Previous {analytics.days} days
+          </p>
+        </article>
+
+        <article className="sa-plan-usage-card">
+          <span>Average / day</span>
+
           <strong>
             {formatNumber(
               analytics.averagePerDay,
             )}
           </strong>
-          <p>Page views per day</p>
-        </article>
 
-        <article className="sa-plan-usage-card">
-          <span>Active days</span>
-          <strong>
-            {analytics.activeDays}
-          </strong>
           <p>
-            Days with recorded traffic
+            Across the current period
           </p>
         </article>
 
         <article className="sa-plan-usage-card">
-          <span>Tracked pages</span>
+          <span>Public pages tracked</span>
+
           <strong>
             {analytics.trackedPages}
           </strong>
+
           <p>
-            Public paths with traffic
+            {analytics.activeDays} active day{
+              analytics.activeDays === 1
+                ? ""
+                : "s"
+            }
           </p>
         </article>
       </div>

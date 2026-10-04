@@ -106,22 +106,31 @@ function utcDateOnly(
   );
 }
 
+const PRIVATE_PATH_PREFIXES = [
+  "/admin",
+  "/api",
+  "/setup",
+  "/preview",
+  "/_next",
+] as const;
+
 function validPath(
   value: unknown,
 ): value is string {
-  return (
-    typeof value ===
-      "string" &&
-    value.startsWith("/") &&
-    value.length <= 1024 &&
-    !value.includes("?") &&
-    !value.includes("#") &&
-    !value.startsWith(
-      "/admin",
-    ) &&
-    !value.startsWith(
-      "/api/",
-    )
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.length > 1024 ||
+    value.includes("?") ||
+    value.includes("#")
+  ) {
+    return false;
+  }
+
+  return !PRIVATE_PATH_PREFIXES.some(
+    (prefix) =>
+      value === prefix ||
+      value.startsWith(`${prefix}/`),
   );
 }
 
@@ -299,25 +308,22 @@ export async function POST(
      * Prevent arbitrary-path row amplification.
      * Only a current Page owned by this exact tenant can receive analytics.
      */
-    const page =
-      await prisma.page
+    const publication =
+      await prisma.pagePublication
         .findFirst({
           where: {
             siteId:
               tenant.siteId,
 
             path,
-
-            deletedAt:
-              null,
           },
 
           select: {
-            id: true,
+            pageId: true,
           },
         });
 
-    if (!page) {
+    if (!publication) {
       return new NextResponse(
         null,
         {

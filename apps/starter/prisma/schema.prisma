@@ -36,6 +36,7 @@ model Site {
   subscriptions  Subscription[]
   analyticsDaily          AnalyticsDaily[]
   googleAnalyticsBinding GoogleAnalyticsBinding?
+  searchConsoleBinding   SearchConsoleBinding?
 
   @@index([organizationId], map: "sites_organization_id_idx")
   @@map("sites")
@@ -383,6 +384,21 @@ model GoogleAnalyticsBinding {
   site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "google_analytics_bindings_site_id_fkey")
 
   @@map("google_analytics_bindings")
+}
+
+
+/// Server-owned Google Search Console property binding for one tenant.
+model SearchConsoleBinding {
+  siteId     String    @id @map("site_id") @db.Uuid
+  siteUrl    String    @unique(map: "search_console_bindings_site_url_key") @map("site_url") @db.VarChar(512)
+  enabled    Boolean   @default(true)
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "search_console_bindings_site_id_fkey")
+
+  @@map("search_console_bindings")
 }
 
 

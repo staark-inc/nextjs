@@ -48,6 +48,10 @@ export function adminFeaturesFromPlanEntitlements(
     features.push("seo");
   }
 
+  if (canUsePlanFeature(entitlements, "searchConsole")) {
+    features.push("searchConsole");
+  }
+
   if (canUsePlanFeature(entitlements, "analytics")) {
     features.push("analytics");
   }

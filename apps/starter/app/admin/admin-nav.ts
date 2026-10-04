@@ -119,6 +119,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "search google titles descriptions",
   },
   {
+    href: "/admin/search-console",
+    feature: "searchConsole",
+    label: "Search Console",
+    description: "Google search performance",
+    icon: "M4 5h16v14H4V5Zm3 10 3-3 2 2 5-6 M15 8h2v2",
+    group: "Growth",
+    keywords: "google search console queries clicks impressions ctr ranking position",
+  },
+  {
     href: "/admin/analytics",
     feature: "analytics",
     label: "Analytics",
