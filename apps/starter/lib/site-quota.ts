@@ -40,6 +40,35 @@ const QUOTA_KEYS: Record<
   domains: "maxDomains",
 };
 
+/**
+ * Pages installed by Staark during first setup are part of the website
+ * package itself and must never consume the customer's page quota.
+ *
+ * The vertical setup page varies by website type:
+ * - business / automotive / etc. -> /tjanster
+ * - salon                       -> /priser
+ * - hotel                       -> /rum
+ */
+export const INCLUDED_PAGE_PATHS = [
+  "/",
+  "/kontakt",
+  "/om-oss",
+  "/tjanster",
+  "/priser",
+  "/rum",
+] as const;
+
+export function billableUsersCount(
+  totalOrganizationMembers: number,
+): number {
+  // The first account is the required website owner and is included
+  // in every package. maxUsers therefore represents additional seats.
+  return Math.max(
+    0,
+    totalOrganizationMembers - 1,
+  );
+}
+
 function quotaSnapshot(
   resource: SiteQuotaResource,
   entitlements: TenantEntitlements,
@@ -86,6 +115,11 @@ async function currentUsage(
         where: {
           siteId,
           deletedAt: null,
+          path: {
+            notIn: [
+              ...INCLUDED_PAGE_PATHS,
+            ],
+          },
         },
       });
 
@@ -97,16 +131,22 @@ async function currentUsage(
         },
       });
 
-    case "users":
+    case "users": {
       if (!organizationId) {
         return 0;
       }
 
-      return prisma.organizationMember.count({
-        where: {
-          organizationId,
-        },
-      });
+      const totalMembers =
+        await prisma.organizationMember.count({
+          where: {
+            organizationId,
+          },
+        });
+
+      return billableUsersCount(
+        totalMembers,
+      );
+    }
 
     case "storage": {
       const files =

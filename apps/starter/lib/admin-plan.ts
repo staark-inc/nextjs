@@ -2,6 +2,10 @@ import { getPrismaClient } from "./db/prisma";
 import { requireAdminTenantContext } from "./admin-tenant";
 import { resolvePublicContentConfig } from "./content-source";
 import { listMediaFiles } from "./admin-media";
+import {
+  INCLUDED_PAGE_PATHS,
+  billableUsersCount,
+} from "./site-quota";
 
 export type AdminPlanSummary = {
   planKey: string;
@@ -90,6 +94,11 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
       where: {
         siteId: tenant.siteId,
         deletedAt: null,
+        path: {
+          notIn: [
+            ...INCLUDED_PAGE_PATHS,
+          ],
+        },
       },
     }),
     prisma.submission.count({
@@ -98,9 +107,16 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
       },
     }),
     tenant.organizationId
-      ? prisma.organizationMember.count({
-          where: { organizationId: tenant.organizationId },
-        })
+      ? prisma.organizationMember
+          .count({
+            where: {
+              organizationId:
+                tenant.organizationId,
+            },
+          })
+          .then(
+            billableUsersCount,
+          )
       : Promise.resolve(0),
     prisma.domain.count({
       where: {
