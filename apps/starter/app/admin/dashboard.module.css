@@ -592,3 +592,78 @@
   font-size: 12px;
   line-height: 1.5;
 }
+
+
+/* ---- Package upgrade notice ------------------------------------------ */
+
+.upgradeNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 18px;
+  padding: 17px 18px;
+  border: 1px solid var(--sa-primary-line);
+  border-radius: var(--sa-radius);
+  background: var(--sa-primary-soft);
+}
+
+.upgradeNotice > div {
+  min-width: 0;
+}
+
+.upgradeEyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--sa-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.upgradeNotice strong {
+  display: block;
+  color: var(--sa-ink);
+  font-size: 15px;
+}
+
+.upgradeNotice p {
+  max-width: 720px;
+  margin: 4px 0 0;
+  color: var(--sa-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.upgradeAction {
+  min-height: 38px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 13px;
+  border: 1px solid var(--sa-primary-line);
+  border-radius: 10px;
+  background: var(--sa-surface);
+  color: var(--sa-primary);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.upgradeAction:hover {
+  border-color: var(--sa-primary);
+}
+
+@media (max-width: 640px) {
+  .upgradeNotice {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .upgradeAction {
+    width: 100%;
+  }
+}

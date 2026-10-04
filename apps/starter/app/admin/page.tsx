@@ -23,7 +23,15 @@ import { readAdminAnnouncements } from "@/lib/hub-announcements";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    denied?: string;
+  }>;
+}) {
+  const params =
+    await searchParams;
   const session = await getSession();
 
   const role = resolveAdminRole(
@@ -114,10 +122,18 @@ export default async function AdminDashboard() {
       data={data}
       username={displayName}
       websiteType={websiteType}
+      inboxEnabled={
+        clientFeatures.includes(
+          "inbox",
+        )
+      }
       bookingEnabled={
         clientFeatures.includes(
           "booking",
         )
+      }
+      deniedFeature={
+        params.denied ?? null
       }
       updates={tenantUpdates.items}
     />

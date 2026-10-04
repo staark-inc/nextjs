@@ -310,7 +310,22 @@ export async function proxy(req: NextRequest) {
 
     if (isApi) {
       return NextResponse.json(
-        { ok: false, error: "Not authorized for this admin feature.", feature },
+        {
+          ok: false,
+          code:
+            role === "client"
+              ? "PLAN_FEATURE_REQUIRED"
+              : "ADMIN_FEATURE_FORBIDDEN",
+          error:
+            role === "client"
+              ? "This feature is not included in the current package."
+              : "Not authorized for this admin feature.",
+          feature,
+          upgradeUrl:
+            role === "client"
+              ? "/admin/plan"
+              : null,
+        },
         { status: 403 },
       );
     }

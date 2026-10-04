@@ -14,6 +14,13 @@ import Greeting from "./Greeting";
 import NeedsYou from "./NeedsYou";
 import styles from "./dashboard.module.css";
 import type { TenantAnnouncement } from "@/lib/hub-announcements";
+import {
+  ADMIN_FEATURES,
+  type AdminFeature,
+} from "@/lib/admin-features";
+import {
+  packageUpgradeCopy,
+} from "@/lib/package-upgrade";
 
 const ARROW = "M5 12h14 M13 6l6 6-6 6";
 
@@ -45,32 +52,67 @@ export default function ClientDashboard({
   data,
   username,
   websiteType,
+  inboxEnabled,
   bookingEnabled,
+  deniedFeature,
   updates,
 }: {
   data: DashboardData;
   username: string;
   websiteType: WebsiteType;
+  inboxEnabled: boolean;
   bookingEnabled: boolean;
+  deniedFeature: string | null;
   updates: TenantAnnouncement[];
 }) {
   const navigation = resolveClientNavigation(websiteType);
   const profile = resolveWebsiteProfile(websiteType);
 
   const tasks = data.tasks.filter((task) => {
-    if (task.kind === "message") return true;
-    if (task.kind === "booking") return bookingEnabled;
+    if (task.kind === "message") {
+      return inboxEnabled;
+    }
+
+    if (task.kind === "booking") {
+      return bookingEnabled;
+    }
+
     return false;
   });
 
   const moreTasks = {
-    messages: data.moreTasks.messages,
-    bookings: bookingEnabled ? data.moreTasks.bookings : 0,
+    messages:
+      inboxEnabled
+        ? data.moreTasks.messages
+        : 0,
+
+    bookings:
+      bookingEnabled
+        ? data.moreTasks.bookings
+        : 0,
   };
 
   const newMessages =
-    tasks.filter((task) => task.kind === "message").length +
-    data.moreTasks.messages;
+    inboxEnabled
+      ? tasks.filter(
+          (task) =>
+            task.kind === "message",
+        ).length +
+        data.moreTasks.messages
+      : 0;
+
+  const denied =
+    deniedFeature &&
+    (
+      ADMIN_FEATURES as readonly string[]
+    ).includes(deniedFeature)
+      ? deniedFeature as AdminFeature
+      : null;
+
+  const upgrade =
+    denied
+      ? packageUpgradeCopy(denied)
+      : null;
 
   const activity = data.activity.filter((event) => {
     if (
@@ -81,12 +123,21 @@ export default function ClientDashboard({
       return false;
     }
 
-    if (event.kind === "booking") return bookingEnabled;
+    if (
+      event.kind === "booking"
+    ) {
+      return bookingEnabled;
+    }
+
+    if (
+      event.kind === "enquiry" ||
+      event.kind === "inbox"
+    ) {
+      return inboxEnabled;
+    }
 
     // Do not expose internal CRM / admin state changes to the client.
     return (
-      event.kind === "enquiry" ||
-      event.kind === "inbox" ||
       event.kind === "page" ||
       event.kind === "media"
     );
@@ -111,12 +162,14 @@ export default function ClientDashboard({
         </div>
 
         <div className="sa-page-header__actions">
-          <Link
-            className="sa-btn sa-btn--ghost"
-            href="/admin/forms"
-          >
-            {navigation.inboxLabel}
-          </Link>
+          {inboxEnabled ? (
+            <Link
+              className="sa-btn sa-btn--ghost"
+              href="/admin/forms"
+            >
+              {navigation.inboxLabel}
+            </Link>
+          ) : null}
 
           {bookingEnabled ? (
             <Link
@@ -135,6 +188,39 @@ export default function ClientDashboard({
           )}
         </div>
       </section>
+
+      {upgrade ? (
+        <section
+          className={styles.upgradeNotice}
+          role="status"
+        >
+          <div>
+            <span className={styles.upgradeEyebrow}>
+              Package feature
+            </span>
+
+            <strong>
+              {upgrade.title}
+            </strong>
+
+            <p>
+              {upgrade.description}
+            </p>
+          </div>
+
+          <Link
+            href="/admin/plan"
+            className={styles.upgradeAction}
+          >
+            View plan
+            {" "}
+            <AdminIcon
+              d={ARROW}
+              size={15}
+            />
+          </Link>
+        </section>
+      ) : null}
 
       <section
         className={styles.stats}
@@ -227,13 +313,23 @@ export default function ClientDashboard({
                 View and answer incoming requests
               </span>
             </Link>
-          ) : (
+          ) : inboxEnabled ? (
             <Link
               href="/admin/forms"
               className={styles.shortcut}
             >
               <strong>{navigation.inboxLabel}</strong>
               <span>Read customer messages</span>
+            </Link>
+          ) : (
+            <Link
+              href="/admin/plan"
+              className={styles.shortcut}
+            >
+              <strong>Package features</strong>
+              <span>
+                See what's included in your plan
+              </span>
             </Link>
           )}
 
@@ -284,11 +380,13 @@ export default function ClientDashboard({
                 <h2>Recent updates</h2>
               </div>
 
-              <Link href="/admin/forms">
-                {navigation.inboxLabel}
-                {" "}
-                <AdminIcon d={ARROW} size={16} />
-              </Link>
+              {inboxEnabled ? (
+                <Link href="/admin/forms">
+                  {navigation.inboxLabel}
+                  {" "}
+                  <AdminIcon d={ARROW} size={16} />
+                </Link>
+              ) : null}
             </div>
 
             {activity.length ? (
