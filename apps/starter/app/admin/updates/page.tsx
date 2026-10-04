@@ -1,3 +1,5 @@
+import NewsMarkdown from "@/components/news/NewsMarkdown";
+import { safeNewsUrl } from "@/lib/news-policy";
 import {
   readAdminAnnouncements,
 } from "@/lib/hub-announcements";
@@ -30,6 +32,8 @@ function formatDate(
 function kindLabel(
   kind: string,
 ): string {
+  if (kind === "improvement") return "Improvement";
+  if (kind === "fix") return "Fix";
   if (kind === "feature") {
     return "New feature";
   }
@@ -88,7 +92,12 @@ export default async function UpdatesPage() {
               key={item.id}
               className="sa-card sa-update-card"
             >
+              {item.coverImageUrl && safeNewsUrl(item.coverImageUrl, true) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="news-cover" src={safeNewsUrl(item.coverImageUrl, true)} alt="" loading="lazy" referrerPolicy="no-referrer" />
+              ) : null}
               <div className="sa-update-card__meta">
+                {item.pinned ? <span className="sa-update-kind">Pinned</span> : null}
                 <span
                   className={`sa-update-kind sa-update-kind--${item.kind}`}
                 >
@@ -117,9 +126,8 @@ export default async function UpdatesPage() {
                   {item.summary}
                 </strong>
 
-                <p>
-                  {item.body}
-                </p>
+                <NewsMarkdown body={item.body} format={item.bodyFormat} />
+                {item.ctaLabel && item.ctaUrl && safeNewsUrl(item.ctaUrl) ? <a className="news-cta" href={safeNewsUrl(item.ctaUrl)} target={/^https?:/.test(safeNewsUrl(item.ctaUrl)) ? "_blank" : undefined} rel="noopener noreferrer">{item.ctaLabel} →</a> : null}
               </div>
             </article>
           ),

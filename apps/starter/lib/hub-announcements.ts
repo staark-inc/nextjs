@@ -8,6 +8,11 @@ export type TenantAnnouncement = {
   title: string;
   summary: string;
   body: string;
+  bodyFormat: string;
+  ctaLabel: string | null;
+  ctaUrl: string | null;
+  coverImageUrl: string | null;
+  pinned: boolean;
   kind: string;
   audiencePlan: string | null;
   publishedAt: string;
@@ -198,6 +203,11 @@ export async function readAdminAnnouncements(
               title?: unknown;
               summary?: unknown;
               body?: unknown;
+              bodyFormat?: unknown;
+              ctaLabel?: unknown;
+              ctaUrl?: unknown;
+              coverImageUrl?: unknown;
+              pinned?: unknown;
               kind?: unknown;
               audiencePlan?: unknown;
               publishedAt?: unknown;
@@ -235,7 +245,7 @@ export async function readAdminAnnouncements(
             typeof item.kind ===
               "string" &&
             typeof item.publishedAt ===
-              "string",
+              "string" && Number.isFinite(Date.parse(item.publishedAt)),
         )
         .map(
           (item) => ({
@@ -250,6 +260,12 @@ export async function readAdminAnnouncements(
 
             body:
               item.body as string,
+
+            bodyFormat: item.bodyFormat === "markdown" ? "markdown" : "plain",
+            ctaLabel: typeof item.ctaLabel === "string" ? item.ctaLabel : null,
+            ctaUrl: typeof item.ctaUrl === "string" ? item.ctaUrl : null,
+            coverImageUrl: typeof item.coverImageUrl === "string" ? item.coverImageUrl : null,
+            pinned: item.pinned === true,
 
             kind:
               item.kind as string,
