@@ -304,7 +304,24 @@ export default function PageEditorClient({
         </div>
         <span className="sa-toolbar--right" />
         <Link href={`/admin/pages/${file}/revisions`} className="sa-btn sa-btn--ghost sa-btn--sm">History</Link>
-        <a href={page.path} target="_blank" rel="noopener" className="sa-btn sa-btn--ghost sa-btn--sm">View live &rarr;</a>
+        <a
+          href={page.path}
+          target="_blank"
+          rel="noopener"
+          className="sa-btn sa-btn--ghost sa-btn--sm"
+        >
+          View live &rarr;
+        </a>
+
+        <a
+          href={`/admin/pages/${file}/preview`}
+          target="_blank"
+          rel="noopener"
+          className="sa-btn sa-btn--ghost sa-btn--sm"
+        >
+          Preview draft &rarr;
+        </a>
+
         <button
           className="sa-btn sa-btn--ghost"
           onClick={save}
