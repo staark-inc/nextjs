@@ -143,7 +143,7 @@ export function controlSignaturePayload(
     eventId,
     sequence,
     sha256Hex(body),
-  ].join("\\n");
+  ].join("\n");
 }
 
 export function signControlRequest(input: {
