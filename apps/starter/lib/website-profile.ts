@@ -150,23 +150,19 @@ const CLIENT_FEATURES_BY_PROFILE = {
 
   salon: [
     ...BASE_CLIENT_FEATURES,
-    "booking",
     "services",
   ],
 
   restaurant: [
     ...BASE_CLIENT_FEATURES,
-    "booking",
   ],
 
   hotel: [
     ...BASE_CLIENT_FEATURES,
-    "booking",
   ],
 
   automotive: [
     ...BASE_CLIENT_FEATURES,
-    "booking",
   ],
 
   portfolio: FLEXIBLE_CLIENT_FEATURES,
@@ -248,14 +244,32 @@ export function resolveClientFeatures(
     result.push("analytics");
   }
 
-  // Generic/custom installs may enable booking as an optional entitlement.
-  // Vertical products that require bookings already include it in their profile.
+  // Commercial capabilities are always plan-driven.
+  // A website profile may describe whether a module makes sense for that
+  // vertical, but it must never bypass the subscription entitlement.
   if (
-    (type === "business" || type === "portfolio" || type === "custom") &&
     availableFeatures.includes("booking") &&
     !result.includes("booking")
   ) {
     result.push("booking");
+  }
+
+  // Remove entitlement-backed features that the current package does not grant.
+  for (const feature of [
+    "inbox",
+    "seo",
+    "domains",
+  ] as const) {
+    if (
+      !availableFeatures.includes(feature)
+    ) {
+      const index =
+        result.indexOf(feature);
+
+      if (index >= 0) {
+        result.splice(index, 1);
+      }
+    }
   }
 
   return result;

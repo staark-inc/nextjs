@@ -165,7 +165,7 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     href: "/admin/domains",
-    feature: "settings",
+    feature: "domains",
     label: "Domains",
     description: "Addresses & verification",
     icon: "M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Zm0 0h18 M12 3a15 15 0 0 1 0 18 M12 3a15 15 0 0 0 0 18",

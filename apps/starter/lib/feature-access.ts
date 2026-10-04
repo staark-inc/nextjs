@@ -3,6 +3,8 @@ import type { TenantEntitlements } from "./tenant-context";
 export const PLAN_FEATURES = [
   "booking",
   "analytics",
+  "seo",
+  "customDomain",
   "searchConsole",
   "businessProfile",
   "leads",
@@ -41,6 +43,17 @@ export const PLAN_FEATURE_REGISTRY: Record<
     entitlementKey: "analytics",
     kind: "level",
     disabledValues: ["none", "disabled"],
+  },
+
+  seo: {
+    entitlementKey: "seo",
+    kind: "level",
+    disabledValues: ["none", "disabled"],
+  },
+
+  customDomain: {
+    entitlementKey: "customDomain",
+    kind: "boolean",
   },
 
   searchConsole: {

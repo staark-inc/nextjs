@@ -36,12 +36,24 @@ export function adminFeaturesFromPlanEntitlements(
 ): AdminFeature[] {
   const features: AdminFeature[] = [];
 
+  if (canUsePlanFeature(entitlements, "leads")) {
+    features.push("inbox");
+  }
+
   if (canUsePlanFeature(entitlements, "booking")) {
     features.push("booking");
   }
 
+  if (canUsePlanFeature(entitlements, "seo")) {
+    features.push("seo");
+  }
+
   if (canUsePlanFeature(entitlements, "analytics")) {
     features.push("analytics");
+  }
+
+  if (canUsePlanFeature(entitlements, "customDomain")) {
+    features.push("domains");
   }
 
   return features;
