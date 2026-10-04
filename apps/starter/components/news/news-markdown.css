@@ -1,0 +1,120 @@
+.news-markdown {
+  font-size: 14px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  color: inherit;
+}
+.news-plain {
+  white-space: pre-wrap;
+}
+.news-markdown > :first-child {
+  margin-top: 0;
+}
+.news-markdown > :last-child {
+  margin-bottom: 0;
+}
+.news-markdown h1,
+.news-markdown h2,
+.news-markdown h3 {
+  margin: 1.4em 0 0.55em;
+  line-height: 1.3;
+  font-weight: 750;
+}
+.news-markdown h1 {
+  font-size: 1.6em;
+}
+.news-markdown h2 {
+  font-size: 1.35em;
+}
+.news-markdown h3 {
+  font-size: 1.15em;
+}
+.news-markdown p {
+  margin: 0.7em 0;
+  white-space: normal;
+}
+.news-markdown ul {
+  list-style: disc;
+  padding-left: 1.5em;
+}
+.news-markdown ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+.news-markdown li {
+  margin: 0.25em 0;
+}
+.news-markdown a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.news-markdown img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 1em 0;
+}
+.news-markdown blockquote {
+  border-left: 3px solid #94a3b8;
+  margin: 1em 0;
+  padding: 0.25em 1em;
+  background: #f8fafc;
+  color: #475569;
+}
+.news-markdown pre {
+  overflow: auto;
+  border-radius: 10px;
+  padding: 14px;
+  background: #172033;
+  color: #f8fafc;
+  white-space: pre;
+}
+.news-markdown code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+}
+.news-markdown :not(pre) > code {
+  background: #f1f5f9;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+.news-markdown table {
+  display: block;
+  overflow: auto;
+  border-collapse: collapse;
+  max-width: 100%;
+}
+.news-markdown th,
+.news-markdown td {
+  border: 1px solid #dbe2ea;
+  padding: 8px 12px;
+  text-align: left;
+}
+.news-markdown hr {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5em 0;
+}
+.news-cover {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.news-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 10px 16px;
+  border-radius: 9px;
+  background: #172033;
+  color: white;
+  text-decoration: none;
+  font-weight: 650;
+  font-size: 13px;
+}

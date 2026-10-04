@@ -5976,3 +5976,8 @@ body :where(a, button, input, select, textarea, summary):focus-visible {
   color: var(--sa-muted);
   font-size: 13px;
 }
+
+.sa-update-kind--improvement { background:#ecfdf5;color:#047857; }
+.sa-update-kind--fix { background:#f5f3ff;color:#7c3aed; }
+.sa-update-card__copy .news-markdown p { white-space:normal; }
+.sa-update-card__copy .news-markdown { font-size:14px; }
