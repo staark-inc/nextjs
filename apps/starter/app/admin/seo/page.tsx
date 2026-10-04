@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react";
 
+type SeoAuditCheck = {
+  key: string;
+  label: string;
+  passed: boolean;
+  tone: "good" | "warning" | "error" | "info";
+  message: string;
+  points: number;
+  maxPoints: number;
+};
+
 type PageSeo = {
   file: string;
   path: string;
@@ -12,6 +22,20 @@ type PageSeo = {
   noindex: boolean;
   updatedAt?: string;
   hasOg: boolean;
+  published?: boolean;
+
+  audit: {
+    score: number;
+    status:
+      | "good"
+      | "needs-work"
+      | "poor"
+      | "noindex";
+    checks: SeoAuditCheck[];
+    internalLinks: number;
+    images: number;
+    imagesWithAlt: number;
+  };
 };
 
 type SiteSeo = {
@@ -128,22 +152,47 @@ export default function SeoPage() {
     showToast("Page SEO saved.", true);
   }
 
-  function seoScore(p: PageSeo): { label: string; cls: string } {
-    if (p.noindex) return { label: "Noindex", cls: "sa-status--pending" };
-    let score = 0;
-    if (p.seoTitle) score++;
-    if (p.seoDescription) score++;
-    if (p.seoDescription && p.seoDescription.length >= 50 && p.seoDescription.length <= 160) score++;
-    if (score === 3) return { label: "Good", cls: "sa-status--read" };
-    if (score >= 1) return { label: "Needs work", cls: "sa-status--pending" };
-    return { label: "Missing", cls: "sa-status--declined" };
+  function seoScore(
+    p: PageSeo,
+  ): {
+    label: string;
+    cls: string;
+  } {
+    if (p.audit.status === "noindex") {
+      return {
+        label: "Noindex",
+        cls: "sa-status--pending",
+      };
+    }
+
+    if (p.audit.status === "good") {
+      return {
+        label: `${p.audit.score} · Good`,
+        cls: "sa-status--read",
+      };
+    }
+
+    if (
+      p.audit.status ===
+      "needs-work"
+    ) {
+      return {
+        label: `${p.audit.score} · Needs work`,
+        cls: "sa-status--pending",
+      };
+    }
+
+    return {
+      label: `${p.audit.score} · Poor`,
+      cls: "sa-status--declined",
+    };
   }
 
   function matchesFilter(page: PageSeo): boolean {
     const status = seoScore(page).label;
     if (filter === "good") return status === "Good";
     if (filter === "needs") return status === "Needs work";
-    if (filter === "missing") return status === "Missing";
+    if (filter === "missing") return page.audit.status === "poor";
     if (filter === "noindex") return page.noindex;
     return true;
   }
@@ -266,7 +315,7 @@ export default function SeoPage() {
             <option value="all">All pages</option>
             <option value="good">Good</option>
             <option value="needs">Needs work</option>
-            <option value="missing">Missing</option>
+                    <option value="missing">Poor</option>
             <option value="noindex">Noindex</option>
           </select>
           <span>{filteredPages.length} result(s)</span>
@@ -325,6 +374,90 @@ export default function SeoPage() {
                 <p>{selectedPage.path}</p>
               </div>
               <a className="sa-btn sa-btn--ghost sa-btn--sm" href={`/admin/pages/${selectedPage.file}`}>Edit page</a>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gap: 12,
+                padding: 16,
+                marginBottom: 20,
+                border: "1px solid var(--sa-border)",
+                borderRadius: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <span className="sa-page-eyebrow">
+                    Live SEO audit
+                  </span>
+
+                  <h3 style={{ margin: "4px 0 0" }}>
+                    Score {selectedPage.audit.score}/100
+                  </h3>
+                </div>
+
+                <span
+                  className={`sa-status ${
+                    seoScore(selectedPage).cls
+                  }`}
+                >
+                  <span className="sa-status__dot" />
+                  {seoScore(selectedPage).label}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 8,
+                }}
+              >
+                {selectedPage.audit.checks.map(
+                  (check) => (
+                    <div
+                      key={check.key}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "24px minmax(0,1fr)",
+                        gap: 8,
+                        alignItems: "start",
+                      }}
+                    >
+                      <span>
+                        {check.passed
+                          ? "✓"
+                          : check.tone === "error"
+                            ? "✕"
+                            : "!"}
+                      </span>
+
+                      <div>
+                        <strong>
+                          {check.label}
+                        </strong>
+
+                        <div className="sa-field-hint">
+                          {check.message}
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+
+              <small className="sa-note">
+                Audit reflects the currently published version.
+                SEO edits are saved as draft until the page is published.
+              </small>
             </div>
 
             <div className="sa-field">

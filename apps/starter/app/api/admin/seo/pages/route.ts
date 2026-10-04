@@ -4,10 +4,21 @@ import path from "node:path";
 import { PageSchema } from "@staark/core";
 import {
   adminPagesUsePostgres,
-  listPostgresAdminPages,
   readPostgresAdminPage,
   savePostgresAdminPage,
 } from "@/lib/admin-page-postgres";
+import {
+  createPostgresRepositories,
+} from "@/lib/repositories";
+import {
+  requireAdminTenantContext,
+} from "@/lib/admin-tenant";
+import {
+  readAdminSiteSettings,
+} from "@/lib/admin-site-settings";
+import {
+  auditPageSeo,
+} from "@/lib/seo-audit";
 import {
   contentStoragePath,
   listContent,
@@ -32,27 +43,64 @@ export async function GET() {
 
   if (adminPagesUsePostgres()) {
     try {
-      const { pages: summaries } = await listPostgresAdminPages();
-      const pages = await Promise.all(
-        summaries.map(async (summary) => {
-          const record = await readPostgresAdminPage(summary.file);
-          if (!record) return null;
-          const data = record.page;
-          return {
-            file: record.id,
-            path: data.path,
-            title: data.title,
-            seoTitle: data.seo.title ?? "",
-            seoDescription: data.seo.description ?? "",
-            ogImage: data.seo.ogImage ?? "",
-            noindex: Boolean(data.seo.noindex),
-            updatedAt: data.updatedAt ?? record.updatedAt ?? "",
-            hasOg: Boolean(data.seo.ogImage),
-          };
-        }),
-      );
+      const tenant =
+        await requireAdminTenantContext();
+
+      const site =
+        await readAdminSiteSettings();
+
+      const publications =
+        await createPostgresRepositories()
+          .publications
+          .list(tenant.siteId);
+
+      const pages =
+        publications.map(
+          (publication) => {
+            const data =
+              publication.page;
+
+            const audit =
+              auditPageSeo(
+                data,
+                {
+                  defaultOgImage:
+                    site.seo.ogImage,
+                },
+              );
+
+            return {
+              file:
+                publication.pageId,
+              path:
+                publication.path,
+              title:
+                data.title,
+              seoTitle:
+                data.seo.title ?? "",
+              seoDescription:
+                data.seo.description ?? "",
+              ogImage:
+                data.seo.ogImage ?? "",
+              noindex:
+                Boolean(
+                  data.seo.noindex,
+                ),
+              updatedAt:
+                publication.publishedAt,
+              hasOg:
+                Boolean(
+                  data.seo.ogImage ||
+                    site.seo.ogImage,
+                ),
+              published: true,
+              audit,
+            };
+          },
+        );
+
       return NextResponse.json({
-        pages: pages.filter((page) => page !== null),
+        pages,
       });
     } catch (error) {
       return NextResponse.json(
@@ -109,11 +157,16 @@ export async function PUT(req: Request) {
   if (blocked) return blocked;
 
   const body = (await req.json()) as Record<string, unknown>;
-  const file = typeof body.file === "string" ? body.file : "";
-  const safe = path.posix.basename(file);
+  const file =
+    typeof body.file === "string"
+      ? body.file
+      : "";
 
-  if (!file || safe !== file || !safe.endsWith(".json")) {
-    return NextResponse.json({ error: "Invalid page file." }, { status: 400 });
+  if (!file) {
+    return NextResponse.json(
+      { error: "Invalid page id." },
+      { status: 400 },
+    );
   }
 
   if (adminPagesUsePostgres()) {
@@ -169,6 +222,19 @@ export async function PUT(req: Request) {
         { status: 500 },
       );
     }
+  }
+
+  const safe =
+    path.posix.basename(file);
+
+  if (
+    safe !== file ||
+    !safe.endsWith(".json")
+  ) {
+    return NextResponse.json(
+      { error: "Invalid page file." },
+      { status: 400 },
+    );
   }
 
   try {
