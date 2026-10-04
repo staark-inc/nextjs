@@ -150,7 +150,9 @@ async function currentUsage(
 
     case "storage": {
       const files =
-        await listMediaFiles();
+        await listMediaFiles(
+          siteId,
+        );
 
       return files.reduce(
         (total, file) =>

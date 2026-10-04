@@ -54,6 +54,49 @@ export function uploadsStoragePath(...parts: string[]): string {
   return storagePath(STAARK_UPLOADS_PREFIX, ...parts);
 }
 
+/**
+ * SaaS tenant-owned state.
+ *
+ * Never use the global .staark namespace for mutable tenant data.
+ */
+export function tenantStateStoragePath(
+  siteId: string,
+  ...parts: string[]
+): string {
+  if (!siteId.trim()) {
+    throw new Error("Tenant storage requires siteId.");
+  }
+
+  return storagePath(
+    "sites",
+    siteId,
+    STAARK_STATE_PREFIX,
+    ...parts,
+  );
+}
+
+/**
+ * SaaS tenant-owned uploaded media.
+ *
+ * Public URLs intentionally remain /uploads/<name>; the hostname resolves
+ * the owning tenant before this storage key is read.
+ */
+export function tenantUploadsStoragePath(
+  siteId: string,
+  ...parts: string[]
+): string {
+  if (!siteId.trim()) {
+    throw new Error("Tenant storage requires siteId.");
+  }
+
+  return storagePath(
+    "sites",
+    siteId,
+    "uploads",
+    ...parts,
+  );
+}
+
 async function directoryExists(target: string): Promise<boolean> {
   try {
     return (await stat(/* turbopackIgnore: true */ target)).isDirectory();

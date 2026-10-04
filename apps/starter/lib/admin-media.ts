@@ -1,20 +1,43 @@
-import { readdir, readFile, stat } from "node:fs/promises";
-import path from "node:path";
-import { getStorage } from "@staark/platform/server";
 import {
-  readStateJson,
-  stateExists,
+  readdir,
+  readFile,
+  stat,
+} from "node:fs/promises";
+
+import path from "node:path";
+
+import {
+  getStorage,
+  readStorageJson,
+  writeStorageJson,
+} from "@staark/platform/server";
+
+import {
+  stateStoragePath,
+  tenantStateStoragePath,
+  tenantUploadsStoragePath,
   uploadsStoragePath,
-  writeStateJson,
-  writeStateText,
 } from "./storage";
 
-export const IMAGE_EXTENSION = /\.(jpg|jpeg|png|gif|webp|svg|avif|ico)$/i;
-/** Existing SVG assets stay readable, but new uploads are raster-only. */
-export const UPLOAD_IMAGE_EXTENSION = /\.(jpg|jpeg|png|gif|webp|avif|ico)$/i;
-const MEDIA_SEED_MARKER = "media-seeded-v1";
+export const IMAGE_EXTENSION =
+  /\.(jpg|jpeg|png|gif|webp|svg|avif|ico)$/i;
 
-export type MediaMetadata = Record<string, { alt?: string }>;
+/**
+ * Existing SVG assets stay readable, but new uploads are raster-only.
+ */
+export const UPLOAD_IMAGE_EXTENSION =
+  /\.(jpg|jpeg|png|gif|webp|avif|ico)$/i;
+
+const LEGACY_MEDIA_SEED_MARKER =
+  "media-seeded-v1";
+
+export type MediaMetadata =
+  Record<
+    string,
+    {
+      alt?: string;
+    }
+  >;
 
 export type MediaFile = {
   name: string;
@@ -24,148 +47,497 @@ export type MediaFile = {
   alt: string;
 };
 
-let mediaSeedPromise: Promise<void> | undefined;
+let legacySeedPromise:
+  Promise<void> | undefined;
 
-function packagedUploadsCandidates(): string[] {
-  const cwd = /* turbopackIgnore: true */ process.cwd();
+function uploadKey(
+  siteId: string | null,
+  ...parts: string[]
+): string {
+  return siteId
+    ? tenantUploadsStoragePath(
+        siteId,
+        ...parts,
+      )
+    : uploadsStoragePath(
+        ...parts,
+      );
+}
+
+function stateKey(
+  siteId: string | null,
+  ...parts: string[]
+): string {
+  return siteId
+    ? tenantStateStoragePath(
+        siteId,
+        ...parts,
+      )
+    : stateStoragePath(
+        ...parts,
+      );
+}
+
+function packagedUploadsCandidates():
+string[] {
+  const cwd =
+    process.cwd();
+
   return [
-    path.resolve(/* turbopackIgnore: true */ cwd, "public", "uploads"),
-    path.resolve(/* turbopackIgnore: true */ cwd, "apps", "starter", "public", "uploads"),
+    path.resolve(
+      cwd,
+      "public",
+      "uploads",
+    ),
+
+    path.resolve(
+      cwd,
+      "apps",
+      "starter",
+      "public",
+      "uploads",
+    ),
   ];
 }
 
-async function packagedUploadsDir(): Promise<string | null> {
-  for (const candidate of packagedUploadsCandidates()) {
+async function packagedUploadsDir():
+Promise<string | null> {
+  for (
+    const candidate
+    of packagedUploadsCandidates()
+  ) {
     try {
-      if ((await stat(/* turbopackIgnore: true */ candidate)).isDirectory()) return candidate;
+      if (
+        (
+          await stat(candidate)
+        ).isDirectory()
+      ) {
+        return candidate;
+      }
     } catch {
-      // Try the next standalone/local-dev location.
+      // Try the next location.
     }
   }
+
   return null;
 }
 
-async function seedPackagedMedia(): Promise<void> {
-  if (await stateExists(MEDIA_SEED_MARKER)) return;
+/**
+ * Packaged media seeding is legacy/local-only.
+ *
+ * SaaS tenants must never receive global seed files automatically because
+ * that would recreate cross-tenant ownership ambiguity.
+ */
+async function seedLegacyPackagedMedia():
+Promise<void> {
+  const storage =
+    getStorage();
 
-  const source = await packagedUploadsDir();
+  const marker =
+    stateKey(
+      null,
+      LEGACY_MEDIA_SEED_MARKER,
+    );
+
+  if (
+    await storage.exists(marker)
+  ) {
+    return;
+  }
+
+  const source =
+    await packagedUploadsDir();
+
   if (source) {
-    const storage = getStorage();
-    const entries = await readdir(/* turbopackIgnore: true */ source, { withFileTypes: true });
+    const entries =
+      await readdir(
+        source,
+        {
+          withFileTypes: true,
+        },
+      );
 
-    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      if (!entry.isFile() || !IMAGE_EXTENSION.test(entry.name)) continue;
-      const key = uploadsStoragePath(entry.name);
-      if (await storage.exists(key)) continue;
-      await storage.write(key, await readFile(/* turbopackIgnore: true */ path.join(/* turbopackIgnore: true */ source, entry.name)));
+    for (
+      const entry
+      of entries.sort(
+        (a, b) =>
+          a.name.localeCompare(
+            b.name,
+          ),
+      )
+    ) {
+      if (
+        !entry.isFile() ||
+        !IMAGE_EXTENSION.test(
+          entry.name,
+        )
+      ) {
+        continue;
+      }
+
+      const key =
+        uploadKey(
+          null,
+          entry.name,
+        );
+
+      if (
+        await storage.exists(
+          key,
+        )
+      ) {
+        continue;
+      }
+
+      await storage.write(
+        key,
+        await readFile(
+          path.join(
+            source,
+            entry.name,
+          ),
+        ),
+      );
     }
   }
 
-  // The marker prevents deliberately deleted packaged files from being restored
-  // on every process restart.
-  await writeStateText(MEDIA_SEED_MARKER, new Date().toISOString());
+  await storage.write(
+    marker,
+    new Date()
+      .toISOString(),
+  );
 }
 
-export async function ensureMediaSeed(): Promise<void> {
-  if (!mediaSeedPromise) {
-    mediaSeedPromise = seedPackagedMedia().catch((error) => {
-      mediaSeedPromise = undefined;
-      throw error;
-    });
+async function ensureMediaScope(
+  siteId: string | null,
+): Promise<void> {
+  if (siteId) {
+    return;
   }
-  return mediaSeedPromise;
+
+  if (!legacySeedPromise) {
+    legacySeedPromise =
+      seedLegacyPackagedMedia()
+        .catch(
+          (error) => {
+            legacySeedPromise =
+              undefined;
+
+            throw error;
+          },
+        );
+  }
+
+  await legacySeedPromise;
 }
 
-export function safeMediaName(value: string): string {
-  const portable = value.replaceAll("\\", "/");
-  const base = portable.split("/").pop() ?? "";
-  return base.replace(/[^a-zA-Z0-9._-]/g, "_");
+/**
+ * Legacy/local compatibility helper.
+ *
+ * PostgreSQL SaaS callers must use an explicit siteId and must not invoke
+ * global media seeding. Backup v1 is already blocked in PostgreSQL mode.
+ */
+export async function ensureMediaSeed():
+Promise<void> {
+  await ensureMediaScope(
+    null,
+  );
 }
 
-export async function readMediaMetadata(): Promise<MediaMetadata> {
+export function safeMediaName(
+  value: string,
+): string {
+  const portable =
+    value.replaceAll(
+      "\\",
+      "/",
+    );
+
+  const base =
+    portable
+      .split("/")
+      .pop() ?? "";
+
+  return base.replace(
+    /[^a-zA-Z0-9._-]/g,
+    "_",
+  );
+}
+
+export async function readMediaMetadata(
+  siteId: string | null,
+): Promise<MediaMetadata> {
   try {
-    return (await readStateJson<MediaMetadata>("media.json")) ?? {};
+    return (
+      await readStorageJson<MediaMetadata>(
+        getStorage(),
+        stateKey(
+          siteId,
+          "media.json",
+        ),
+      )
+    ) ?? {};
   } catch {
     return {};
   }
 }
 
-export async function writeMediaMetadata(metadata: MediaMetadata): Promise<void> {
-  await writeStateJson("media.json", metadata);
+export async function writeMediaMetadata(
+  siteId: string | null,
+  metadata: MediaMetadata,
+): Promise<void> {
+  await writeStorageJson(
+    getStorage(),
+    stateKey(
+      siteId,
+      "media.json",
+    ),
+    metadata,
+  );
 }
 
-export async function mediaExists(name: string): Promise<boolean> {
-  await ensureMediaSeed();
-  return getStorage().exists(uploadsStoragePath(safeMediaName(name)));
+export async function mediaExists(
+  siteId: string | null,
+  name: string,
+): Promise<boolean> {
+  await ensureMediaScope(
+    siteId,
+  );
+
+  return getStorage()
+    .exists(
+      uploadKey(
+        siteId,
+        safeMediaName(name),
+      ),
+    );
 }
 
-export async function uniqueMediaName(requested: string): Promise<string> {
-  await ensureMediaSeed();
-  if (!(await mediaExists(requested))) return requested;
+export async function uniqueMediaName(
+  siteId: string | null,
+  requested: string,
+): Promise<string> {
+  await ensureMediaScope(
+    siteId,
+  );
 
-  const ext = path.extname(requested);
-  const stem = path.basename(requested, ext);
+  if (
+    !(
+      await mediaExists(
+        siteId,
+        requested,
+      )
+    )
+  ) {
+    return requested;
+  }
+
+  const ext =
+    path.extname(
+      requested,
+    );
+
+  const stem =
+    path.basename(
+      requested,
+      ext,
+    );
+
   let index = 2;
-  while (await mediaExists(`${stem}-${index}${ext}`)) index += 1;
+
+  while (
+    await mediaExists(
+      siteId,
+      `${stem}-${index}${ext}`,
+    )
+  ) {
+    index += 1;
+  }
+
   return `${stem}-${index}${ext}`;
 }
 
-export async function readMediaFile(name: string): Promise<Uint8Array | null> {
-  await ensureMediaSeed();
-  return getStorage().read(uploadsStoragePath(safeMediaName(name)));
+export async function readMediaFile(
+  siteId: string | null,
+  name: string,
+): Promise<Uint8Array | null> {
+  await ensureMediaScope(
+    siteId,
+  );
+
+  return getStorage()
+    .read(
+      uploadKey(
+        siteId,
+        safeMediaName(name),
+      ),
+    );
 }
 
-export async function writeMediaFile(name: string, data: Uint8Array): Promise<void> {
-  await ensureMediaSeed();
-  await getStorage().write(uploadsStoragePath(safeMediaName(name)), data);
+export async function writeMediaFile(
+  siteId: string | null,
+  name: string,
+  data: Uint8Array,
+): Promise<void> {
+  await ensureMediaScope(
+    siteId,
+  );
+
+  await getStorage()
+    .write(
+      uploadKey(
+        siteId,
+        safeMediaName(name),
+      ),
+      data,
+    );
 }
 
-export async function deleteMediaFile(name: string): Promise<void> {
-  await ensureMediaSeed();
-  await getStorage().delete(uploadsStoragePath(safeMediaName(name)));
+export async function deleteMediaFile(
+  siteId: string | null,
+  name: string,
+): Promise<void> {
+  await ensureMediaScope(
+    siteId,
+  );
+
+  await getStorage()
+    .delete(
+      uploadKey(
+        siteId,
+        safeMediaName(name),
+      ),
+    );
 }
 
 export async function describeMediaFile(
+  siteId: string | null,
   name: string,
-  metadata: MediaMetadata = {},
+  metadata:
+    MediaMetadata = {},
 ): Promise<MediaFile | null> {
-  await ensureMediaSeed();
-  const safe = safeMediaName(name);
-  const details = await getStorage().stat(uploadsStoragePath(safe));
-  if (!details) return null;
+  await ensureMediaScope(
+    siteId,
+  );
+
+  const safe =
+    safeMediaName(name);
+
+  const details =
+    await getStorage()
+      .stat(
+        uploadKey(
+          siteId,
+          safe,
+        ),
+      );
+
+  if (!details) {
+    return null;
+  }
 
   return {
-    name: safe,
-    url: `/uploads/${safe}`,
-    size: details.size,
-    modifiedAt: details.mtime > 0 ? new Date(details.mtime).toISOString() : "",
-    alt: metadata[safe]?.alt ?? "",
+    name:
+      safe,
+
+    /**
+     * Public URL deliberately contains no tenant identifier.
+     * Hostname -> tenant resolution provides the ownership boundary.
+     */
+    url:
+      `/uploads/${safe}`,
+
+    size:
+      details.size,
+
+    modifiedAt:
+      details.mtime > 0
+        ? new Date(
+            details.mtime,
+          ).toISOString()
+        : "",
+
+    alt:
+      metadata[safe]
+        ?.alt ?? "",
   };
 }
 
-export async function listMediaFiles(): Promise<MediaFile[]> {
-  await ensureMediaSeed();
-  const metadata = await readMediaMetadata();
-  const prefix = `${uploadsStoragePath()}/`;
+export async function listMediaFiles(
+  siteId: string | null,
+): Promise<MediaFile[]> {
+  await ensureMediaScope(
+    siteId,
+  );
 
-  const entries = (await getStorage().list(uploadsStoragePath()))
-    .filter((entry) => entry.path.startsWith(prefix))
-    .map((entry) => ({
-      entry,
-      name: entry.path.slice(prefix.length),
-    }))
-    .filter(({ name }) =>
-      Boolean(name) &&
-      !name.includes("/") &&
-      IMAGE_EXTENSION.test(name),
+  const metadata =
+    await readMediaMetadata(
+      siteId,
+    );
+
+  const root =
+    uploadKey(
+      siteId,
+    );
+
+  const prefix =
+    `${root}/`;
+
+  const entries =
+    (
+      await getStorage()
+        .list(root)
     )
-    .sort((a, b) => a.name.localeCompare(b.name));
+      .filter(
+        (entry) =>
+          entry.path.startsWith(
+            prefix,
+          ),
+      )
+      .map(
+        (entry) => ({
+          entry,
 
-  return entries.map(({ entry, name }) => ({
-    name,
-    url: `/uploads/${name}`,
-    size: entry.size,
-    modifiedAt: entry.mtime > 0 ? new Date(entry.mtime).toISOString() : "",
-    alt: metadata[name]?.alt ?? "",
-  }));
+          name:
+            entry.path.slice(
+              prefix.length,
+            ),
+        }),
+      )
+      .filter(
+        ({ name }) =>
+          Boolean(name) &&
+          !name.includes("/") &&
+          IMAGE_EXTENSION.test(
+            name,
+          ),
+      )
+      .sort(
+        (a, b) =>
+          a.name.localeCompare(
+            b.name,
+          ),
+      );
+
+  return entries.map(
+    ({
+      entry,
+      name,
+    }) => ({
+      name,
+      url:
+        `/uploads/${name}`,
+      size:
+        entry.size,
+      modifiedAt:
+        entry.mtime > 0
+          ? new Date(
+              entry.mtime,
+            ).toISOString()
+          : "",
+      alt:
+        metadata[name]
+          ?.alt ?? "",
+    }),
+  );
 }

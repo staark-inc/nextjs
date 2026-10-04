@@ -18,6 +18,7 @@ import {
   readAdminSiteQuota,
 } from "@/lib/site-quota";
 import { requireAuth } from "../guard";
+import { resolveAdminMediaSiteId } from "@/lib/admin-media-scope";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -26,8 +27,11 @@ export async function GET() {
   if (blocked) return blocked;
 
   try {
+    const siteId =
+      await resolveAdminMediaSiteId();
+
     const [described, usageIndex, quota] = await Promise.all([
-      listMediaFiles(),
+      listMediaFiles(siteId),
       buildMediaUsageIndex(),
       readAdminSiteQuota("storage"),
     ]);
@@ -51,6 +55,9 @@ export async function POST(req: NextRequest) {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
+  const siteId =
+    await resolveAdminMediaSiteId();
+
   const formData = await req.formData();
   const files = formData.getAll("files") as File[];
   const replace = formData.get("replace") === "true";
@@ -61,7 +68,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Replacing media requires one file and a target name." }, { status: 400 });
   }
 
-  const metadata = await readMediaMetadata();
+  const metadata = await readMediaMetadata(siteId);
   const uploaded = [];
 
   const storageQuota =
@@ -96,7 +103,7 @@ export async function POST(req: NextRequest) {
 
       if (
         !IMAGE_EXTENSION.test(name) ||
-        !(await mediaExists(name))
+        !(await mediaExists(siteId, name))
       ) {
         return NextResponse.json(
           {
@@ -128,6 +135,7 @@ export async function POST(req: NextRequest) {
 
       const existing =
         await describeMediaFile(
+          siteId,
           name,
           metadata,
         );
@@ -137,6 +145,7 @@ export async function POST(req: NextRequest) {
     } else {
       name =
         await uniqueMediaName(
+          siteId,
           requested,
         );
     }
@@ -183,12 +192,18 @@ export async function POST(req: NextRequest) {
     }
 
     await writeMediaFile(
+      siteId,
       name,
       new Uint8Array(
         await file.arrayBuffer(),
       ),
     );
-    const described = await describeMediaFile(name, metadata);
+    const described =
+      await describeMediaFile(
+        siteId,
+        name,
+        metadata,
+      );
     if (described) uploaded.push(described);
   }
 
@@ -199,20 +214,23 @@ export async function PUT(req: NextRequest) {
   const blocked = await requireAuth();
   if (blocked) return blocked;
 
+  const siteId =
+    await resolveAdminMediaSiteId();
+
   const body = (await req.json()) as { name?: string; alt?: string };
   const name = safeMediaName(body.name ?? "");
-  if (!name || !(await mediaExists(name))) {
+  if (!name || !(await mediaExists(siteId, name))) {
     return NextResponse.json({ error: "File not found." }, { status: 404 });
   }
   if (typeof body.alt !== "string" || body.alt.length > 300) {
     return NextResponse.json({ error: "Alt text must be 300 characters or fewer." }, { status: 400 });
   }
 
-  const metadata = await readMediaMetadata();
+  const metadata = await readMediaMetadata(siteId);
   const alt = body.alt.trim();
   if (alt) metadata[name] = { ...metadata[name], alt };
   else delete metadata[name];
-  await writeMediaMetadata(metadata);
+  await writeMediaMetadata(siteId, metadata);
 
   return NextResponse.json({ ok: true, name, alt });
 }
@@ -220,6 +238,9 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const blocked = await requireAuth();
   if (blocked) return blocked;
+
+  const siteId =
+    await resolveAdminMediaSiteId();
 
   const { name: requestedName } = (await req.json()) as { name?: string };
   if (!requestedName) return NextResponse.json({ error: "Missing file name." }, { status: 400 });
@@ -229,7 +250,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Invalid file name." }, { status: 400 });
   }
 
-  if (!(await mediaExists(name))) {
+  if (!(await mediaExists(siteId, name))) {
     return NextResponse.json({ error: "File not found." }, { status: 404 });
   }
 
@@ -245,11 +266,11 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
-  await deleteMediaFile(name);
-  const metadata = await readMediaMetadata();
+  await deleteMediaFile(siteId, name);
+  const metadata = await readMediaMetadata(siteId);
   if (metadata[name]) {
     delete metadata[name];
-    await writeMediaMetadata(metadata);
+    await writeMediaMetadata(siteId, metadata);
   }
   return NextResponse.json({ ok: true });
 }

@@ -6,6 +6,14 @@ import {
   safeMediaName,
 } from "@/lib/admin-media";
 
+import {
+  resolvePublicContentConfig,
+} from "@/lib/content-source";
+
+import {
+  resolveTenantContext,
+} from "@/lib/tenant-context";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -55,8 +63,56 @@ async function serve(
     return new Response("Not found.", { status: 404 });
   }
 
-  const bytes = await readMediaFile(name);
-  if (!bytes) return new Response("Not found.", { status: 404 });
+  const config =
+    resolvePublicContentConfig();
+
+  let siteId:
+    string | null = null;
+
+  if (
+    config.source ===
+      "postgres"
+  ) {
+    const tenant =
+      await resolveTenantContext({
+        host:
+          req.headers.get(
+            "host",
+          ),
+
+        forwardedHost:
+          req.headers.get(
+            "x-forwarded-host",
+          ),
+      });
+
+    if (!tenant) {
+      return new Response(
+        "Not found.",
+        {
+          status: 404,
+        },
+      );
+    }
+
+    siteId =
+      tenant.siteId;
+  }
+
+  const bytes =
+    await readMediaFile(
+      siteId,
+      name,
+    );
+
+  if (!bytes) {
+    return new Response(
+      "Not found.",
+      {
+        status: 404,
+      },
+    );
+  }
 
   const etag = etagFor(bytes);
 
