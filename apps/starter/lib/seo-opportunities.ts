@@ -83,6 +83,30 @@ export function buildSeoOpportunities(
         continue;
       }
 
+      // Avoid duplicate opportunities:
+      // if the field itself is missing, don't also report its length.
+      if (
+        check.key === "title-length" &&
+        page.audit.checks.some(
+          (item) =>
+            item.key === "title-present" &&
+            !item.passed,
+        )
+      ) {
+        continue;
+      }
+
+      if (
+        check.key === "description-length" &&
+        page.audit.checks.some(
+          (item) =>
+            item.key === "description-present" &&
+            !item.passed,
+        )
+      ) {
+        continue;
+      }
+
       const priority =
         priorityForTone(
           check.tone,

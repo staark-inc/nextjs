@@ -1,0 +1,449 @@
+.page {
+  display: grid;
+  gap: 18px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fullBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--sa-primary-line);
+  border-radius: 999px;
+  background: var(--sa-primary-soft);
+  color: var(--sa-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns:
+    1.35fr repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.scoreCard,
+.metricCard {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: var(--sa-surface);
+}
+
+.scoreCard > div {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.scoreCard span,
+.metricCard span {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--sa-muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.scoreCard strong {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.scoreCard small {
+  color: var(--sa-muted);
+  font-size: 13px;
+}
+
+.scoreCard p,
+.metricCard small {
+  margin-top: 9px;
+  color: var(--sa-muted);
+  font-size: 12px;
+}
+
+.metricCard strong {
+  display: block;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.good strong,
+.tableScore.good,
+.lighthouseScore.good strong {
+  color: var(--sa-success);
+}
+
+.warning strong,
+.tableScore.warning,
+.lighthouseScore.warning strong {
+  color: var(--sa-warning);
+}
+
+.poor strong,
+.tableScore.poor,
+.lighthouseScore.poor strong {
+  color: var(--sa-danger);
+}
+
+.prioritySummary {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.prioritySummary span,
+.priority {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.prioritySummary span {
+  padding: 6px 9px;
+}
+
+.high,
+.priorityHigh {
+  background: var(--sa-danger-soft);
+  color: var(--sa-danger);
+}
+
+.medium,
+.priorityMedium {
+  background: var(--sa-warning-soft);
+  color: var(--sa-warning);
+}
+
+.low,
+.priorityLow {
+  background: var(--sa-primary-soft);
+  color: var(--sa-primary);
+}
+
+.opportunityList {
+  display: grid;
+}
+
+.opportunityRow {
+  display: grid;
+  grid-template-columns:
+    70px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--sa-line);
+}
+
+.opportunityRow:last-child {
+  border-bottom: 0;
+}
+
+.priority {
+  justify-content: center;
+  padding: 5px 8px;
+}
+
+.opportunityCopy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.opportunityCopy strong {
+  color: var(--sa-ink);
+  font-size: 13px;
+}
+
+.opportunityCopy span,
+.opportunityCopy small {
+  color: var(--sa-muted);
+  font-size: 12px;
+}
+
+.pageSpeedControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pageSpeedControls select {
+  min-height: 38px;
+  max-width: 280px;
+  padding: 0 10px;
+  border: 1px solid var(--sa-line-strong);
+  border-radius: 8px;
+  background: var(--sa-surface);
+  color: var(--sa-ink);
+}
+
+.pageSpeedEmpty {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  min-height: 150px;
+  border: 1px dashed var(--sa-line-strong);
+  border-radius: 12px;
+  color: var(--sa-muted);
+  text-align: center;
+}
+
+.pageSpeedEmpty strong {
+  color: var(--sa-ink);
+}
+
+.errorBox,
+.successBox {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.errorBox {
+  border: 1px solid var(--sa-danger-line);
+  background: var(--sa-danger-soft);
+  color: var(--sa-danger);
+}
+
+.successBox {
+  margin-top: 18px;
+  border: 1px solid var(--sa-success-line);
+  background: var(--sa-success-soft);
+  color: var(--sa-success);
+}
+
+.lighthouseGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lighthouseScore {
+  padding: 18px;
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+  background: var(--sa-surface-soft);
+}
+
+.lighthouseScore span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--sa-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lighthouseScore strong {
+  font-size: 30px;
+}
+
+.lighthouseScore small {
+  margin-left: 4px;
+  color: var(--sa-muted);
+}
+
+.webVitals {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.webVitals > div {
+  display: grid;
+  gap: 4px;
+  padding: 15px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+}
+
+.webVitals span,
+.webVitals small {
+  color: var(--sa-muted);
+  font-size: 11px;
+}
+
+.webVitals strong {
+  font-size: 19px;
+}
+
+.lighthouseOpportunities {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--sa-line);
+}
+
+.subheading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.lighthouseRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--sa-line);
+}
+
+.lighthouseRow:last-child {
+  border-bottom: 0;
+}
+
+.lighthouseRow > div {
+  display: grid;
+  gap: 3px;
+}
+
+.lighthouseRow span,
+.lighthouseRow small {
+  color: var(--sa-muted);
+  font-size: 12px;
+}
+
+.tableScore {
+  font-size: 15px;
+}
+
+.auditPanel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+  background: var(--sa-surface-soft);
+}
+
+.auditPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.auditPanelHeader > div {
+  display: grid;
+  gap: 3px;
+}
+
+.auditPanelHeader strong {
+  font-size: 24px;
+}
+
+.auditPanelHeader > span {
+  color: var(--sa-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.checkList {
+  display: grid;
+  gap: 8px;
+}
+
+.checkRow {
+  display: grid;
+  grid-template-columns:
+    22px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.checkRow > div {
+  display: grid;
+  gap: 2px;
+}
+
+.checkRow strong {
+  font-size: 12px;
+}
+
+.checkRow small {
+  color: var(--sa-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+  .overviewGrid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .lighthouseGrid,
+  .webVitals {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .headerActions,
+  .pageSpeedControls {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .fullBadge {
+    justify-content: center;
+  }
+
+  .pageSpeedControls select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .overviewGrid,
+  .lighthouseGrid,
+  .webVitals,
+  .settingsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .opportunityRow {
+    grid-template-columns:
+      auto minmax(0, 1fr);
+  }
+
+  .opportunityRow > button {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .lighthouseRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
