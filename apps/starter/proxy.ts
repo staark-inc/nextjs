@@ -16,6 +16,13 @@ import { resolvePublicContentConfig } from "@/lib/content-source";
 import { resolveTenantContext } from "@/lib/tenant-context";
 import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import {
+  validateClientSessionIdentity,
+  validateManagerSessionScope,
+} from "@/lib/session-identity";
+import {
+  ADMIN_SESSION_COOKIE,
+} from "@/lib/auth";
+import {
   ADMIN_LOGIN_PATH,
   isAdminSessionActive,
   resolveAdminAuthConfig,
@@ -180,7 +187,72 @@ export async function proxy(req: NextRequest) {
   }
 
   if (active) {
-    const role = resolveAdminRole(session.role);
+    const role =
+      resolveAdminRole(
+        session.role,
+      );
+
+    const contentConfig =
+      resolvePublicContentConfig();
+
+    const tenant =
+      contentConfig.source ===
+        "postgres"
+        ? await resolveTenantContext({
+            host:
+              req.headers.get(
+                "host",
+              ),
+            forwardedHost:
+              req.headers.get(
+                "x-forwarded-host",
+              ),
+          })
+        : null;
+
+    const identityValidation =
+      role === "manager"
+        ? validateManagerSessionScope(
+            session,
+          )
+        : await validateClientSessionIdentity(
+            session,
+            tenant,
+          );
+
+    if (
+      !identityValidation.ok
+    ) {
+      const response =
+        isApi
+          ? NextResponse.json(
+              {
+                ok: false,
+                code:
+                  "SESSION_IDENTITY_INVALID",
+                reason:
+                  identityValidation.reason,
+                error:
+                  "Your session is no longer valid. Sign in again.",
+              },
+              {
+                status: 401,
+              },
+            )
+          : NextResponse.redirect(
+              new URL(
+                `${ADMIN_LOGIN_PATH}?reason=revoked`,
+                req.url,
+              ),
+            );
+
+      response.cookies.delete(
+        ADMIN_SESSION_COOKIE,
+      );
+
+      return response;
+    }
+
     const setupRequest =
       pathname === "/admin/setup" ||
       pathname === "/api/admin/setup";
@@ -240,17 +312,6 @@ export async function proxy(req: NextRequest) {
       }
     }
     const feature = featureForAdminPath(pathname);
-
-    const contentConfig =
-      resolvePublicContentConfig();
-
-    const tenant =
-      contentConfig.source === "postgres"
-        ? await resolveTenantContext({
-            host: req.headers.get("host"),
-            forwardedHost: req.headers.get("x-forwarded-host"),
-          })
-        : null;
 
     const planFeatures =
       adminFeaturesFromPlanEntitlements(

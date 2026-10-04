@@ -9,6 +9,7 @@ type LoginFormProps = {
   /** Already sanitized on the server with safeAdminNext. */
   next: string;
   expired: boolean;
+  revoked: boolean;
   siteName: string;
   host: string;
   siteUrl: string;
@@ -21,7 +22,19 @@ type LoginErrorBody = {
   retryAfter?: number;
 };
 
-function initialNotice(next: string, expired: boolean): Notice {
+function initialNotice(
+  next: string,
+  expired: boolean,
+  revoked: boolean,
+): Notice {
+  if (revoked) {
+    return {
+      tone: "warning",
+      text:
+        "Your session was revoked or no longer belongs to this website. Sign in again.",
+    };
+  }
+
   if (expired) return { tone: "warning", text: "Your session expired. Sign in again to continue." };
   if (next !== "/admin") return { tone: "info", text: `Sign in to continue to ${next}.` };
   return null;
@@ -38,6 +51,7 @@ function formatWait(seconds: number): string {
 export default function LoginForm({
   next,
   expired,
+  revoked,
   siteName,
   host,
   siteUrl,
@@ -50,7 +64,15 @@ export default function LoginForm({
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [notice, setNotice] = useState<Notice>(() => initialNotice(next, expired));
+  const [notice, setNotice] =
+    useState<Notice>(
+      () =>
+        initialNotice(
+          next,
+          expired,
+          revoked,
+        ),
+    );
   const [lockedUntil, setLockedUntil] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const passwordRef = useRef<HTMLInputElement>(null);

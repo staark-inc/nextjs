@@ -196,6 +196,7 @@ model User {
   twoFactorPendingSecret String?   @map("two_factor_pending_secret") @db.Text
   twoFactorRecoveryCodes Json      @default("[]") @map("two_factor_recovery_codes") @db.JsonB
   twoFactorEnabledAt     DateTime? @map("two_factor_enabled_at") @db.Timestamptz(3)
+  sessionVersion         Int       @default(1) @map("session_version")
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

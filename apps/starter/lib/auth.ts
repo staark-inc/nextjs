@@ -14,6 +14,8 @@ export type SessionData = {
   userId?: string;
   organizationId?: string;
   siteId?: string;
+  sessionVersion?: number;
+  authScope?: "tenant" | "platform";
   loginAt?: number;
   expiresAt?: number;
   remember?: boolean;

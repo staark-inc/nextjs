@@ -120,8 +120,34 @@ export async function POST(
 
         twoFactorEnabledAt:
           null,
+
+        sessionVersion: {
+          increment: 1,
+        },
       },
     });
+
+    const refreshed =
+      await prisma.user.findUniqueOrThrow({
+        where: {
+          id: user.id,
+        },
+
+        select: {
+          sessionVersion:
+            true,
+        },
+      });
+
+    const {
+      session,
+    } =
+      await requireClientAccount();
+
+    session.sessionVersion =
+      refreshed.sessionVersion;
+
+    await session.save();
 
     return NextResponse.json({
       ok: true,

@@ -183,6 +183,27 @@ export async function POST(req: NextRequest) {
 
     session.siteId =
       saasAccount.siteId;
+
+    session.sessionVersion =
+      saasAccount.sessionVersion;
+
+    session.authScope =
+      "tenant";
+  } else {
+    session.userId =
+      undefined;
+
+    session.organizationId =
+      undefined;
+
+    session.siteId =
+      undefined;
+
+    session.sessionVersion =
+      undefined;
+
+    session.authScope =
+      "platform";
   }
 
   session.loginAt = loginAt;

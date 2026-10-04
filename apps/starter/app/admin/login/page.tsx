@@ -65,7 +65,13 @@ function color(value: string | undefined, fallback: string): string {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const next = safeAdminNext(typeof params.next === "string" ? params.next : null);
-  const expired = params.reason === "expired";
+  const expired =
+    params.reason ===
+      "expired";
+
+  const revoked =
+    params.reason ===
+      "revoked";
 
   const site = await loadSitePreview();
   const siteName = site?.name?.trim() || "";
@@ -97,6 +103,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <LoginForm
           next={next}
           expired={expired}
+          revoked={revoked}
           siteName={siteName}
           host={host}
           siteUrl={siteUrl}

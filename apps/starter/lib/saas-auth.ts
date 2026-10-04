@@ -39,6 +39,7 @@ export async function resolveSaasLoginAccount(
       twoFactorEnabled: true,
       twoFactorSecret: true,
       twoFactorRecoveryCodes: true,
+      sessionVersion: true,
       memberships: {
         where: { organizationId: tenant.organizationId },
         select: { role: true },
@@ -64,6 +65,8 @@ export async function resolveSaasLoginAccount(
     userId: user.id,
     siteId: tenant.siteId,
     organizationId: tenant.organizationId,
+    sessionVersion:
+      user.sessionVersion,
     twoFactorEnabled:
       user.twoFactorEnabled,
     twoFactorSecret:
