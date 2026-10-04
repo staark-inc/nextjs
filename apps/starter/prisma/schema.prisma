@@ -323,6 +323,7 @@ model Domain {
 
   @@index([siteId], map: "domains_site_id_idx")
   @@index([siteId, primaryDomain], map: "domains_site_id_primary_domain_idx")
+  @@index([releaseAt], map: "domains_release_at_idx")
   @@map("domains")
 }
 

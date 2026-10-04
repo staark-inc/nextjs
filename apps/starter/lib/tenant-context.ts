@@ -154,8 +154,19 @@ export async function resolveTenantContext(
   const prisma = getPrismaClient();
 
   if (hostname) {
-    const domain = await prisma.domain.findUnique({
-      where: { hostname },
+    const domain = await prisma.domain.findFirst({
+      where: {
+        hostname,
+        blockedAt: null,
+        releasedAt: null,
+        OR: [
+          { type: "platform" },
+          {
+            type: "custom",
+            verified: true,
+          },
+        ],
+      },
       select: {
         id: true,
         site: {

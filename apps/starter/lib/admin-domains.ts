@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import { randomUUID } from "node:crypto";
 import { resolveTxt } from "node:dns/promises";
 
@@ -277,7 +278,10 @@ export async function listAdminDomains(): Promise<AdminDomainState> {
   const prisma = getPrismaClient();
 
   const rows = await prisma.domain.findMany({
-    where: { siteId: tenant.siteId },
+    where: {
+      siteId: tenant.siteId,
+      releasedAt: null,
+    },
     orderBy: [{ type: "asc" }, { createdAt: "asc" }],
   });
 
@@ -322,7 +326,11 @@ export async function createAdminCustomDomain(input: {
     `;
 
     const current = await tx.domain.count({
-      where: { siteId: tenant.siteId, type: "custom" },
+      where: {
+        siteId: tenant.siteId,
+        type: "custom",
+        releasedAt: null,
+      },
     });
 
     assertSiteQuotaValue(
@@ -333,14 +341,46 @@ export async function createAdminCustomDomain(input: {
 
     const existing = await tx.domain.findUnique({
       where: { hostname },
-      select: { id: true, siteId: true },
+      select: {
+        id: true,
+        siteId: true,
+        releasedAt: true,
+      },
     });
 
     if (existing) {
-      if (existing.siteId === tenant.siteId) {
-        throw new Error("This domain is already connected to this website.");
+      if (!existing.releasedAt) {
+        if (existing.siteId === tenant.siteId) {
+          throw new Error("This domain is already connected to this website.");
+        }
+
+        throw new Error("This domain is already connected to another website.");
       }
-      throw new Error("This domain is already connected to another website.");
+
+      return tx.domain.update({
+        where: {
+          id: existing.id,
+        },
+        data: {
+          siteId: tenant.siteId,
+          type: "custom",
+          verified: false,
+          primaryDomain: false,
+          verificationToken: randomUUID(),
+          sslStatus: "pending",
+          provider: "cloudflare",
+          providerHostnameId: null,
+          providerStatus: "provisioning",
+          providerError: null,
+          ownershipVerificationName: null,
+          ownershipVerificationValue: null,
+          sslValidationRecords: Prisma.DbNull,
+          providerLastSyncAt: null,
+          blockedAt: null,
+          releaseAt: null,
+          releasedAt: null,
+        },
+      });
     }
 
     return tx.domain.create({
