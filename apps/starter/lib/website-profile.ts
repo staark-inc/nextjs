@@ -245,6 +245,7 @@ export function resolveClientFeatures(
   for (const feature of [
     "inbox",
     "seo",
+    "searchConsole",
     "analytics",
     "domains",
     "booking",
