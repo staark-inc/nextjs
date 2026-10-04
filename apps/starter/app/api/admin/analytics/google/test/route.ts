@@ -3,8 +3,7 @@ import {
 } from "next/server";
 
 import {
-  requireAuth,
-  requirePlanFeature,
+  requireManager,
 } from "../../../guard";
 
 import {
@@ -13,14 +12,7 @@ import {
 } from "@/lib/google-analytics-data";
 
 async function guard() {
-  const auth =
-    await requireAuth();
-
-  if (auth) return auth;
-
-  return requirePlanFeature(
-    "analytics",
-  );
+  return requireManager();
 }
 
 export async function POST(

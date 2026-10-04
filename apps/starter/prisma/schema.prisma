@@ -34,7 +34,8 @@ model Site {
   domains        Domain[]
   usage          SiteUsage?
   subscriptions  Subscription[]
-  analyticsDaily AnalyticsDaily[]
+  analyticsDaily          AnalyticsDaily[]
+  googleAnalyticsBinding GoogleAnalyticsBinding?
 
   @@index([organizationId], map: "sites_organization_id_idx")
   @@map("sites")
@@ -337,6 +338,26 @@ model SiteUsage {
   site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "site_usage_site_id_fkey")
 
   @@map("site_usage")
+}
+
+
+/// Server-owned GA4 binding for exactly one tenant website.
+///
+/// Client-editable Site.settings must never decide which GA4 Property can be
+/// queried with the shared Staark service account.
+model GoogleAnalyticsBinding {
+  siteId          String   @id @map("site_id") @db.Uuid
+  measurementId   String   @unique(map: "google_analytics_bindings_measurement_id_key") @map("measurement_id") @db.VarChar(40)
+  propertyId      String   @unique(map: "google_analytics_bindings_property_id_key") @map("property_id") @db.VarChar(40)
+  enabled         Boolean  @default(false)
+  consentRequired Boolean  @default(true) @map("consent_required")
+  verifiedAt      DateTime? @map("verified_at") @db.Timestamptz(3)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "google_analytics_bindings_site_id_fkey")
+
+  @@map("google_analytics_bindings")
 }
 
 

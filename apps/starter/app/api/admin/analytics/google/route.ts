@@ -1,51 +1,53 @@
 import {
   NextResponse,
 } from "next/server";
+
 import {
   revalidatePath,
 } from "next/cache";
 
 import {
-  SiteSettingsSchema,
-} from "@staark/core";
-
-import {
-  mutateAdminSiteSettings,
   readAdminSiteSettings,
 } from "@/lib/admin-site-settings";
-import {
-  resolveGoogleAnalyticsSettings,
-} from "@/lib/google-analytics-settings";
 
 import {
-  requireAuth,
+  requireAdminTenantContext,
+} from "@/lib/admin-tenant";
+
+import {
+  bindGoogleAnalyticsProperty,
+  readGoogleAnalyticsBinding,
+} from "@/lib/google-analytics-binding";
+
+import {
+  testGoogleAnalyticsProperty,
+} from "@/lib/google-analytics-data";
+
+import {
+  requireManager,
   requirePlanFeature,
 } from "../../guard";
 
-async function guard() {
-  const auth =
-    await requireAuth();
-
-  if (auth) return auth;
-
-  return requirePlanFeature(
-    "analytics",
-  );
-}
-
 export async function GET() {
   const blocked =
-    await guard();
+    await requirePlanFeature(
+      "analytics",
+    );
 
-  if (blocked) return blocked;
+  if (blocked) {
+    return blocked;
+  }
+
+  const tenant =
+    await requireAdminTenantContext();
 
   const site =
     await readAdminSiteSettings();
 
   return NextResponse.json({
     googleAnalytics:
-      resolveGoogleAnalyticsSettings(
-        site,
+      await readGoogleAnalyticsBinding(
+        tenant.siteId,
       ),
 
     consent: {
@@ -64,9 +66,17 @@ export async function PUT(
   request: Request,
 ) {
   const blocked =
-    await guard();
+    await requireManager();
 
-  if (blocked) return blocked;
+  if (blocked) {
+    return blocked;
+  }
+
+  const tenant =
+    await requireAdminTenantContext();
+
+  const site =
+    await readAdminSiteSettings();
 
   const raw =
     await request
@@ -83,67 +93,106 @@ export async function PUT(
         error:
           "Invalid Google Analytics configuration.",
       },
-      { status: 400 },
+      {
+        status: 400,
+      },
+    );
+  }
+
+  const input =
+    raw as Record<
+      string,
+      unknown
+    >;
+
+  const measurementId =
+    typeof input.measurementId ===
+      "string"
+      ? input.measurementId
+          .trim()
+          .toUpperCase()
+      : "";
+
+  const propertyId =
+    typeof input.propertyId ===
+      "string"
+      ? input.propertyId.trim()
+      : "";
+
+  const enabled =
+    input.enabled === true;
+
+  const consentRequired =
+    input.consentRequired !== false;
+
+  if (
+    !/^G-[A-Z0-9]+$/.test(
+      measurementId,
+    )
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Enter a valid GA4 Measurement ID.",
+      },
+      {
+        status: 422,
+      },
+    );
+  }
+
+  if (
+    !/^\d+$/.test(
+      propertyId,
+    )
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Enter a valid numeric GA4 Property ID.",
+      },
+      {
+        status: 422,
+      },
+    );
+  }
+
+  if (
+    enabled &&
+    consentRequired &&
+    !site.privacy
+      .analyticsConsentEnabled
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Enable Analytics consent under Privacy & consent before enabling Google Analytics.",
+      },
+      {
+        status: 422,
+      },
     );
   }
 
   try {
-    const current =
-      await readAdminSiteSettings();
-
-    const parsed =
-      SiteSettingsSchema.parse({
-        ...current,
-
-        analytics: {
-          ...(current.analytics ?? {}),
-
-          googleAnalytics: raw,
-        },
-      }).analytics.googleAnalytics;
-
-    if (
-      parsed.enabled &&
-      !parsed.measurementId
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "A Measurement ID is required when Google Analytics is enabled.",
-        },
-        { status: 422 },
-      );
-    }
-
-    if (
-      parsed.enabled &&
-      parsed.consentRequired &&
-      !current.privacy
-        .analyticsConsentEnabled
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Enable Analytics consent under Privacy & consent before enabling Google Analytics.",
-        },
-        { status: 422 },
-      );
-    }
+    /*
+     * A binding can only be committed by a trusted Staark Manager and only
+     * after the platform service account proves it can access the Property.
+     */
+    await testGoogleAnalyticsProperty(
+      propertyId,
+    );
 
     const saved =
-      await mutateAdminSiteSettings(
-        (site) =>
-          SiteSettingsSchema.parse({
-            ...site,
+      await bindGoogleAnalyticsProperty({
+        siteId:
+          tenant.siteId,
 
-            analytics: {
-              ...(site.analytics ?? {}),
-
-              googleAnalytics:
-                parsed,
-            },
-          }),
-      );
+        measurementId,
+        propertyId,
+        enabled,
+        consentRequired,
+      });
 
     revalidatePath(
       "/",
@@ -154,18 +203,32 @@ export async function PUT(
       ok: true,
 
       googleAnalytics:
-        saved.analytics
-          .googleAnalytics,
+        saved,
     });
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not bind Google Analytics.";
+
+    const duplicate =
+      message.includes(
+        "Unique constraint",
+      ) ||
+      message.includes(
+        "unique constraint",
+      );
+
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Could not save Google Analytics settings.",
+          duplicate
+            ? "This GA4 Measurement ID or Property ID is already bound to another Staark website."
+            : message,
       },
-      { status: 422 },
+      {
+        status: 422,
+      },
     );
   }
 }

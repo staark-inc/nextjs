@@ -4,8 +4,20 @@ import {
   readAdminSiteSettings,
 } from "@/lib/admin-site-settings";
 import {
-  resolveGoogleAnalyticsSettings,
-} from "@/lib/google-analytics-settings";
+  readGoogleAnalyticsBinding,
+} from "@/lib/google-analytics-binding";
+
+import {
+  requireAdminTenantContext,
+} from "@/lib/admin-tenant";
+
+import {
+  getSession,
+} from "@/lib/auth";
+
+import {
+  resolveAdminRole,
+} from "@staark/platform/server";
 import {
   googleAnalyticsServiceSummary,
 } from "@/lib/google-analytics-data";
@@ -19,10 +31,21 @@ export default async function GoogleAnalyticsPage() {
   const site =
     await readAdminSiteSettings();
 
+  const tenant =
+    await requireAdminTenantContext();
+
   const ga =
-    resolveGoogleAnalyticsSettings(
-      site,
+    await readGoogleAnalyticsBinding(
+      tenant.siteId,
     );
+
+  const session =
+    await getSession();
+
+  const editable =
+    resolveAdminRole(
+      session.role,
+    ) === "manager";
 
   const service =
     googleAnalyticsServiceSummary();
@@ -71,6 +94,7 @@ export default async function GoogleAnalyticsPage() {
 
       <GoogleAnalyticsForm
         initial={ga}
+        editable={editable}
         analyticsConsentEnabled={
           site.privacy
             .analyticsConsentEnabled

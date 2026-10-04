@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 
 import { readAdminAnalytics } from "@/lib/admin-analytics";
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
-import { resolveGoogleAnalyticsSettings } from "@/lib/google-analytics-settings";
+import { readGoogleAnalyticsBinding } from "@/lib/google-analytics-binding";
+import { requireAdminTenantContext } from "@/lib/admin-tenant";
 import { readAdminGoogleAnalytics } from "@/lib/admin-google-analytics";
 
 export const dynamic = "force-dynamic";
@@ -29,8 +30,13 @@ export default async function AnalyticsPage() {
   const site =
     await readAdminSiteSettings();
 
+  const tenant =
+    await requireAdminTenantContext();
+
   const googleAnalytics =
-    resolveGoogleAnalyticsSettings(site);
+    await readGoogleAnalyticsBinding(
+      tenant.siteId,
+    );
 
   try {
     analytics =
@@ -53,7 +59,7 @@ export default async function AnalyticsPage() {
 
   const ga4 =
     await readAdminGoogleAnalytics(
-      site,
+      tenant.siteId,
       analytics.access.level,
     );
 

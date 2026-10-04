@@ -10,7 +10,7 @@ import { SaasAccessBlocked } from "./SaasAccessBlocked";
 import ConsentMode from "./ConsentMode";
 import CookieConsent from "./CookieConsent";
 import GoogleAnalytics from "./GoogleAnalytics";
-import { resolveGoogleAnalyticsSettings } from "@/lib/google-analytics-settings";
+import { resolveTenantGoogleAnalyticsSettings } from "@/lib/google-analytics-binding";
 import PublicAnalytics from "./PublicAnalytics";
 import { canUsePlanFeature } from "@/lib/feature-access";
 import "@staark/theme-light/styles.css";
@@ -80,7 +80,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const site = await content.getSite();
 
   const googleAnalytics =
-    resolveGoogleAnalyticsSettings(site);
+    await resolveTenantGoogleAnalyticsSettings(
+      site,
+      tenant?.siteId ?? null,
+    );
 
   const runtime = resolveThemeRuntime(site.theme.family);
   const preset = resolvePreset(runtime.theme, site.theme.preset);

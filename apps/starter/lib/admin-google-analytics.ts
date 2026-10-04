@@ -1,15 +1,11 @@
-import type {
-  SiteSettings,
-} from "@staark/core";
-
 import {
   runGoogleAnalyticsReport,
   type GaRunReportResponse,
 } from "./google-analytics-data";
 
 import {
-  resolveGoogleAnalyticsSettings,
-} from "./google-analytics-settings";
+  readGoogleAnalyticsBinding,
+} from "./google-analytics-binding";
 
 export type GoogleAnalyticsMetricSummary = {
   activeUsers: number;
@@ -102,12 +98,12 @@ function empty(
 }
 
 export async function readAdminGoogleAnalytics(
-  site: SiteSettings,
+  siteId: string,
   level: string | null,
 ): Promise<AdminGoogleAnalyticsData> {
   const settings =
-    resolveGoogleAnalyticsSettings(
-      site,
+    await readGoogleAnalyticsBinding(
+      siteId,
     );
 
   const days =
