@@ -35,11 +35,6 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function bigintToSafeNumber(value: bigint): number {
-  const max = BigInt(Number.MAX_SAFE_INTEGER);
-  return Number(value > max ? max : value);
-}
-
 export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
   const contentConfig = resolvePublicContentConfig();
 
@@ -76,7 +71,6 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
 
   const [
     subscription,
-    usage,
     pagesCount,
     submissionsCount,
     usersCount,
@@ -86,9 +80,6 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
     prisma.subscription.findUnique({
       where: { siteId: tenant.siteId },
       include: { plan: true },
-    }),
-    prisma.siteUsage.findUnique({
-      where: { siteId: tenant.siteId },
     }),
     prisma.page.count({
       where: {
@@ -152,12 +143,10 @@ export async function readAdminPlanSummary(): Promise<AdminPlanSummary> {
     trialEndsAt: subscription.trialEndsAt?.toISOString() ?? null,
     cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
     canceledAt: subscription.canceledAt?.toISOString() ?? null,
-    // Media is read live from the tenant storage. SiteUsage remains useful
-    // for accounting, but it must not make the customer-facing plan page stale.
-    storageUsedBytes: Math.max(
-      usage ? bigintToSafeNumber(usage.storageBytes) : 0,
+    // Customer-facing usage is the actual tenant storage, never a stale
+    // accounting counter left behind after deletes or recovery work.
+    storageUsedBytes:
       liveMediaBytes,
-    ),
     mediaCount: mediaFiles.length,
     pagesCount,
     submissionsCount,

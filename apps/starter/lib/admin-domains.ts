@@ -311,6 +311,16 @@ export async function createAdminCustomDomain(input: {
   const hostname = normalizeCustomHostname(input.hostname);
 
   const reserved = await prisma.$transaction(async (tx) => {
+    /*
+     * Prevent two concurrent requests from both observing the same count and
+     * creating domains past the plan limit.
+     */
+    await tx.$executeRaw`
+      SELECT pg_advisory_xact_lock(
+        hashtext(${`domains:${tenant.siteId}`})
+      )
+    `;
+
     const current = await tx.domain.count({
       where: { siteId: tenant.siteId, type: "custom" },
     });
