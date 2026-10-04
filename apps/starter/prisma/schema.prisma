@@ -279,6 +279,7 @@ model Subscription {
   cancelAtPeriodEnd      Boolean   @default(false) @map("cancel_at_period_end")
   canceledAt             DateTime? @map("canceled_at") @db.Timestamptz(3)
   trialEndsAt            DateTime? @map("trial_ends_at") @db.Timestamptz(3)
+  controlVersion         BigInt    @default(0) @map("control_version")
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -379,6 +380,26 @@ model AnalyticsDaily {
   @@index([siteId, date], map: "analytics_daily_site_id_date_idx")
   @@map("analytics_daily")
 }
+
+/// Inbound signed Hub -> Runtime control message.
+///
+/// Event ids are globally unique at the receiver, while sequence provides
+/// monotonic ordering for state-bearing subjects such as subscriptions.
+model ControlEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  source      String    @db.VarChar(40)
+  eventId     String    @unique(map: "control_events_event_id_key") @map("event_id") @db.VarChar(160)
+  subject     String    @db.VarChar(255)
+  sequence    BigInt
+  bodyHash    String    @map("body_hash") @db.Char(64)
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([source, subject, sequence], map: "control_events_source_subject_sequence_idx")
+  @@index([processedAt], map: "control_events_processed_at_idx")
+  @@map("control_events")
+}
+
 
 /// Stripe webhook audit/idempotency ledger.
 model BillingEvent {

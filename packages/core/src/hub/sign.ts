@@ -112,3 +112,275 @@ export function checkFormToken(
   if (age > (opts.maxSeconds ?? 60 * 60 * 6)) return { ok: false, reason: "expired" };
   return { ok: true };
 }
+
+
+// ---------------------------------------------------------------------------
+// Staark control protocol v2
+// ---------------------------------------------------------------------------
+
+export const CONTROL_PROTOCOL_VERSION = "2";
+
+export type ControlSignedHeaders = {
+  "X-Staark-Protocol": "2";
+  "X-Staark-Timestamp": string;
+  "X-Staark-Event-ID": string;
+  "X-Staark-Sequence": string;
+  "X-Staark-Signature": string;
+};
+
+export function controlSignaturePayload(
+  method: string,
+  path: string,
+  timestamp: string,
+  eventId: string,
+  sequence: string,
+  body: string,
+): string {
+  return [
+    method.toUpperCase(),
+    path,
+    timestamp,
+    eventId,
+    sequence,
+    sha256Hex(body),
+  ].join("\\n");
+}
+
+export function signControlRequest(input: {
+  method: string;
+  path: string;
+  body?: string;
+  eventId: string;
+  sequence: bigint | number | string;
+  secret: string;
+  now?: number;
+}): ControlSignedHeaders {
+  const timestamp =
+    String(
+      Math.floor(
+        (input.now ?? Date.now()) /
+          1000,
+      ),
+    );
+
+  const sequence =
+    String(input.sequence);
+
+  const signature =
+    createHmac(
+      "sha256",
+      input.secret,
+    )
+      .update(
+        controlSignaturePayload(
+          input.method,
+          input.path,
+          timestamp,
+          input.eventId,
+          sequence,
+          input.body ?? "",
+        ),
+        "utf8",
+      )
+      .digest("hex");
+
+  return {
+    "X-Staark-Protocol": "2",
+    "X-Staark-Timestamp":
+      timestamp,
+    "X-Staark-Event-ID":
+      input.eventId,
+    "X-Staark-Sequence":
+      sequence,
+    "X-Staark-Signature":
+      signature,
+  };
+}
+
+export type VerifyControlResult =
+  | {
+      ok: true;
+      eventId: string;
+      sequence: bigint;
+      timestamp: number;
+    }
+  | {
+      ok: false;
+      reason:
+        | "protocol"
+        | "missing"
+        | "expired"
+        | "event"
+        | "sequence"
+        | "signature";
+    };
+
+export function verifyControlRequest(input: {
+  method: string;
+  path: string;
+  body: string;
+  headers: Headers;
+  secret: string;
+  now?: number;
+  maxSkewSeconds?: number;
+}): VerifyControlResult {
+  const protocol =
+    input.headers.get(
+      "x-staark-protocol",
+    );
+
+  if (
+    protocol !==
+    CONTROL_PROTOCOL_VERSION
+  ) {
+    return {
+      ok: false,
+      reason: "protocol",
+    };
+  }
+
+  const timestamp =
+    input.headers.get(
+      "x-staark-timestamp",
+    );
+
+  const eventId =
+    input.headers.get(
+      "x-staark-event-id",
+    );
+
+  const rawSequence =
+    input.headers.get(
+      "x-staark-sequence",
+    );
+
+  const signature =
+    input.headers.get(
+      "x-staark-signature",
+    );
+
+  if (
+    !timestamp ||
+    !eventId ||
+    !rawSequence ||
+    !signature
+  ) {
+    return {
+      ok: false,
+      reason: "missing",
+    };
+  }
+
+  if (
+    eventId.length > 160 ||
+    !/^[A-Za-z0-9:_.-]+$/.test(
+      eventId,
+    )
+  ) {
+    return {
+      ok: false,
+      reason: "event",
+    };
+  }
+
+  if (
+    !/^\d+$/.test(
+      rawSequence,
+    )
+  ) {
+    return {
+      ok: false,
+      reason: "sequence",
+    };
+  }
+
+  let sequence: bigint;
+
+  try {
+    sequence =
+      BigInt(rawSequence);
+  } catch {
+    return {
+      ok: false,
+      reason: "sequence",
+    };
+  }
+
+  if (sequence < 0n) {
+    return {
+      ok: false,
+      reason: "sequence",
+    };
+  }
+
+  const now =
+    Math.floor(
+      (input.now ?? Date.now()) /
+        1000,
+    );
+
+  const ts =
+    Number(timestamp);
+
+  if (
+    !Number.isInteger(ts) ||
+    Math.abs(now - ts) >
+      (
+        input.maxSkewSeconds ??
+        SIGNATURE_MAX_SKEW_SECONDS
+      )
+  ) {
+    return {
+      ok: false,
+      reason: "expired",
+    };
+  }
+
+  const expected =
+    Buffer.from(
+      createHmac(
+        "sha256",
+        input.secret,
+      )
+        .update(
+          controlSignaturePayload(
+            input.method,
+            input.path,
+            timestamp,
+            eventId,
+            rawSequence,
+            input.body,
+          ),
+          "utf8",
+        )
+        .digest("hex"),
+      "utf8",
+    );
+
+  const given =
+    Buffer.from(
+      signature,
+      "utf8",
+    );
+
+  if (
+    expected.length !==
+      given.length ||
+    !timingSafeEqual(
+      expected,
+      given,
+    )
+  ) {
+    return {
+      ok: false,
+      reason: "signature",
+    };
+  }
+
+  return {
+    ok: true,
+    eventId,
+    sequence,
+    timestamp: ts,
+  };
+}

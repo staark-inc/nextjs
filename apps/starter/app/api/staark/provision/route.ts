@@ -1,8 +1,3 @@
-import {
-  createHmac,
-  timingSafeEqual,
-} from "node:crypto";
-
 import { NextResponse } from "next/server";
 
 import {
@@ -10,46 +5,12 @@ import {
   type HubProvisioningInput,
 } from "@/lib/hub-provisioning";
 
+import {
+  verifyHubControlRequest,
+} from "@/lib/control-request";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const MAX_CLOCK_SKEW_SECONDS = 300;
-
-function safeEqualHex(a: string, b: string): boolean {
-  try {
-    const aa = Buffer.from(a, "hex");
-    const bb = Buffer.from(b, "hex");
-
-    return aa.length > 0 &&
-      aa.length === bb.length &&
-      timingSafeEqual(aa, bb);
-  } catch {
-    return false;
-  }
-}
-
-function verifyHubRequest(
-  body: string,
-  timestamp: string | null,
-  signature: string | null,
-  secret: string,
-): boolean {
-  if (!timestamp || !signature) return false;
-
-  const unix = Number(timestamp);
-  if (!Number.isInteger(unix)) return false;
-
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - unix) > MAX_CLOCK_SKEW_SECONDS) {
-    return false;
-  }
-
-  const expected = createHmac("sha256", secret)
-    .update(`${timestamp}.${body}`)
-    .digest("hex");
-
-  return safeEqualHex(expected, signature);
-}
 
 export async function POST(request: Request) {
   const secret = process.env.STAARK_PROVISIONING_SECRET?.trim();
@@ -66,14 +27,14 @@ export async function POST(request: Request) {
 
   const rawBody = await request.text();
 
-  if (
-    !verifyHubRequest(
+  const verified =
+    verifyHubControlRequest(
+      request,
       rawBody,
-      request.headers.get("x-staark-timestamp"),
-      request.headers.get("x-staark-signature"),
       secret,
-    )
-  ) {
+    );
+
+  if (!verified) {
     return NextResponse.json(
       { ok: false, error: "Invalid provisioning signature." },
       { status: 401 },

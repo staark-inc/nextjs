@@ -7,7 +7,14 @@ export * from "./update/protocol";
 export { checkForPlatformUpdate, UPDATE_HUB_PATHS } from "./update/client";
 export { createStaarkContent, HUB_PATHS, type StaarkContent } from "./hub/client";
 export { readStaarkEnv, hubRequest, HubError, DEFAULT_HUB_URL, CLIENT_VERSION, type HubConnection } from "./hub/connection";
-export { signRequest, verifySignature, issueFormToken, checkFormToken } from "./hub/sign";
+export {
+  signRequest,
+  verifySignature,
+  issueFormToken,
+  checkFormToken,
+  sha256Hex,
+  verifyControlRequest,
+} from "./hub/sign";
 export {
   createStorage,
   getStorage,

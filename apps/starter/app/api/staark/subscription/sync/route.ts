@@ -1,17 +1,15 @@
-import {
-  createHmac,
-  timingSafeEqual,
-} from "node:crypto";
-
 import { NextResponse } from "next/server";
 
 import { getPrismaClient } from "@/lib/db/prisma";
 import { hasPublicSubscriptionAccess } from "@/lib/subscription-access";
+import {
+  controlBodyHash,
+  verifyHubControlRequest,
+} from "@/lib/control-request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_CLOCK_SKEW_SECONDS = 300;
 const DOMAIN_RETENTION_DAYS = 30;
 
 const PLAN_KEYS = {
@@ -19,45 +17,6 @@ const PLAN_KEYS = {
   SAAS: "saas",
   BUSINESS: "business",
 } as const;
-
-function safeEqualHex(a: string, b: string): boolean {
-  try {
-    const aa = Buffer.from(a, "hex");
-    const bb = Buffer.from(b, "hex");
-
-    return (
-      aa.length > 0 &&
-      aa.length === bb.length &&
-      timingSafeEqual(aa, bb)
-    );
-  } catch {
-    return false;
-  }
-}
-
-function verifyRequest(
-  body: string,
-  timestamp: string | null,
-  signature: string | null,
-  secret: string,
-): boolean {
-  if (!timestamp || !signature) return false;
-
-  const unix = Number(timestamp);
-  if (!Number.isInteger(unix)) return false;
-
-  const now = Math.floor(Date.now() / 1000);
-
-  if (Math.abs(now - unix) > MAX_CLOCK_SKEW_SECONDS) {
-    return false;
-  }
-
-  const expected = createHmac("sha256", secret)
-    .update(`${timestamp}.${body}`)
-    .digest("hex");
-
-  return safeEqualHex(expected, signature);
-}
 
 function required(value: unknown, field: string): string {
   if (typeof value !== "string" || !value.trim()) {
@@ -109,14 +68,14 @@ export async function POST(request: Request) {
 
   const rawBody = await request.text();
 
-  if (
-    !verifyRequest(
+  const verified =
+    verifyHubControlRequest(
+      request,
       rawBody,
-      request.headers.get("x-staark-timestamp"),
-      request.headers.get("x-staark-signature"),
       secret,
-    )
-  ) {
+    );
+
+  if (!verified) {
     return NextResponse.json(
       {
         ok: false,
@@ -160,6 +119,14 @@ export async function POST(request: Request) {
     }
 
     const prisma = getPrismaClient();
+
+    const controlSubject =
+      `subscription:${stripeSubscriptionId}`;
+
+    const bodyHash =
+      controlBodyHash(
+        rawBody,
+      );
 
     const existing =
       await prisma.subscription.findUnique({
@@ -209,53 +176,201 @@ export async function POST(request: Request) {
             DOMAIN_RETENTION_DAYS,
           );
 
-    await prisma.$transaction(async (tx) => {
-      await tx.subscription.update({
-        where: {
-          id: existing.id,
-        },
-        data: {
-          planId: plan.id,
-          status,
-          currentPeriodStart:
-            optionalDate(
-              body.currentPeriodStart,
-            ),
-          currentPeriodEnd:
-            optionalDate(
-              body.currentPeriodEnd,
-            ),
-          trialEndsAt:
-            null,
-          cancelAtPeriodEnd:
-            body.cancelAtPeriodEnd === true,
-        },
-      });
+    const result =
+      await prisma.$transaction(
+        async (tx) => {
+          /*
+           * Serialize state for this Stripe subscription across all runtime
+           * instances.
+           */
+          await tx.$executeRaw`
+            SELECT pg_advisory_xact_lock(
+              hashtext(${controlSubject})
+            )
+          `;
 
-      if (publicAccess) {
-        await tx.domain.updateMany({
-          where: {
-            siteId: existing.siteId!,
-            releasedAt: null,
-          },
-          data: {
-            blockedAt: null,
-            releaseAt: null,
-          },
-        });
-      } else {
-        await tx.domain.updateMany({
-          where: {
-            siteId: existing.siteId!,
-            releasedAt: null,
-          },
-          data: {
-            blockedAt: now,
-            releaseAt,
-          },
-        });
-      }
-    });
+          const current =
+            await tx.subscription
+              .findUnique({
+                where: {
+                  id:
+                    existing.id,
+                },
+
+                select: {
+                  controlVersion:
+                    true,
+                },
+              });
+
+          if (!current) {
+            throw new Error(
+              "Runtime subscription disappeared during sync.",
+            );
+          }
+
+          if (
+            verified.protocol ===
+              "v2"
+          ) {
+            const duplicate =
+              await tx.controlEvent
+                .findUnique({
+                  where: {
+                    eventId:
+                      verified.eventId,
+                  },
+                });
+
+            if (duplicate) {
+              return {
+                ignored:
+                  true,
+                reason:
+                  "duplicate",
+              } as const;
+            }
+
+            if (
+              verified.sequence <=
+              current.controlVersion
+            ) {
+              await tx.controlEvent
+                .create({
+                  data: {
+                    source:
+                      "hub",
+
+                    eventId:
+                      verified.eventId,
+
+                    subject:
+                      controlSubject,
+
+                    sequence:
+                      verified.sequence,
+
+                    bodyHash,
+
+                    processedAt:
+                      new Date(),
+                  },
+                });
+
+              return {
+                ignored:
+                  true,
+                reason:
+                  "stale",
+              } as const;
+            }
+          }
+
+          await tx.subscription.update({
+            where: {
+              id: existing.id,
+            },
+            data: {
+              planId: plan.id,
+              status,
+              currentPeriodStart:
+                optionalDate(
+                  body.currentPeriodStart,
+                ),
+              currentPeriodEnd:
+                optionalDate(
+                  body.currentPeriodEnd,
+                ),
+              trialEndsAt:
+                null,
+              cancelAtPeriodEnd:
+                body.cancelAtPeriodEnd ===
+                true,
+
+              ...(
+                verified.protocol ===
+                  "v2"
+                  ? {
+                      controlVersion:
+                        verified.sequence,
+                    }
+                  : {}
+              ),
+            },
+          });
+
+          if (publicAccess) {
+            await tx.domain.updateMany({
+              where: {
+                siteId:
+                  existing.siteId!,
+                releasedAt: null,
+              },
+              data: {
+                blockedAt: null,
+                releaseAt: null,
+              },
+            });
+          } else {
+            await tx.domain.updateMany({
+              where: {
+                siteId:
+                  existing.siteId!,
+                releasedAt: null,
+              },
+              data: {
+                blockedAt: now,
+                releaseAt,
+              },
+            });
+          }
+
+          if (
+            verified.protocol ===
+              "v2"
+          ) {
+            await tx.controlEvent
+              .create({
+                data: {
+                  source:
+                    "hub",
+
+                  eventId:
+                    verified.eventId,
+
+                  subject:
+                    controlSubject,
+
+                  sequence:
+                    verified.sequence,
+
+                  bodyHash,
+
+                  processedAt:
+                    new Date(),
+                },
+              });
+          }
+
+          return {
+            ignored:
+              false,
+            reason:
+              null,
+          } as const;
+        },
+      );
+
+    if (result.ignored) {
+      return NextResponse.json({
+        ok: true,
+        skipped: true,
+        reason:
+          result.reason,
+        publicAccess,
+        status,
+      });
+    }
 
     return NextResponse.json({
       ok: true,
