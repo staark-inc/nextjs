@@ -68,6 +68,8 @@ export default async function SearchConsolePage() {
           <p className="sa-subtitle">
             See how customers find your
             website in Google Search.
+            Connection settings are managed
+            under Integrations.
           </p>
         </div>
       </section>

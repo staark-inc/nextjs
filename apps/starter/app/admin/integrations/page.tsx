@@ -269,29 +269,13 @@ export default async function IntegrationsPage() {
             style={{
               marginTop:
                 18,
-
-              display:
-                "flex",
-
-              flexWrap:
-                "wrap",
-
-              gap:
-                10,
             }}
           >
             <Link
-              href="/admin/analytics/google"
+              href="/admin/integrations/google"
               className="sa-btn"
             >
-              Google Analytics
-            </Link>
-
-            <Link
-              href="/admin/search-console"
-              className="sa-btn sa-btn--ghost"
-            >
-              Search Console
+              Manage Google services
             </Link>
           </div>
         </section>
