@@ -434,7 +434,272 @@ export default function SearchConsoleForm({
   }
 
   return (
-    <section className="sa-card">
+    <>
+      <details className="sa-card sa-ga4-guide">
+        <summary className="sa-ga4-guide__summary">
+          <span>
+            <span className="sa-card__eyebrow">
+              Setup guide
+            </span>
+
+            <strong>
+              How to connect Google Search Console
+            </strong>
+
+            <small>
+              Verify the website and give Staark
+              reporting access in a few steps.
+            </small>
+          </span>
+
+          <span
+            className="sa-ga4-guide__chevron"
+            aria-hidden="true"
+          >
+            ↓
+          </span>
+        </summary>
+
+        <div className="sa-ga4-guide__content">
+          <ol className="sa-ga4-guide__steps">
+            <li>
+              <span className="sa-ga4-guide__number">
+                1
+              </span>
+
+              <div>
+                <strong>
+                  Open Google Search Console
+                </strong>
+
+                <p>
+                  Sign in to Google Search Console
+                  with the Google account that
+                  should own this website.
+                </p>
+
+                <p>
+                  Add a new property for this
+                  website if it does not already
+                  exist.
+                </p>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                2
+              </span>
+
+              <div>
+                <strong>
+                  Choose the property type
+                </strong>
+
+                <p>
+                  For the simplest Staark setup,
+                  choose a URL-prefix property and
+                  enter the exact public website
+                  address.
+                </p>
+
+                <div className="sa-ga4-guide__example">
+                  Example:
+                  <code>
+                    https://example.com/
+                  </code>
+                </div>
+
+                <p>
+                  If you choose a Domain property,
+                  Google will require DNS
+                  verification instead.
+                </p>
+
+                <div className="sa-ga4-guide__example">
+                  Domain example:
+                  <code>
+                    sc-domain:example.com
+                  </code>
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                3
+              </span>
+
+              <div>
+                <strong>
+                  Verify ownership
+                </strong>
+
+                {type === "domain" ? (
+                  <>
+                    <p>
+                      This property uses DNS
+                      verification.
+                    </p>
+
+                    <p>
+                      Copy the TXT record provided
+                      by Google and add it to the
+                      domain&apos;s DNS settings.
+                      Then return to Search Console
+                      and press
+                      <strong> Verify</strong>.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      For a URL-prefix property,
+                      choose
+                      <strong> HTML file</strong>
+                      in Google Search Console.
+                    </p>
+
+                    <p>
+                      Download the
+                      googleXXXXXXXX.html file and
+                      upload it below in Staark.
+                    </p>
+
+                    <p>
+                      After Staark shows the file as
+                      live, return to Google Search
+                      Console and press
+                      <strong> Verify</strong>.
+                    </p>
+                  </>
+                )}
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                4
+              </span>
+
+              <div>
+                <strong>
+                  Give Staark access
+                </strong>
+
+                <p>
+                  After Google confirms ownership,
+                  open Search Console:
+                </p>
+
+                <p>
+                  Settings → Users and permissions
+                  → Add user
+                </p>
+
+                <p>
+                  Add the Staark service account
+                  shown below.
+                </p>
+
+                <div className="sa-ga4-guide__service-account">
+                  <span>
+                    Staark service account
+                  </span>
+
+                  <code>
+                    {clientEmail ??
+                      "Service account unavailable"}
+                  </code>
+                </div>
+
+                <p className="sa-note">
+                  Staark only needs access to read
+                  Search Console performance data.
+                </p>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                5
+              </span>
+
+              <div>
+                <strong>
+                  Enter the property in Staark
+                </strong>
+
+                <p>
+                  Paste the exact Search Console
+                  property identifier into the
+                  Property field below.
+                </p>
+
+                <p>
+                  Use the exact same format that
+                  Google Search Console shows.
+                </p>
+
+                <div className="sa-ga4-guide__example">
+                  URL-prefix:
+                  <code>
+                    https://example.com/
+                  </code>
+                </div>
+
+                <div className="sa-ga4-guide__example">
+                  Domain:
+                  <code>
+                    sc-domain:example.com
+                  </code>
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <span className="sa-ga4-guide__number">
+                6
+              </span>
+
+              <div>
+                <strong>
+                  Connect and verify access
+                </strong>
+
+                <p>
+                  Enable Search Console and press
+                  <strong>
+                    {" "}Connect &amp; verify access
+                  </strong>.
+                </p>
+
+                <p>
+                  Staark will check that its service
+                  account can access the property
+                  before loading search performance
+                  data.
+                </p>
+              </div>
+            </li>
+          </ol>
+
+          <div className="sa-ga4-guide__done">
+            <strong>
+              Done
+            </strong>
+
+            <span>
+              Once connected, clicks, impressions,
+              CTR, average position, search queries
+              and top pages will appear in the
+              Search Console dashboard.
+            </span>
+          </div>
+        </div>
+      </details>
+
+      <section className="sa-card">
       <div className="sa-card__header">
         <p className="sa-card__eyebrow">
           Connection
@@ -750,5 +1015,6 @@ export default function SearchConsoleForm({
         ) : null}
       </div>
     </section>
+    </>
   );
 }
