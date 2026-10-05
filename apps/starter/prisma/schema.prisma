@@ -106,6 +106,7 @@ model PageRevision {
   page Page @relation(fields: [siteId, pageId], references: [siteId, id], onDelete: Cascade, map: "page_revisions_site_id_page_id_fkey")
 
   @@index([siteId, pageId, createdAt], map: "page_revisions_site_id_page_id_created_at_idx")
+  @@index([siteId, createdAt], map: "page_revisions_site_id_created_at_idx")
   @@map("page_revisions")
 }
 
@@ -190,6 +191,7 @@ model Submission {
   activities SubmissionActivity[]
 
   @@id([siteId, id], map: "submissions_pkey")
+  @@index([siteId, receivedAt, id], map: "submissions_site_id_received_at_id_idx")
   @@index([siteId, kind, status, receivedAt], map: "submissions_site_id_kind_status_received_at_idx")
   @@index([siteId, bookingStatus, receivedAt], map: "submissions_site_id_booking_status_received_at_idx")
   @@map("submissions")
@@ -449,6 +451,7 @@ model Automation {
 
   @@index([siteId, enabled], map: "automations_site_id_enabled_idx")
   @@index([siteId, trigger], map: "automations_site_id_trigger_idx")
+  @@index([siteId, enabled, trigger, createdAt], map: "automations_site_id_enabled_trigger_created_at_idx")
   @@map("automations")
 }
 

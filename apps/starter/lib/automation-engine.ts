@@ -42,6 +42,26 @@ type Rule = {
   actionConfig: unknown;
 };
 
+function isUniqueConstraintError(
+  error: unknown,
+): boolean {
+  if (
+    !error ||
+    typeof error !== "object"
+  ) {
+    return false;
+  }
+
+  return (
+    "code" in error &&
+    (
+      error as {
+        code?: unknown;
+      }
+    ).code === "P2002"
+  );
+}
+
 function objectRecord(
   value: unknown,
 ): Record<string, unknown> {
@@ -59,13 +79,9 @@ async function automationFeatureEnabled(
     getPrismaClient();
 
   const subscription =
-    await prisma.subscription.findFirst({
+    await prisma.subscription.findUnique({
       where: {
         siteId,
-      },
-
-      orderBy: {
-        createdAt: "desc",
       },
 
       select: {
@@ -671,27 +687,6 @@ export async function runAutomationEvent(
       continue;
     }
 
-    const existing =
-      await prisma.automationRun.findUnique({
-        where: {
-          automationId_eventKey: {
-            automationId:
-              rule.id,
-
-            eventKey:
-              event.eventKey,
-          },
-        },
-
-        select: {
-          id: true,
-        },
-      });
-
-    if (existing) {
-      continue;
-    }
-
     let run:
       { id: string };
 
@@ -721,13 +716,22 @@ export async function runAutomationEvent(
             id: true,
           },
         });
-    } catch {
+    } catch (error) {
       /*
-       * The unique automation/event key is the idempotency barrier.
-       * A concurrent worker may have created the same run between
-       * findUnique() and create().
+       * automationId + eventKey is the idempotency barrier.
+       *
+       * Do not preflight with SELECT: the unique constraint itself is
+       * authoritative and avoids one database round-trip per matching rule.
        */
-      continue;
+      if (
+        isUniqueConstraintError(
+          error,
+        )
+      ) {
+        continue;
+      }
+
+      throw error;
     }
 
     await executeRun(
