@@ -1,12 +1,17 @@
 import {
-  readStateText,
-  writeStateText,
-} from "./storage";
+  createStaarkLogger,
+  createStorageLogSink,
+  createStorageLogStore,
+  type StaarkLogLevel,
+  type StaarkLogMetaValue,
+} from "@staark/logs/server";
 
 export type AdminLogLevel =
+  | "debug"
   | "info"
   | "warning"
-  | "error";
+  | "error"
+  | "critical";
 
 export type AdminLogEntry = {
   id: string;
@@ -16,151 +21,517 @@ export type AdminLogEntry = {
   action: string;
   message: string;
   actor: string;
-  meta?: Record<string, string | number | boolean | null>;
+  meta?: Record<
+    string,
+    StaarkLogMetaValue
+  >;
 };
 
-const LOG_FILE = "application-logs.jsonl";
-const MAX_STORED_LOGS = 1000;
+export type AdminLogQuery = {
+  limit?: number;
+  level?: AdminLogLevel;
+  area?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+};
 
-function makeId(): string {
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
+export type AdminLogStats = {
+  files: number;
+  entries: number;
+  critical: number;
+  errors: number;
+  warnings: number;
+  info: number;
+  debug: number;
+  malformedLines: number;
+  oldestTimestamp: string | null;
+  newestTimestamp: string | null;
+};
+
+const store =
+  createStorageLogStore();
+
+const logger =
+  createStaarkLogger({
+    context: {
+      source: "admin",
+    },
+
+    sink:
+      createStorageLogSink(
+        store,
+      ),
+  });
+
+function normalizeLevel(
+  level:
+    | AdminLogLevel
+    | undefined,
+): StaarkLogLevel {
+  switch (level) {
+    case "debug":
+    case "warning":
+    case "error":
+    case "critical":
+      return level;
+
+    default:
+      return "info";
+  }
 }
 
-function parseLogs(raw: string | null): AdminLogEntry[] {
-  if (!raw?.trim()) return [];
+function metaValue(
+  value: unknown,
+): StaarkLogMetaValue | undefined {
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
 
-  const result: AdminLogEntry[] = [];
+  return undefined;
+}
 
-  for (const line of raw.split("\n")) {
-    if (!line.trim()) continue;
+function mapEntry(
+  entry: Awaited<
+    ReturnType<
+      typeof store.list
+    >
+  >[number],
+): AdminLogEntry {
+  const rawArea =
+    entry.meta?.area;
 
-    try {
-      const parsed =
-        JSON.parse(line) as Partial<AdminLogEntry>;
+  const rawAction =
+    entry.meta?.action;
 
-      if (
-        typeof parsed.id !== "string" ||
-        typeof parsed.at !== "string" ||
-        typeof parsed.level !== "string" ||
-        typeof parsed.area !== "string" ||
-        typeof parsed.action !== "string" ||
-        typeof parsed.message !== "string"
-      ) {
-        continue;
-      }
+  const rawActor =
+    entry.meta?.actor;
 
-      result.push({
-        id: parsed.id,
-        at: parsed.at,
-        level:
-          parsed.level === "error"
-            ? "error"
-            : parsed.level === "warning"
-              ? "warning"
-              : "info",
-        area: parsed.area,
-        action: parsed.action,
-        message: parsed.message,
-        actor:
-          typeof parsed.actor === "string"
-            ? parsed.actor
-            : "system",
-        ...(parsed.meta &&
-        typeof parsed.meta === "object" &&
-        !Array.isArray(parsed.meta)
-          ? {
-              meta: parsed.meta as Record<
-                string,
-                string | number | boolean | null
-              >,
-            }
-          : {}),
-      });
-    } catch {
-      // Ignore malformed historical lines.
+  const area =
+    typeof rawArea ===
+      "string"
+      ? rawArea
+      : entry.source;
+
+  const action =
+    typeof rawAction ===
+      "string"
+      ? rawAction
+      : entry.event;
+
+  const actor =
+    typeof rawActor ===
+      "string"
+      ? rawActor
+      : entry.actor?.type ??
+        "system";
+
+  const {
+    area: _area,
+    action: _action,
+    actor: _actor,
+    ...restMeta
+  } =
+    entry.meta ?? {};
+
+  return {
+    id: entry.id,
+    at: entry.timestamp,
+    level: entry.level,
+    area,
+    action,
+    message:
+      entry.message,
+    actor,
+
+    ...(Object.keys(
+      restMeta,
+    ).length
+      ? {
+          meta:
+            restMeta,
+        }
+      : {}),
+  };
+}
+
+function parseDateBoundary(
+  value: string | undefined,
+  endOfDay = false,
+): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed =
+    value.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      trimmed,
+    )
+  ) {
+    return endOfDay
+      ? `${trimmed}T23:59:59.999Z`
+      : `${trimmed}T00:00:00.000Z`;
+  }
+
+  const parsed =
+    new Date(trimmed);
+
+  if (
+    Number.isNaN(
+      parsed.getTime(),
+    )
+  ) {
+    return undefined;
+  }
+
+  return parsed.toISOString();
+}
+
+function matchesAdminQuery(
+  item: AdminLogEntry,
+  query: AdminLogQuery,
+): boolean {
+  if (
+    query.level &&
+    item.level !== query.level
+  ) {
+    return false;
+  }
+
+  const area =
+    query.area
+      ?.trim()
+      .toLowerCase();
+
+  if (
+    area &&
+    item.area.toLowerCase() !== area
+  ) {
+    return false;
+  }
+
+  const search =
+    query.search
+      ?.trim()
+      .toLowerCase();
+
+  if (search) {
+    const haystack = [
+      item.id,
+      item.level,
+      item.area,
+      item.action,
+      item.message,
+      item.actor,
+      item.meta
+        ? JSON.stringify(
+            item.meta,
+          )
+        : "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    if (
+      !haystack.includes(
+        search,
+      )
+    ) {
+      return false;
     }
   }
 
-  return result;
+  return true;
 }
 
-export async function appendAdminLog(input: {
-  level?: AdminLogLevel;
-  area: string;
-  action: string;
-  message: string;
-  actor?: string;
-  meta?: Record<
-    string,
-    string | number | boolean | null | undefined
-  >;
-}): Promise<void> {
+export async function appendAdminLog(
+  input: {
+    level?: AdminLogLevel;
+    area: string;
+    action: string;
+    message: string;
+    actor?: string;
+    actorRole?:
+      | "client"
+      | "manager"
+      | "system";
+    meta?: Record<
+      string,
+      string | number | boolean | null | undefined
+    >;
+  },
+): Promise<void> {
   try {
-    const current = parseLogs(
-      await readStateText(LOG_FILE),
-    );
+    const area =
+      input.area.trim() ||
+      "system";
 
-    const cleanMeta = input.meta
-      ? Object.fromEntries(
-          Object.entries(input.meta).filter(
+    const action =
+      input.action.trim() ||
+      "event";
+
+    const extraMeta =
+      input.meta
+        ? Object.fromEntries(
+            Object.entries(
+              input.meta,
+            )
+              .map(
+                ([key, value]) =>
+                  [
+                    key,
+                    metaValue(
+                      value,
+                    ),
+                  ] as const,
+              )
+              .filter(
+                (
+                  entry,
+                ): entry is [
+                  string,
+                  StaarkLogMetaValue,
+                ] =>
+                  entry[1] !==
+                  undefined,
+              ),
+          )
+        : {};
+
+    await logger.log(
+      normalizeLevel(
+        input.level,
+      ),
+      {
+        source: "admin",
+
+        event:
+          `${area}.${action}`,
+
+        message:
+          input.message,
+
+        actor: {
+          type:
+            input.actorRole ??
             (
-              entry,
-            ): entry is [
-              string,
-              string | number | boolean | null,
-            ] => entry[1] !== undefined,
-          ),
-        )
-      : undefined;
+              input.actor &&
+              input.actor !==
+                "system"
+                ? "manager"
+                : "system"
+            ),
+        },
 
-    const entry: AdminLogEntry = {
-      id: makeId(),
-      at: new Date().toISOString(),
-      level: input.level ?? "info",
-      area: input.area.trim() || "system",
-      action: input.action.trim() || "event",
-      message: input.message.trim().slice(0, 1000),
-      actor: input.actor?.trim() || "admin",
-      ...(cleanMeta &&
-      Object.keys(cleanMeta).length
-        ? { meta: cleanMeta }
-        : {}),
-    };
-
-    const next = [
-      ...current,
-      entry,
-    ].slice(-MAX_STORED_LOGS);
-
-    await writeStateText(
-      LOG_FILE,
-      `${next
-        .map((item) => JSON.stringify(item))
-        .join("\n")}\n`,
+        meta: {
+          area,
+          action,
+          actor:
+            input.actor?.trim() ||
+            "admin",
+          ...extraMeta,
+        },
+      },
     );
   } catch (error) {
-    // Logging must never break the operation being logged.
     console.error(
       "[staark] Could not persist application log:",
-      (error as Error).message,
+      error instanceof Error
+        ? error.message
+        : String(error),
     );
   }
 }
 
 export async function listAdminLogs(
-  limit = 200,
+  limitOrQuery:
+    | number
+    | AdminLogQuery = 200,
 ): Promise<AdminLogEntry[]> {
-  const logs = parseLogs(
-    await readStateText(LOG_FILE),
-  );
+  const query:
+    AdminLogQuery =
+    typeof limitOrQuery ===
+      "number"
+      ? {
+          limit:
+            limitOrQuery,
+        }
+      : limitOrQuery;
 
-  return logs
-    .slice(-Math.max(1, Math.min(limit, 500)))
-    .reverse();
+  const limit =
+    Math.max(
+      1,
+      Math.min(
+        query.limit ?? 200,
+        5_000,
+      ),
+    );
+
+  /*
+   * Load some headroom because area/action/search
+   * are compatibility metadata and are filtered
+   * after mapping the structured store entry.
+   */
+  const raw =
+    await store.list({
+      limit:
+        Math.min(
+          Math.max(
+            limit * 8,
+            500,
+          ),
+          5_000,
+        ),
+
+      ...(query.level
+        ? {
+            levels: [
+              query.level,
+            ],
+          }
+        : {}),
+
+      ...(parseDateBoundary(
+        query.from,
+      )
+        ? {
+            from:
+              parseDateBoundary(
+                query.from,
+              ),
+          }
+        : {}),
+
+      ...(parseDateBoundary(
+        query.to,
+        true,
+      )
+        ? {
+            to:
+              parseDateBoundary(
+                query.to,
+                true,
+              ),
+          }
+        : {}),
+    });
+
+  return raw
+    .map(mapEntry)
+    .filter(
+      (item) =>
+        matchesAdminQuery(
+          item,
+          query,
+        ),
+    )
+    .slice(
+      0,
+      limit,
+    );
 }
 
-export async function clearAdminLogs(): Promise<void> {
-  await writeStateText(LOG_FILE, "");
+export async function getAdminLogStats(
+  query: Pick<
+    AdminLogQuery,
+    "from" | "to"
+  > = {},
+): Promise<AdminLogStats> {
+  const stats =
+    await store.stats({
+      ...(parseDateBoundary(
+        query.from,
+      )
+        ? {
+            from:
+              parseDateBoundary(
+                query.from,
+              ),
+          }
+        : {}),
+
+      ...(parseDateBoundary(
+        query.to,
+        true,
+      )
+        ? {
+            to:
+              parseDateBoundary(
+                query.to,
+                true,
+              ),
+          }
+        : {}),
+    });
+
+  return {
+    files:
+      stats.files,
+
+    entries:
+      stats.entries,
+
+    critical:
+      stats.critical,
+
+    errors:
+      stats.error,
+
+    warnings:
+      stats.warning,
+
+    info:
+      stats.info,
+
+    debug:
+      stats.debug,
+
+    malformedLines:
+      stats.malformedLines,
+
+    oldestTimestamp:
+      stats.oldestTimestamp,
+
+    newestTimestamp:
+      stats.newestTimestamp,
+  };
+}
+
+export async function listAdminLogAreas():
+  Promise<string[]> {
+  const logs =
+    await listAdminLogs({
+      limit: 5_000,
+    });
+
+  return Array.from(
+    new Set(
+      logs
+        .map(
+          (item) =>
+            item.area.trim(),
+        )
+        .filter(Boolean),
+    ),
+  ).sort(
+    (a, b) =>
+      a.localeCompare(b),
+  );
+}
+
+export async function clearAdminLogs():
+  Promise<void> {
+  await store.clear();
 }

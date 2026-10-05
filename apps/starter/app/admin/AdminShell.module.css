@@ -220,6 +220,18 @@
   cursor: pointer;
 }
 
+.profileLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.profileLink:hover,
+.profileLink:focus-visible {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .paletteItem small {
   flex: none;
   color: var(--sa-muted);

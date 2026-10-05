@@ -180,21 +180,9 @@ export default function AdminShell({
 
   const navItems = useMemo(
     () =>
-      getAdminNavItems(activeWebsiteType)
+      getAdminNavItems(activeWebsiteType, role)
         .filter((item) =>
           visibleFeatures.includes(item.feature),
-        )
-        .map((item) =>
-          role === "client" &&
-          item.href === "/admin/themes"
-            ? {
-                ...item,
-                label: "Design",
-                description: "Colors & style",
-                keywords:
-                  "design colors typography style appearance",
-              }
-            : item,
         ),
     [
       activeWebsiteType,
@@ -479,7 +467,9 @@ export default function AdminShell({
         <div className="sa-sidebar__user sa-sidebar__user--v2">
           <div className="sa-sidebar__avatar">{username[0]?.toUpperCase() ?? "A"}</div>
           <div className="sa-sidebar__user-copy">
-            <strong>{username}</strong>
+            <strong>
+              <Link className={styles.profileLink} href="/admin/profile">{username}</Link>
+            </strong>
             <small>{role === "manager" ? "Manager account" : "Client account"}</small>
             <span className={sessionEndingSoon ? styles.sessionWarning : undefined}>
               {sessionEndingSoon ? `Session ends in ${formatRemaining(remainingMs)}` : `Signed in · ${formatRemaining(remainingMs)} left`}
@@ -571,6 +561,7 @@ export default function AdminShell({
         <CommandPalette
           websiteType={activeWebsiteType}
           features={visibleFeatures}
+          role={role}
           onClose={() => setPaletteOpen(false)}
         />
       ) : null}

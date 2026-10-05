@@ -1,12 +1,23 @@
 import type { AdminFeature } from "@/lib/admin-features";
 import type { WebsiteType } from "@staark/core";
+import type { AdminRole } from "@staark/platform/server";
 import {
   resolveClientNavigation,
   resolveWebsiteProfile,
   supportsServicesCatalog,
 } from "@/lib/website-profile";
 
-export type AdminNavGroup = "Overview" | "Business" | "Website" | "Growth" | "System";
+export type AdminNavGroup =
+  | "Overview"
+  | "Business"
+  | "Website"
+  | "Growth"
+  | "Settings"
+  | "Diagnostics"
+  | "Content & SEO"
+  | "Infrastructure"
+  | "Configuration"
+  | "System";
 
 export type AdminNavItem = {
   href: string;
@@ -23,7 +34,137 @@ export type AdminNavItem = {
 
 export const SEARCH_ICON = "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm5-2 5 5";
 
-export const adminNavGroups: AdminNavGroup[] = ["Overview", "Business", "Website", "Growth", "System"];
+export const adminNavGroups: AdminNavGroup[] = [
+  "Overview",
+  "Business",
+  "Website",
+  "Growth",
+  "Settings",
+  "Diagnostics",
+  "Content & SEO",
+  "Infrastructure",
+  "Configuration",
+  "System",
+];
+
+const CLIENT_HIDDEN_ROUTES = new Set([
+  "/admin/updates",
+  "/admin/redirects",
+  "/admin/health",
+  "/admin/backups",
+  "/admin/logs",
+  "/admin/profile",
+]);
+
+const CLIENT_SETTINGS_ROUTES = new Set([
+  "/admin/site",
+  "/admin/domains",
+  "/admin/integrations",
+  "/admin/privacy",
+  "/admin/plan",
+]);
+
+/*
+ * Manager navigation is deliberately not "client navigation + more".
+ *
+ * Staark Manager uses the tenant admin as an operational console:
+ * inspect, diagnose, configure and repair. Customer day-to-day workflows
+ * remain reachable through direct routes / command palette when needed,
+ * but they do not occupy the Manager sidebar.
+ */
+const MANAGER_HIDDEN_ROUTES = new Set([
+  "/admin/updates",
+  "/admin/forms",
+  "/admin/bookings",
+  "/admin/services",
+  "/admin/navigation",
+  "/admin/automations",
+  "/admin/privacy",
+  "/admin/profile",
+]);
+
+const MANAGER_NAV_OVERRIDES: Record<
+  string,
+  Partial<
+    Pick<
+      AdminNavItem,
+      "label" | "description" | "group" | "keywords"
+    >
+  >
+> = {
+  "/admin": {
+    label: "Technical overview",
+    description: "Runtime & tenant status",
+    group: "Overview",
+    keywords: "technical overview runtime tenant status dashboard",
+  },
+  "/admin/health": {
+    label: "Site Health",
+    description: "Diagnostics & integrity",
+    group: "Diagnostics",
+  },
+  "/admin/logs": {
+    label: "Logs",
+    description: "Application events",
+    group: "Diagnostics",
+  },
+  "/admin/analytics": {
+    label: "Analytics diagnostics",
+    description: "Traffic & tracking",
+    group: "Diagnostics",
+  },
+  "/admin/pages": {
+    label: "Pages",
+    description: "Content inspection",
+    group: "Content & SEO",
+  },
+  "/admin/media": {
+    label: "Media",
+    description: "Assets & usage",
+    group: "Content & SEO",
+  },
+  "/admin/seo": {
+    label: "SEO diagnostics",
+    description: "Search visibility & issues",
+    group: "Content & SEO",
+  },
+  "/admin/redirects": {
+    label: "Redirects",
+    description: "URL routing",
+    group: "Content & SEO",
+  },
+  "/admin/domains": {
+    label: "Domains",
+    description: "DNS & hostnames",
+    group: "Infrastructure",
+  },
+  "/admin/integrations": {
+    label: "Integrations",
+    description: "Connected services",
+    group: "Infrastructure",
+  },
+  "/admin/backups": {
+    label: "Backups",
+    description: "Restore & recovery",
+    group: "Infrastructure",
+  },
+  "/admin/themes": {
+    label: "Theme runtime",
+    description: "Theme family & presets",
+    group: "Configuration",
+    keywords: "theme runtime design studio preset colors fonts",
+  },
+  "/admin/site": {
+    label: "Site settings",
+    description: "Tenant configuration",
+    group: "Configuration",
+  },
+  "/admin/plan": {
+    label: "Plan & usage",
+    description: "Subscription & limits",
+    group: "Configuration",
+  },
+};
 
 const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
@@ -228,20 +369,47 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
 ];
 
-export function getAdminNavItems(websiteType: WebsiteType): AdminNavItem[] {
+export function getAdminNavItems(
+  websiteType: WebsiteType,
+  role: AdminRole = "manager",
+): AdminNavItem[] {
   const profile = resolveWebsiteProfile(websiteType);
   const copy = resolveClientNavigation(websiteType);
+  const client = role === "client";
+  const manager = role === "manager";
 
   return BASE_ADMIN_NAV_ITEMS
     .filter(
       (item) =>
-        item.feature !== "services" ||
-        supportsServicesCatalog(websiteType),
+        (item.feature !== "services" ||
+          supportsServicesCatalog(websiteType)) &&
+        (!client || !CLIENT_HIDDEN_ROUTES.has(item.href)) &&
+        (!manager || !MANAGER_HIDDEN_ROUTES.has(item.href)),
     )
     .map((item) => {
+    let contextualItem: AdminNavItem =
+      client && CLIENT_SETTINGS_ROUTES.has(item.href)
+        ? {
+            ...item,
+            group: "Settings",
+          }
+        : item;
+
+    const managerOverride =
+      manager
+        ? MANAGER_NAV_OVERRIDES[item.href]
+        : undefined;
+
+    if (managerOverride) {
+      contextualItem = {
+        ...contextualItem,
+        ...managerOverride,
+      };
+    }
+
     if (item.href === "/admin/forms") {
       return {
-        ...item,
+        ...contextualItem,
         label: copy.inboxLabel,
         description: copy.inboxDescription,
         keywords: profile.inboxKeywords,
@@ -250,13 +418,31 @@ export function getAdminNavItems(websiteType: WebsiteType): AdminNavItem[] {
 
     if (item.href === "/admin/bookings") {
       return {
-        ...item,
+        ...contextualItem,
         label: copy.bookingLabel,
         description: copy.bookingDescription,
       };
     }
 
-    return item;
+    if (client && item.href === "/admin/themes") {
+      return {
+        ...contextualItem,
+        label: "Design",
+        description: "Colors & style",
+        keywords: "design colors typography style appearance theme",
+      };
+    }
+
+    if (client && item.href === "/admin/site") {
+      return {
+        ...contextualItem,
+        label: "Site settings",
+        description: "Business details",
+        keywords: "site settings business contact opening hours address name",
+      };
+    }
+
+    return contextualItem;
   });
 }
 
@@ -265,7 +451,8 @@ export function getAdminNavGroups(items: AdminNavItem[]): AdminNavGroup[] {
 }
 
 /** Backwards-compatible business defaults. */
-export const adminNavItems: AdminNavItem[] = getAdminNavItems("business");
+export const adminNavItems: AdminNavItem[] =
+  getAdminNavItems("business", "manager");
 
 export function isNavActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === href;

@@ -1,15 +1,80 @@
 import Link from "next/link";
 import {
+  redirect,
+} from "next/navigation";
+
+import {
+  getSession,
+  isSessionActive,
+} from "@/lib/auth";
+
+import {
+  getAdminLogStats,
+  listAdminLogAreas,
   listAdminLogs,
+  type AdminLogLevel,
 } from "@/lib/admin-logs";
+
 import styles from "./page.module.css";
 
-export const dynamic = "force-dynamic";
+export const dynamic =
+  "force-dynamic";
 
-function formatDate(iso: string): string {
-  const date = new Date(iso);
+type SearchParams =
+  Promise<
+    Record<
+      string,
+      string |
+      string[] |
+      undefined
+    >
+  >;
 
-  if (Number.isNaN(date.getTime())) {
+const LEVELS:
+  AdminLogLevel[] = [
+    "critical",
+    "error",
+    "warning",
+    "info",
+    "debug",
+  ];
+
+function firstValue(
+  value:
+    | string
+    | string[]
+    | undefined,
+): string {
+  if (
+    Array.isArray(value)
+  ) {
+    return value[0] ?? "";
+  }
+
+  return value ?? "";
+}
+
+function validLevel(
+  value: string,
+): AdminLogLevel | undefined {
+  return LEVELS.includes(
+    value as AdminLogLevel,
+  )
+    ? value as AdminLogLevel
+    : undefined;
+}
+
+function formatDate(
+  iso: string,
+): string {
+  const date =
+    new Date(iso);
+
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
     return iso;
   }
 
@@ -30,22 +95,160 @@ function formatDate(iso: string): string {
   )}`;
 }
 
-export default async function LogsPage() {
-  const logs = await listAdminLogs(250);
+function exportHref(
+  params: {
+    level?: string;
+    area?: string;
+    q?: string;
+    from?: string;
+    to?: string;
+  },
+): string {
+  const search =
+    new URLSearchParams();
 
-  const counts = {
-    errors: logs.filter(
-      (item) => item.level === "error",
-    ).length,
+  for (
+    const [key, value]
+    of Object.entries(
+      params,
+    )
+  ) {
+    if (
+      value?.trim()
+    ) {
+      search.set(
+        key,
+        value.trim(),
+      );
+    }
+  }
 
-    warnings: logs.filter(
-      (item) => item.level === "warning",
-    ).length,
+  const query =
+    search.toString();
 
-    info: logs.filter(
-      (item) => item.level === "info",
-    ).length,
-  };
+  return query
+    ? `/api/admin/logs/export?${query}`
+    : "/api/admin/logs/export";
+}
+
+export default async function LogsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const session =
+    await getSession();
+
+  if (
+    !isSessionActive(
+      session,
+    )
+  ) {
+    redirect(
+      "/admin/login",
+    );
+  }
+
+  /*
+   * Logs are an operational Manager feature.
+   * Client users should not be able to open
+   * the page by manually entering the URL.
+   */
+  if (
+    session.role !==
+    "manager"
+  ) {
+    redirect(
+      "/admin",
+    );
+  }
+
+  const raw =
+    await searchParams;
+
+  const level =
+    validLevel(
+      firstValue(
+        raw.level,
+      ),
+    );
+
+  const area =
+    firstValue(
+      raw.area,
+    ).trim();
+
+  const search =
+    firstValue(
+      raw.q,
+    ).trim();
+
+  const from =
+    firstValue(
+      raw.from,
+    ).trim();
+
+  const to =
+    firstValue(
+      raw.to,
+    ).trim();
+
+  const [
+    logs,
+    stats,
+    areas,
+  ] =
+    await Promise.all([
+      listAdminLogs({
+        limit: 250,
+        ...(level
+          ? { level }
+          : {}),
+        ...(area
+          ? { area }
+          : {}),
+        ...(search
+          ? {
+              search,
+            }
+          : {}),
+        ...(from
+          ? { from }
+          : {}),
+        ...(to
+          ? { to }
+          : {}),
+      }),
+
+      getAdminLogStats({
+        ...(from
+          ? { from }
+          : {}),
+        ...(to
+          ? { to }
+          : {}),
+      }),
+
+      listAdminLogAreas(),
+    ]);
+
+  const filtered =
+    Boolean(
+      level ||
+      area ||
+      search ||
+      from ||
+      to,
+    );
+
+  const exportUrl =
+    exportHref({
+      level,
+      area,
+      q: search,
+      from,
+      to,
+    });
 
   return (
     <>
@@ -53,27 +256,39 @@ export default async function LogsPage() {
         <Link href="/admin">
           Dashboard
         </Link>
+
         <span>/</span>
-        <span>Logs</span>
+
+        <span>
+          Logs
+        </span>
       </div>
 
       <div className="sa-page-header">
         <div>
           <p className="sa-page-eyebrow">
-            System
+            Diagnostics
           </p>
 
           <h1 className="sa-h1">
-            Application logs
+            Manager logs
           </h1>
 
           <p className="sa-subtitle">
-            Technical events recorded by this
-            Staark installation.
+            Storage-backed technical events for
+            this tenant. Available independently
+            of the database.
           </p>
         </div>
 
         <div className="sa-page-header__actions">
+          <a
+            className="sa-btn sa-btn--ghost"
+            href={exportUrl}
+          >
+            Export JSONL
+          </a>
+
           <Link
             className="sa-btn sa-btn--ghost"
             href="/admin/health"
@@ -83,16 +298,34 @@ export default async function LogsPage() {
         </div>
       </div>
 
-      <div className="sa-stats">
+      <div
+        className={`${styles.stats} sa-stats`}
+      >
         <div className="sa-stat">
           <div className="sa-stat__label">
             Recorded
           </div>
+
           <div className="sa-stat__value">
-            {logs.length}
+            {stats.entries}
           </div>
+
           <div className="sa-stat__desc">
-            Latest events
+            Stored events
+          </div>
+        </div>
+
+        <div className={styles.criticalStat}>
+          <div className="sa-stat__label">
+            Critical
+          </div>
+
+          <div className="sa-stat__value">
+            {stats.critical}
+          </div>
+
+          <div className="sa-stat__desc">
+            Immediate attention
           </div>
         </div>
 
@@ -100,9 +333,11 @@ export default async function LogsPage() {
           <div className="sa-stat__label">
             Errors
           </div>
+
           <div className="sa-stat__value">
-            {counts.errors}
+            {stats.errors}
           </div>
+
           <div className="sa-stat__desc">
             Need attention
           </div>
@@ -112,9 +347,11 @@ export default async function LogsPage() {
           <div className="sa-stat__label">
             Warnings
           </div>
+
           <div className="sa-stat__value">
-            {counts.warnings}
+            {stats.warnings}
           </div>
+
           <div className="sa-stat__desc">
             Review recommended
           </div>
@@ -124,14 +361,186 @@ export default async function LogsPage() {
           <div className="sa-stat__label">
             Info
           </div>
+
           <div className="sa-stat__value">
-            {counts.info}
+            {stats.info + stats.debug}
           </div>
+
           <div className="sa-stat__desc">
             Normal activity
           </div>
         </div>
       </div>
+
+      {stats.malformedLines > 0 ? (
+        <div className={styles.integrityWarning}>
+          <strong>
+            Storage warning
+          </strong>
+
+          <span>
+            {stats.malformedLines} malformed
+            JSONL line
+            {stats.malformedLines === 1
+              ? ""
+              : "s"}{" "}
+            were ignored while reading the log
+            archive.
+          </span>
+        </div>
+      ) : null}
+
+      <section
+        className={`${styles.filters} sa-card`}
+      >
+        <form
+          className={styles.filterForm}
+          method="get"
+        >
+          <div className={styles.searchField}>
+            <label htmlFor="log-search">
+              Search
+            </label>
+
+            <input
+              id="log-search"
+              name="q"
+              type="search"
+              defaultValue={search}
+              placeholder="Message, event, actor..."
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="log-level">
+              Level
+            </label>
+
+            <select
+              id="log-level"
+              name="level"
+              defaultValue={level ?? ""}
+            >
+              <option value="">
+                All levels
+              </option>
+
+              {LEVELS.map(
+                (item) => (
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                ),
+              )}
+            </select>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="log-area">
+              Area
+            </label>
+
+            <select
+              id="log-area"
+              name="area"
+              defaultValue={area}
+            >
+              <option value="">
+                All areas
+              </option>
+
+              {areas.map(
+                (item) => (
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                ),
+              )}
+            </select>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="log-from">
+              From
+            </label>
+
+            <input
+              id="log-from"
+              name="from"
+              type="date"
+              defaultValue={from}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="log-to">
+              To
+            </label>
+
+            <input
+              id="log-to"
+              name="to"
+              type="date"
+              defaultValue={to}
+            />
+          </div>
+
+          <div className={styles.filterActions}>
+            <button
+              className="sa-btn sa-btn--primary"
+              type="submit"
+            >
+              Apply filters
+            </button>
+
+            {filtered ? (
+              <Link
+                className="sa-btn sa-btn--ghost"
+                href="/admin/logs"
+              >
+                Reset
+              </Link>
+            ) : null}
+          </div>
+        </form>
+
+        <div className={styles.filterMeta}>
+          <span>
+            Showing{" "}
+            <strong>
+              {logs.length}
+            </strong>{" "}
+            event
+            {logs.length === 1
+              ? ""
+              : "s"}
+          </span>
+
+          <span>
+            Storage files:{" "}
+            <strong>
+              {stats.files}
+            </strong>
+          </span>
+
+          {stats.oldestTimestamp ? (
+            <span>
+              Oldest:{" "}
+              <strong>
+                {formatDate(
+                  stats.oldestTimestamp,
+                )}
+              </strong>
+            </span>
+          ) : null}
+        </div>
+      </section>
 
       <section className="sa-card sa-table-card">
         {logs.length ? (
@@ -149,73 +558,90 @@ export default async function LogsPage() {
               </thead>
 
               <tbody>
-                {logs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="sa-table__date">
-                      {formatDate(log.at)}
-                    </td>
+                {logs.map(
+                  (log) => (
+                    <tr
+                      key={log.id}
+                      className={
+                        log.level ===
+                        "critical"
+                          ? styles.criticalRow
+                          : undefined
+                      }
+                    >
+                      <td className="sa-table__date">
+                        {formatDate(
+                          log.at,
+                        )}
+                      </td>
 
-                    <td>
-                      <span
-                        className={`${styles.level} ${
-                          styles[
-                            `level_${log.level}`
-                          ]
-                        }`}
-                      >
-                        {log.level}
-                      </span>
-                    </td>
+                      <td>
+                        <span
+                          className={`${styles.level} ${
+                            styles[
+                              `level_${log.level}`
+                            ]
+                          }`}
+                        >
+                          {log.level}
+                        </span>
+                      </td>
 
-                    <td>
-                      <code>{log.area}</code>
-                    </td>
+                      <td>
+                        <code>
+                          {log.area}
+                        </code>
+                      </td>
 
-                    <td>
-                      <strong>
-                        {log.action}
-                      </strong>
-                    </td>
+                      <td>
+                        <strong>
+                          {log.action}
+                        </strong>
+                      </td>
 
-                    <td>
-                      <div className={styles.message}>
-                        {log.message}
+                      <td>
+                        <div className={styles.message}>
+                          {log.message}
 
-                        {log.meta ? (
-                          <details>
-                            <summary>
-                              Details
-                            </summary>
+                          {log.meta ? (
+                            <details>
+                              <summary>
+                                Details
+                              </summary>
 
-                            <pre>
-                              {JSON.stringify(
-                                log.meta,
-                                null,
-                                2,
-                              )}
-                            </pre>
-                          </details>
-                        ) : null}
-                      </div>
-                    </td>
+                              <pre>
+                                {JSON.stringify(
+                                  log.meta,
+                                  null,
+                                  2,
+                                )}
+                              </pre>
+                            </details>
+                          ) : null}
+                        </div>
+                      </td>
 
-                    <td>
-                      {log.actor}
-                    </td>
-                  </tr>
-                ))}
+                      <td>
+                        {log.actor}
+                      </td>
+                    </tr>
+                  ),
+                )}
               </tbody>
             </table>
           </div>
         ) : (
           <div className="sa-empty">
             <div className="sa-empty__title">
-              No technical events yet
+              {filtered
+                ? "No matching events"
+                : "No technical events yet"}
             </div>
 
             <div className="sa-empty__desc">
-              Theme changes, backups and system
-              operations will appear here.
+              {filtered
+                ? "Try changing or resetting the current filters."
+                : "Runtime, backup, storage and system operations will appear here."}
             </div>
           </div>
         )}

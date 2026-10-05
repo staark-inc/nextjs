@@ -10,6 +10,11 @@ import {
 
 import { requireAuth } from "../guard";
 
+import {
+  appendAdminAction,
+  changedObjectKeys,
+} from "@/lib/admin-audit";
+
 export async function GET() {
   const blocked = await requireAuth();
   if (blocked) return blocked;
@@ -87,6 +92,18 @@ export async function PUT(
       saved.privacy
         .cookiePolicyPath,
     );
+
+    await appendAdminAction({
+      area: "privacy",
+      action: "privacy.updated",
+      message: "Privacy and consent settings were updated.",
+      resource: "site.privacy",
+      changedKeys:
+        changedObjectKeys(
+          current.privacy,
+          saved.privacy,
+        ),
+    });
 
     return NextResponse.json({
       ok: true,

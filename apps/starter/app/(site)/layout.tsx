@@ -21,7 +21,6 @@ import "@staark/theme-gastfrihet/styles.css";
 import "@staark/theme-byra/styles.css";
 import "@staark/theme-webb/styles.css";
 import "@staark/theme-verkstad/styles.css";
-
 import "@staark/theme-kreator/styles.css";
 /**
  * Public content is mutable at runtime through the ACP and persistent storage.

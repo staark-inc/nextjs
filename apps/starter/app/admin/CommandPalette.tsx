@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { AdminRole } from "@staark/platform/server";
 import type { WebsiteType } from "@staark/core";
 import type { AdminFeature } from "@/lib/admin-features";
 import AdminIcon from "./AdminIcon";
@@ -15,6 +16,8 @@ type Command = {
   hint: string;
   keywords?: string;
   feature?: AdminFeature;
+  managerOnly?: boolean;
+  clientOnly?: boolean;
   run: { type: "route"; href: string } | { type: "external"; href: string } | { type: "logout" };
 };
 
@@ -23,9 +26,9 @@ type PageSummary = { file: string; path: string; title: string };
 const SECTION_ORDER: Command["section"][] = ["Go to", "Pages", "Actions"];
 
 const actionCommands: Command[] = [
-  { id: "action:new-page", section: "Actions", feature: "pages", label: "Create a page", hint: "Pages", keywords: "new add", run: { type: "route", href: "/admin/pages" } },
-  { id: "action:backup", section: "Actions", feature: "backups", label: "Create a backup", hint: "Backups", keywords: "snapshot save", run: { type: "route", href: "/admin/backups" } },
-  { id: "action:redirect", section: "Actions", feature: "redirects", label: "Add a redirect", hint: "Redirects", keywords: "301 url", run: { type: "route", href: "/admin/redirects" } },
+  { id: "action:new-page", section: "Actions", feature: "pages", clientOnly: true, label: "Create a page", hint: "Pages", keywords: "new add", run: { type: "route", href: "/admin/pages" } },
+  { id: "action:backup", section: "Actions", feature: "backups", managerOnly: true, label: "Create a backup", hint: "Backups", keywords: "snapshot save", run: { type: "route", href: "/admin/backups" } },
+  { id: "action:redirect", section: "Actions", feature: "redirects", managerOnly: true, label: "Add a redirect", hint: "Redirects", keywords: "301 url", run: { type: "route", href: "/admin/redirects" } },
   { id: "action:view-site", section: "Actions", label: "View website", hint: "Opens in a new tab", keywords: "open live public", run: { type: "external", href: "/" } },
   { id: "action:logout", section: "Actions", label: "Log out", hint: "End this session", keywords: "sign out exit", run: { type: "logout" } },
 ];
@@ -45,10 +48,12 @@ function rank(command: Command, query: string): number {
 export default function CommandPalette({
   websiteType,
   features,
+  role,
   onClose,
 }: {
   websiteType: WebsiteType;
   features: AdminFeature[];
+  role: AdminRole;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -61,7 +66,7 @@ export default function CommandPalette({
 
   const navCommands = useMemo<Command[]>(
     () =>
-      getAdminNavItems(websiteType)
+      getAdminNavItems(websiteType, role)
         .filter((item) => features.includes(item.feature))
         .map((item) => ({
           id: `nav:${item.href}`,
@@ -72,15 +77,18 @@ export default function CommandPalette({
           feature: item.feature,
           run: { type: "route", href: item.href },
         })),
-    [websiteType, features],
+    [websiteType, features, role],
   );
 
   const allowedActionCommands = useMemo(
     () =>
       actionCommands.filter(
-        (command) => !command.feature || features.includes(command.feature),
+        (command) =>
+          (!command.feature || features.includes(command.feature)) &&
+          (!command.clientOnly || role === "client") &&
+          (!command.managerOnly || role === "manager"),
       ),
-    [features],
+    [features, role],
   );
 
   // Focus the input on open; give focus back to whatever had it on close.

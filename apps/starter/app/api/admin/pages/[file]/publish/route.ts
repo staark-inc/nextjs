@@ -9,6 +9,10 @@ import {
 } from "@/lib/admin-page-postgres";
 import { requireAuth } from "../../../guard";
 
+import {
+  appendAdminAction,
+} from "@/lib/admin-audit";
+
 type Ctx = {
   params: Promise<{ file: string }>;
 };
@@ -47,6 +51,20 @@ export async function POST(
         result.previousPublishedPath,
       );
     }
+
+    await appendAdminAction({
+      area: "pages",
+      action: "page.published",
+      message: `Page "${file}" was published.`,
+      resource: "page",
+      resourceId: file,
+      meta: {
+        path:
+          result.publication.path,
+        redirectCreated:
+          result.pathChanged,
+      },
+    });
 
     return NextResponse.json({
       ok: true,

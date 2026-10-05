@@ -3,12 +3,12 @@
    "verkstad" variant (only this preset selects it), because all theme
    stylesheets are loaded together. Colors come from --sk-* tokens. */
 
-@import "@fontsource/barlow/400.css";
-@import "@fontsource/barlow/500.css";
-@import "@fontsource/barlow/600.css";
-@import "@fontsource/barlow/700.css";
-@import "@fontsource/barlow-condensed/600.css";
-@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource/barlow/latin-400.css";
+@import "@fontsource/barlow/latin-500.css";
+@import "@fontsource/barlow/latin-600.css";
+@import "@fontsource/barlow/latin-700.css";
+@import "@fontsource/barlow-condensed/latin-600.css";
+@import "@fontsource/barlow-condensed/latin-700.css";
 
 /* ---------- Page-level (scoped to the Verkstad header) ---------- */
 :root:has(.sk-header--verkstad) { --sl-accent: var(--sk-color-primary, #c8261e); --sl-body: var(--sk-font-label, inherit); }

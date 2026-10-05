@@ -11,7 +11,9 @@ import {
   type RedirectStatus,
 } from "./redirect-domain";
 import { readStateJson, writeStateJson } from "./storage";
-import { appendAdminLog } from "./admin-logs";
+import {
+  appendAdminAction,
+} from "./admin-audit";
 import { resolvePublicContentConfig } from "./content-source";
 import { requireAdminSiteKey } from "./admin-tenant";
 import {
@@ -282,11 +284,24 @@ export async function createRedirect(
     });
   }
 
-  await appendAdminLog({
+  await appendAdminAction({
     area: "redirects",
     action: "redirect.created",
     message: `Redirect ${rule.from} → ${rule.to} created.`,
-    meta: { from: rule.from, to: rule.to, status: rule.status },
+    resource: "redirect",
+    resourceId: rule.id,
+    changedKeys: [
+      "from",
+      "to",
+      "status",
+      "enabled",
+    ],
+    meta: {
+      from: rule.from,
+      to: rule.to,
+      status: rule.status,
+      enabled: rule.enabled,
+    },
   });
   return rule;
 }
@@ -332,10 +347,18 @@ export async function updateRedirect(
     });
   }
 
-  await appendAdminLog({
+  await appendAdminAction({
     area: "redirects",
     action: "redirect.updated",
     message: `Redirect ${updated.from} was updated.`,
+    resource: "redirect",
+    resourceId: updated.id,
+    changedKeys:
+      Object.keys(input)
+        .filter(
+          (key) =>
+            key !== "id",
+        ),
     meta: {
       from: updated.from,
       to: updated.to,
@@ -367,13 +390,20 @@ export async function deleteRedirect(id: string): Promise<void> {
     });
   }
 
-  await appendAdminLog({
+  await appendAdminAction({
     area: "redirects",
     action: "redirect.deleted",
     message: removed
       ? `Redirect ${removed.from} → ${removed.to} deleted.`
       : "Redirect deleted.",
-    meta: removed ? { from: removed.from, to: removed.to } : undefined,
+    resource: "redirect",
+    resourceId: id,
+    meta: removed
+      ? {
+          from: removed.from,
+          to: removed.to,
+        }
+      : undefined,
   });
 }
 

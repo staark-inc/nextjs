@@ -8,6 +8,11 @@ import {
 } from "@/lib/admin-site-settings";
 import { requireAuth } from "../guard";
 
+import {
+  appendAdminAction,
+  changedObjectKeys,
+} from "@/lib/admin-audit";
+
 type Link = { label: string; href: string };
 type FooterColumn = { title: string; links: Link[] };
 type Navigation = {
@@ -129,6 +134,10 @@ export async function PUT(req: Request) {
   try {
     const body = (await req.json()) as Record<string, unknown>;
     const navigation = normalizeNavigation(body.navigation);
+
+    const before =
+      await readAdminSiteSettings();
+
     const [site, pages] = await Promise.all([
       mutateAdminSiteSettings((current) =>
         SiteSettingsSchema.parse({ ...current, navigation }),
@@ -138,6 +147,31 @@ export async function PUT(req: Request) {
 
     const savedNavigation = normalizeNavigation(site.navigation);
     revalidatePath("/", "layout");
+
+    await appendAdminAction({
+      area: "navigation",
+      action: "navigation.updated",
+      message: "Site navigation was updated.",
+      resource: "site.navigation",
+      changedKeys:
+        changedObjectKeys(
+          before.navigation,
+          savedNavigation,
+        ),
+      meta: {
+        primaryLinks:
+          savedNavigation.primary.length,
+        footerLinks:
+          savedNavigation.footer.length,
+        footerColumns:
+          savedNavigation.footerColumns.length,
+        hasCta:
+          Boolean(
+            savedNavigation.cta,
+          ),
+      },
+    });
+
     return NextResponse.json({
       ok: true,
       navigation: savedNavigation,

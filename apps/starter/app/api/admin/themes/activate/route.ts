@@ -4,7 +4,9 @@ import { readSite, readSiteTheme, writeSite } from "@/lib/admin-theme";
 import { getThemeRuntime, resolveThemeRuntime } from "@/lib/theme-runtime";
 import { evaluateThemeCompatibility, scanThemeBlockUsage } from "@/lib/theme-compatibility";
 import { requireManager } from "../../guard";
-import { appendAdminLog } from "@/lib/admin-logs";
+import {
+  appendAdminAction,
+} from "@/lib/admin-audit";
 
 export async function POST(req: Request) {
   const blocked = await requireManager();
@@ -62,10 +64,16 @@ export async function POST(req: Request) {
   await writeSite(site);
   revalidatePath("/", "layout");
 
-  await appendAdminLog({
+  await appendAdminAction({
     area: "theme",
     action: "theme.activated",
     message: `Theme "${runtime.id}" was activated.`,
+    resource: "theme",
+    resourceId: runtime.id,
+    changedKeys: [
+      "family",
+      "preset",
+    ],
     meta: {
       theme: runtime.id,
       preset: selectedPreset,

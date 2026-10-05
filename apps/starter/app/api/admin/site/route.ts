@@ -7,6 +7,11 @@ import {
 } from "@/lib/admin-site-settings";
 import { requireAuth } from "../guard";
 
+import {
+  appendAdminAction,
+  changedObjectKeys,
+} from "@/lib/admin-audit";
+
 function normalizeOptionalSiteFields(input: unknown): unknown {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return input;
@@ -92,6 +97,9 @@ export async function PUT(req: Request) {
   }
 
   try {
+    const before =
+      await readAdminSiteSettings();
+
     // websiteType is provisioned/managed by Staark. The Settings editor may
     // round-trip it, but must never change it locally.
     const site = await mutateAdminSiteSettings((current) =>
@@ -102,6 +110,22 @@ export async function PUT(req: Request) {
     );
 
     revalidatePath("/", "layout");
+
+    await appendAdminAction({
+      area: "site",
+      action: "site.settings_updated",
+      message: "Site settings were updated.",
+      resource: "site.settings",
+      changedKeys:
+        changedObjectKeys(
+          before,
+          site,
+          [
+            "updatedAt",
+          ],
+        ),
+    });
+
     return NextResponse.json({ ok: true, site });
   } catch (error) {
     return NextResponse.json(

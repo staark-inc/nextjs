@@ -14,3 +14,4 @@ apps/starter/generated/prisma/
 
 # Local SaaS secrets
 .env.saas
+apps/starter/.local-data/

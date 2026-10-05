@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createBackup, listBackups } from "@/lib/admin-backups";
 import { requireAuth } from "../guard";
-import { appendAdminLog } from "@/lib/admin-logs";
+import {
+  appendAdminAction,
+} from "@/lib/admin-audit";
 
 export const runtime = "nodejs";
 
@@ -36,16 +38,23 @@ export async function POST(req: Request) {
       body.includeUploads !== false,
     );
 
-    await appendAdminLog({
+    await appendAdminAction({
       area: "backup",
       action: "backup.created",
       message: "A manual backup was created.",
+      resource: "backup",
+      resourceId: backup.id,
       meta: {
-        includeUploads: body.includeUploads !== false,
+        includeUploads:
+          body.includeUploads !== false,
         label:
           typeof body.label === "string"
             ? body.label
             : "Manual backup",
+        fileCount:
+          backup.fileCount,
+        totalBytes:
+          backup.totalBytes,
       },
     });
 

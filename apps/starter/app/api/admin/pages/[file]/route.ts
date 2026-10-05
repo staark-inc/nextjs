@@ -21,6 +21,11 @@ import {
 } from "@/lib/storage";
 import { requireAuth } from "../../guard";
 
+import {
+  appendAdminAction,
+  changedObjectKeys,
+} from "@/lib/admin-audit";
+
 function safeFile(file: string): string | null {
   if (!file || path.posix.basename(file) !== file || !file.endsWith(".json")) return null;
   return file;
@@ -114,10 +119,35 @@ export async function PUT(req: Request, ctx: Ctx) {
 
   if (postgres) {
     try {
+      const before =
+        await readPostgresAdminPage(
+          requested,
+        );
+
       const saved = await savePostgresAdminPage(requested, parsedPage.data);
       if (!saved) {
         return NextResponse.json({ error: "Page not found." }, { status: 404 });
       }
+
+      await appendAdminAction({
+        area: "pages",
+        action: "page.updated",
+        message: `Page "${requested}" was updated.`,
+        resource: "page",
+        resourceId: requested,
+        changedKeys:
+          changedObjectKeys(
+            before?.page,
+            saved.record.page,
+            [
+              "updatedAt",
+            ],
+          ),
+        meta: {
+          path:
+            saved.record.page.path,
+        },
+      });
 
       return NextResponse.json({
         ok: true,
@@ -165,6 +195,35 @@ export async function PUT(req: Request, ctx: Ctx) {
     const saved = { ...incoming, updatedAt: new Date().toISOString() };
     await writeContentJson(`pages/${file}`, saved);
     revalidatePath("/", "layout");
+
+    await appendAdminAction({
+      area: "pages",
+      action: "page.updated",
+      message: `Page "${file}" was updated.`,
+      resource: "page",
+      resourceId: file,
+      changedKeys:
+        changedObjectKeys(
+          current,
+          saved,
+          [
+            "updatedAt",
+          ],
+        ),
+      meta: {
+        path:
+          incomingPath ||
+          currentPath,
+        redirectCreated:
+          Boolean(
+            currentPath &&
+            incomingPath &&
+            currentPath !==
+              incomingPath,
+          ),
+      },
+    });
+
     return NextResponse.json({ ok: true, page: saved, redirectCreated: currentPath && incomingPath && currentPath !== incomingPath });
   } catch (error) {
     return NextResponse.json(
@@ -181,6 +240,11 @@ export async function DELETE(_req: Request, ctx: Ctx) {
 
   if (adminPagesUsePostgres()) {
     try {
+      const before =
+        await readPostgresAdminPage(
+          requested,
+        );
+
       const deleted =
         await deletePostgresAdminPage(requested);
 
@@ -198,6 +262,27 @@ export async function DELETE(_req: Request, ctx: Ctx) {
           deleted.unpublishedPath,
         );
       }
+
+      await appendAdminAction({
+        level: "warning",
+        area: "pages",
+        action: "page.deleted",
+        message: `Page "${requested}" was deleted.`,
+        resource: "page",
+        resourceId: requested,
+        meta: {
+          ...(before?.page.path
+            ? {
+                path:
+                  before.page.path,
+              }
+            : {}),
+          unpublished:
+            Boolean(
+              deleted.unpublishedPath,
+            ),
+        },
+      });
 
       return NextResponse.json({
         ok: true,
@@ -241,6 +326,23 @@ export async function DELETE(_req: Request, ctx: Ctx) {
         // Page deletion should still succeed if navigation cleanup cannot be completed.
       }
     }
+
+    await appendAdminAction({
+      level: "warning",
+      area: "pages",
+      action: "page.deleted",
+      message: `Page "${file}" was deleted.`,
+      resource: "page",
+      resourceId: file,
+      meta: {
+        ...(page.path
+          ? {
+              path:
+                page.path,
+            }
+          : {}),
+      },
+    });
 
     return NextResponse.json({ ok: true });
   } catch {
