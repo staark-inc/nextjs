@@ -155,10 +155,13 @@ export async function POST(
     host,
   });
 
-  const key =
+  const address =
     clientAddress(
       req.headers,
     );
+
+  const key =
+    `${host.toLowerCase()}|${address}`;
 
   const gate =
     limiter.check(key);
