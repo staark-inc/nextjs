@@ -14,6 +14,9 @@ import {
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
 import { resolvePublicContentConfig } from "@/lib/content-source";
 import { resolveTenantContext } from "@/lib/tenant-context";
+import {
+  readPublicSearchConsoleVerification,
+} from "@/lib/search-console-binding";
 import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import {
   validateClientSessionIdentity,
@@ -133,23 +136,87 @@ export async function proxy(req: NextRequest) {
       pathname,
     )
   ) {
-    const destination =
-      req.nextUrl.clone();
+    const fileName =
+      pathname.slice(1);
 
-    destination.pathname =
-      "/api/staark/search-console-verification";
+    try {
+      const tenant =
+        await resolveTenantContext({
+          host:
+            req.headers.get(
+              "host",
+            ),
 
-    destination.search =
-      "";
+          forwardedHost:
+            req.headers.get(
+              "x-forwarded-host",
+            ),
+        });
 
-    destination.searchParams.set(
-      "file",
-      pathname.slice(1),
-    );
+      if (
+        !tenant ||
+        !tenant.publicAccess
+      ) {
+        return new NextResponse(
+          null,
+          {
+            status: 404,
+          },
+        );
+      }
 
-    return NextResponse.rewrite(
-      destination,
-    );
+      const verification =
+        await readPublicSearchConsoleVerification(
+          tenant.siteId,
+          fileName,
+        );
+
+      if (!verification) {
+        return new NextResponse(
+          null,
+          {
+            status: 404,
+          },
+        );
+      }
+
+      return new NextResponse(
+        req.method === "HEAD"
+          ? null
+          : verification.content,
+        {
+          status: 200,
+
+          headers: {
+            "content-type":
+              `${verification.contentType}; charset=utf-8`,
+
+            "cache-control":
+              "public, max-age=300, must-revalidate",
+
+            "x-content-type-options":
+              "nosniff",
+
+            "x-robots-tag":
+              "noindex, nofollow",
+          },
+        },
+      );
+    } catch (error) {
+      console.error(
+        "[search-console] Verification file lookup failed:",
+        error instanceof Error
+          ? error.message
+          : String(error),
+      );
+
+      return new NextResponse(
+        null,
+        {
+          status: 404,
+        },
+      );
+    }
   }
 
   if (
