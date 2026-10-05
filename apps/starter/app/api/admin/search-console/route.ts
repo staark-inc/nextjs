@@ -17,36 +17,9 @@ import {
   testSearchConsoleProperty,
 } from "@/lib/google-search-console-data";
 
-function normalizeSiteUrl(
-  value: unknown,
-): string | null {
-  if (typeof value !== "string") return null;
-
-  const raw = value.trim();
-
-  if (/^sc-domain:[a-z0-9.-]+$/i.test(raw)) {
-    return raw.toLowerCase();
-  }
-
-  try {
-    const url = new URL(raw);
-
-    if (
-      url.protocol !== "https:" &&
-      url.protocol !== "http:"
-    ) {
-      return null;
-    }
-
-    if (!url.pathname.endsWith("/")) {
-      url.pathname += "/";
-    }
-
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
+import {
+  normalizeSearchConsoleSiteUrl,
+} from "@/lib/search-console-property";
 
 export async function GET() {
   const blocked =
@@ -96,7 +69,7 @@ export async function PUT(
     raw as Record<string, unknown>;
 
   const siteUrl =
-    normalizeSiteUrl(input.siteUrl);
+    normalizeSearchConsoleSiteUrl(input.siteUrl);
 
   if (!siteUrl) {
     return NextResponse.json(

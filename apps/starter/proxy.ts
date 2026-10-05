@@ -129,6 +129,32 @@ export async function proxy(req: NextRequest) {
   if (
     !adminRequest &&
     (req.method === "GET" || req.method === "HEAD") &&
+    /^\/google[a-zA-Z0-9_-]{8,160}\.html$/.test(
+      pathname,
+    )
+  ) {
+    const destination =
+      req.nextUrl.clone();
+
+    destination.pathname =
+      "/api/staark/search-console-verification";
+
+    destination.search =
+      "";
+
+    destination.searchParams.set(
+      "file",
+      pathname.slice(1),
+    );
+
+    return NextResponse.rewrite(
+      destination,
+    );
+  }
+
+  if (
+    !adminRequest &&
+    (req.method === "GET" || req.method === "HEAD") &&
     pathname.startsWith("/uploads/")
   ) {
     const name = pathname.slice("/uploads/".length);

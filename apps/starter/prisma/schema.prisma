@@ -391,12 +391,16 @@ model GoogleAnalyticsBinding {
 
 /// Server-owned Google Search Console property binding for one tenant.
 model SearchConsoleBinding {
-  siteId     String    @id @map("site_id") @db.Uuid
-  siteUrl    String    @unique(map: "search_console_bindings_site_url_key") @map("site_url") @db.VarChar(512)
-  enabled    Boolean   @default(true)
-  verifiedAt DateTime? @map("verified_at") @db.Timestamptz(3)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  siteId                      String    @id @map("site_id") @db.Uuid
+  siteUrl                     String    @unique(map: "search_console_bindings_site_url_key") @map("site_url") @db.VarChar(512)
+  enabled                     Boolean   @default(true)
+  verifiedAt                  DateTime? @map("verified_at") @db.Timestamptz(3)
+  verificationFileName        String?   @map("verification_file_name") @db.VarChar(200)
+  verificationContent         String?   @map("verification_content") @db.Text
+  verificationContentType     String?   @map("verification_content_type") @db.VarChar(40)
+  verificationUploadedAt      DateTime? @map("verification_uploaded_at") @db.Timestamptz(3)
+  createdAt                   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "search_console_bindings_site_id_fkey")
 

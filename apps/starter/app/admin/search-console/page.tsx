@@ -92,7 +92,10 @@ export default async function SearchConsolePage() {
           clientEmail={
             service.clientEmail
           }
-        />
+          initialVerification={
+            binding.verification
+          }
+/>
       ) : null}
 
       {data?.error ? (
@@ -251,7 +254,10 @@ export default async function SearchConsolePage() {
             clientEmail={
               service.clientEmail
             }
-          />
+            initialVerification={
+              binding.verification
+            }
+/>
         </>
       ) : null}
     </>
