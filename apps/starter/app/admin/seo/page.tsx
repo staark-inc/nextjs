@@ -1043,102 +1043,146 @@ export default function SeoPage() {
       </section>
 
       <section className="sa-card">
-        <div className="sa-card__header sa-card__header--row">
-          <div>
-            <p className="sa-card__eyebrow">
-              SEO Opportunities
-            </p>
+        <details className={styles.opportunitiesDetails}>
+          <summary className={styles.opportunitiesSummary}>
+            <div>
+              <p className="sa-card__eyebrow">
+                SEO Opportunities
+              </p>
 
-            <h2>
-              What to improve next
-            </h2>
+              <h2>
+                What to improve next
+              </h2>
 
-            <p>
-              Prioritized from the SEO audit of
-              the currently published website.
-            </p>
-          </div>
-
-          {opportunities ? (
-            <div className={styles.prioritySummary}>
-              <span className={styles.high}>
-                {opportunities.summary.high} High
-              </span>
-
-              <span className={styles.medium}>
-                {opportunities.summary.medium} Medium
-              </span>
-
-              <span className={styles.low}>
-                {opportunities.summary.low} Low
-              </span>
+              <p>
+                Prioritized from the SEO audit of
+                the currently published website.
+              </p>
             </div>
-          ) : null}
-        </div>
 
-        {opportunities?.opportunities.length ? (
-          <div className={styles.opportunityList}>
-            {opportunities.opportunities.map(
-              (item) => (
-                <article
-                  key={item.id}
-                  className={styles.opportunityRow}
-                >
-                  <span
-                    className={`${styles.priority} ${
-                      styles[
-                        `priority${priorityLabel(
-                          item.priority,
-                        )}`
-                      ]
-                    }`}
-                  >
-                    {priorityLabel(
-                      item.priority,
-                    )}
+            <div className={styles.opportunitiesSummaryRight}>
+              {opportunities ? (
+                <div className={styles.prioritySummary}>
+                  <span className={styles.high}>
+                    {opportunities.summary.high} High
                   </span>
 
-                  <div className={styles.opportunityCopy}>
-                    <strong>
-                      {item.title}
-                    </strong>
+                  <span className={styles.medium}>
+                    {opportunities.summary.medium} Medium
+                  </span>
 
-                    <span>
-                      {item.pageTitle} · {item.path}
-                    </span>
+                  <span className={styles.low}>
+                    {opportunities.summary.low} Low
+                  </span>
+                </div>
+              ) : null}
 
-                    <small>
-                      {item.description}
-                    </small>
-                  </div>
+              <span
+                className={styles.opportunitiesChevron}
+                aria-hidden="true"
+              >
+                ↓
+              </span>
+            </div>
+          </summary>
 
-                  <button
-                    type="button"
-                    className="sa-btn sa-btn--ghost sa-btn--sm"
-                    onClick={() =>
-                      selectOpportunityPage(
-                        item,
-                      )
-                    }
-                  >
-                    Fix
-                  </button>
-                </article>
-              ),
+          <div className={styles.opportunitiesBody}>
+            {opportunities?.opportunities.length ? (
+              (["high", "medium", "low"] as const).map(
+                (priority) => {
+                  const items =
+                    opportunities.opportunities.filter(
+                      (item) =>
+                        item.priority === priority,
+                    );
+
+                  if (!items.length) {
+                    return null;
+                  }
+
+                  const priorityClass =
+                    priority === "high"
+                      ? styles.priorityHigh
+                      : priority === "medium"
+                        ? styles.priorityMedium
+                        : styles.priorityLow;
+
+                  return (
+                    <details
+                      key={priority}
+                      className={styles.priorityGroup}
+                      open={priority === "high"}
+                    >
+                      <summary className={styles.priorityGroupSummary}>
+                        <span
+                          className={`${styles.priority} ${priorityClass ?? ""}`}
+                        >
+                          {priorityLabel(priority)}
+                        </span>
+
+                        <strong>
+                          {items.length} issue
+                          {items.length === 1 ? "" : "s"}
+                        </strong>
+
+                        <span
+                          className={styles.priorityChevron}
+                          aria-hidden="true"
+                        >
+                          ↓
+                        </span>
+                      </summary>
+
+                      <div className={styles.priorityGroupBody}>
+                        {items.map((item) => (
+                          <article
+                            key={item.id}
+                            className={styles.opportunityRow}
+                          >
+                            <div className={styles.opportunityCopy}>
+                              <strong>
+                                {item.title}
+                              </strong>
+
+                              <span>
+                                {item.pageTitle} · {item.path}
+                              </span>
+
+                              <small>
+                                {item.description}
+                              </small>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="sa-btn sa-btn--ghost sa-btn--sm"
+                              onClick={() =>
+                                selectOpportunityPage(item)
+                              }
+                            >
+                              Fix
+                            </button>
+                          </article>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                },
+              )
+            ) : (
+              <div className="sa-empty">
+                <div className="sa-empty__title">
+                  No SEO opportunities found
+                </div>
+
+                <div className="sa-empty__desc">
+                  Published pages currently pass the
+                  available audit checks.
+                </div>
+              </div>
             )}
           </div>
-        ) : (
-          <div className="sa-empty">
-            <div className="sa-empty__title">
-              No SEO opportunities found
-            </div>
-
-            <div className="sa-empty__desc">
-              Published pages currently pass the
-              available audit checks.
-            </div>
-          </div>
-        )}
+        </details>
       </section>
 
       <section className="sa-card">
