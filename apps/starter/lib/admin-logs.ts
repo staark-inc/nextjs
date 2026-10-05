@@ -2,9 +2,15 @@ import {
   createStaarkLogger,
   createStorageLogSink,
   createStorageLogStore,
+  type StaarkLogEntry,
   type StaarkLogLevel,
   type StaarkLogMetaValue,
+  type StaarkLogStore,
 } from "@staark/logs/server";
+
+import {
+  resolveAdminLogScope,
+} from "./admin-log-scope";
 
 export type AdminLogLevel =
   | "debug"
@@ -21,6 +27,7 @@ export type AdminLogEntry = {
   action: string;
   message: string;
   actor: string;
+
   meta?: Record<
     string,
     StaarkLogMetaValue
@@ -29,9 +36,11 @@ export type AdminLogEntry = {
 
 export type AdminLogQuery = {
   limit?: number;
+
   level?: AdminLogLevel;
   area?: string;
   search?: string;
+
   from?: string;
   to?: string;
 };
@@ -39,30 +48,47 @@ export type AdminLogQuery = {
 export type AdminLogStats = {
   files: number;
   entries: number;
+
   critical: number;
   errors: number;
   warnings: number;
   info: number;
   debug: number;
+
   malformedLines: number;
-  oldestTimestamp: string | null;
-  newestTimestamp: string | null;
+
+  oldestTimestamp:
+    string | null;
+
+  newestTimestamp:
+    string | null;
 };
 
-const store =
-  createStorageLogStore();
+type ScopedStore = {
+  siteId: string | null;
+  prefix: string;
+  store: StaarkLogStore;
+};
 
-const logger =
-  createStaarkLogger({
-    context: {
-      source: "admin",
-    },
+async function scopedStore():
+  Promise<ScopedStore> {
+  const scope =
+    await resolveAdminLogScope();
 
-    sink:
-      createStorageLogSink(
-        store,
-      ),
-  });
+  return {
+    siteId:
+      scope.siteId,
+
+    prefix:
+      scope.prefix,
+
+    store:
+      createStorageLogStore({
+        prefix:
+          scope.prefix,
+      }),
+  };
+}
 
 function normalizeLevel(
   level:
@@ -97,11 +123,7 @@ function metaValue(
 }
 
 function mapEntry(
-  entry: Awaited<
-    ReturnType<
-      typeof store.list
-    >
-  >[number],
+  entry: StaarkLogEntry,
 ): AdminLogEntry {
   const rawArea =
     entry.meta?.area;
@@ -140,13 +162,21 @@ function mapEntry(
     entry.meta ?? {};
 
   return {
-    id: entry.id,
-    at: entry.timestamp,
-    level: entry.level,
+    id:
+      entry.id,
+
+    at:
+      entry.timestamp,
+
+    level:
+      entry.level,
+
     area,
     action,
+
     message:
       entry.message,
+
     actor,
 
     ...(Object.keys(
@@ -161,7 +191,8 @@ function mapEntry(
 }
 
 function parseDateBoundary(
-  value: string | undefined,
+  value:
+    string | undefined,
   endOfDay = false,
 ): string | undefined {
   if (!value) {
@@ -205,7 +236,8 @@ function matchesAdminQuery(
 ): boolean {
   if (
     query.level &&
-    item.level !== query.level
+    item.level !==
+      query.level
   ) {
     return false;
   }
@@ -217,7 +249,9 @@ function matchesAdminQuery(
 
   if (
     area &&
-    item.area.toLowerCase() !== area
+    item.area
+      .toLowerCase() !==
+      area
   ) {
     return false;
   }
@@ -235,6 +269,7 @@ function matchesAdminQuery(
       item.action,
       item.message,
       item.actor,
+
       item.meta
         ? JSON.stringify(
             item.meta,
@@ -259,21 +294,52 @@ function matchesAdminQuery(
 export async function appendAdminLog(
   input: {
     level?: AdminLogLevel;
+
     area: string;
     action: string;
     message: string;
+
     actor?: string;
+
     actorRole?:
       | "client"
       | "manager"
       | "system";
+
     meta?: Record<
       string,
-      string | number | boolean | null | undefined
+      string |
+      number |
+      boolean |
+      null |
+      undefined
     >;
   },
 ): Promise<void> {
   try {
+    const scoped =
+      await scopedStore();
+
+    const logger =
+      createStaarkLogger({
+        context: {
+          source:
+            "admin",
+
+          ...(scoped.siteId
+            ? {
+                siteId:
+                  scoped.siteId,
+              }
+            : {}),
+        },
+
+        sink:
+          createStorageLogSink(
+            scoped.store,
+          ),
+      });
+
     const area =
       input.area.trim() ||
       "system";
@@ -315,7 +381,8 @@ export async function appendAdminLog(
         input.level,
       ),
       {
-        source: "admin",
+        source:
+          "admin",
 
         event:
           `${area}.${action}`,
@@ -338,14 +405,20 @@ export async function appendAdminLog(
         meta: {
           area,
           action,
+
           actor:
             input.actor?.trim() ||
             "admin",
+
           ...extraMeta,
         },
       },
     );
   } catch (error) {
+    /*
+     * Logging may never break the operation
+     * that is being logged.
+     */
     console.error(
       "[staark] Could not persist application log:",
       error instanceof Error
@@ -360,6 +433,9 @@ export async function listAdminLogs(
     | number
     | AdminLogQuery = 200,
 ): Promise<AdminLogEntry[]> {
+  const scoped =
+    await scopedStore();
+
   const query:
     AdminLogQuery =
     typeof limitOrQuery ===
@@ -374,18 +450,30 @@ export async function listAdminLogs(
     Math.max(
       1,
       Math.min(
-        query.limit ?? 200,
+        query.limit ??
+          200,
         5_000,
       ),
     );
 
+  const from =
+    parseDateBoundary(
+      query.from,
+    );
+
+  const to =
+    parseDateBoundary(
+      query.to,
+      true,
+    );
+
   /*
-   * Load some headroom because area/action/search
+   * Load headroom because area/action/search
    * are compatibility metadata and are filtered
-   * after mapping the structured store entry.
+   * after mapping the structured log entry.
    */
   const raw =
-    await store.list({
+    await scoped.store.list({
       limit:
         Math.min(
           Math.max(
@@ -403,33 +491,19 @@ export async function listAdminLogs(
           }
         : {}),
 
-      ...(parseDateBoundary(
-        query.from,
-      )
-        ? {
-            from:
-              parseDateBoundary(
-                query.from,
-              ),
-          }
+      ...(from
+        ? { from }
         : {}),
 
-      ...(parseDateBoundary(
-        query.to,
-        true,
-      )
-        ? {
-            to:
-              parseDateBoundary(
-                query.to,
-                true,
-              ),
-          }
+      ...(to
+        ? { to }
         : {}),
     });
 
   return raw
-    .map(mapEntry)
+    .map(
+      mapEntry,
+    )
     .filter(
       (item) =>
         matchesAdminQuery(
@@ -449,30 +523,28 @@ export async function getAdminLogStats(
     "from" | "to"
   > = {},
 ): Promise<AdminLogStats> {
+  const scoped =
+    await scopedStore();
+
+  const from =
+    parseDateBoundary(
+      query.from,
+    );
+
+  const to =
+    parseDateBoundary(
+      query.to,
+      true,
+    );
+
   const stats =
-    await store.stats({
-      ...(parseDateBoundary(
-        query.from,
-      )
-        ? {
-            from:
-              parseDateBoundary(
-                query.from,
-              ),
-          }
+    await scoped.store.stats({
+      ...(from
+        ? { from }
         : {}),
 
-      ...(parseDateBoundary(
-        query.to,
-        true,
-      )
-        ? {
-            to:
-              parseDateBoundary(
-                query.to,
-                true,
-              ),
-          }
+      ...(to
+        ? { to }
         : {}),
     });
 
@@ -513,7 +585,8 @@ export async function listAdminLogAreas():
   Promise<string[]> {
   const logs =
     await listAdminLogs({
-      limit: 5_000,
+      limit:
+        5_000,
     });
 
   return Array.from(
@@ -533,5 +606,8 @@ export async function listAdminLogAreas():
 
 export async function clearAdminLogs():
   Promise<void> {
-  await store.clear();
+  const scoped =
+    await scopedStore();
+
+  await scoped.store.clear();
 }
