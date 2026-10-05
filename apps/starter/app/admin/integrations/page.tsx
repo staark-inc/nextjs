@@ -29,6 +29,8 @@ import {
   searchConsoleServiceSummary,
 } from "@/lib/google-search-console-data";
 
+import styles from "./integrations.module.css";
+
 export const dynamic =
   "force-dynamic";
 
@@ -57,10 +59,14 @@ export default async function IntegrationsPage() {
   const tenant =
     await requireAdminTenantContext();
 
+  const prisma =
+    getPrismaClient();
+
   const [
     ga,
     searchConsole,
     subscription,
+    domains,
   ] =
     await Promise.all([
       readGoogleAnalyticsBinding(
@@ -71,28 +77,53 @@ export default async function IntegrationsPage() {
         tenant.siteId,
       ),
 
-      getPrismaClient()
-        .subscription
-        .findUnique({
-          where: {
-            siteId:
-              tenant.siteId,
-          },
+      prisma.subscription.findUnique({
+        where: {
+          siteId:
+            tenant.siteId,
+        },
 
-          select: {
-            provider:
-              true,
+        select: {
+          provider:
+            true,
 
-            providerCustomerId:
-              true,
+          providerCustomerId:
+            true,
 
-            providerSubscriptionId:
-              true,
+          providerSubscriptionId:
+            true,
 
-            status:
-              true,
-          },
-        }),
+          status:
+            true,
+        },
+      }),
+
+      prisma.domain.findMany({
+        where: {
+          siteId:
+            tenant.siteId,
+
+          releasedAt:
+            null,
+        },
+
+        select: {
+          type:
+            true,
+
+          provider:
+            true,
+
+          providerStatus:
+            true,
+
+          sslStatus:
+            true,
+
+          verified:
+            true,
+        },
+      }),
     ]);
 
   const gaService =
@@ -163,6 +194,50 @@ export default async function IntegrationsPage() {
         .providerSubscriptionId,
     );
 
+  const customDomains =
+    domains.filter(
+      (domain) =>
+        domain.type ===
+        "custom",
+    );
+
+  const cloudflareActive =
+    customDomains.filter(
+      (domain) =>
+        domain.verified &&
+        domain.providerStatus ===
+          "active" &&
+        domain.sslStatus ===
+          "active",
+    ).length;
+
+  const googleHealthy =
+    googleConnectedCount ===
+      2 &&
+    googleRuntimeReady;
+
+  const needsAttention =
+    Number(
+      !googleHealthy,
+    ) +
+    Number(
+      !stripeConnected,
+    ) +
+    Number(
+      !mailConfigured,
+    );
+
+  const connected =
+    Number(
+      googleHealthy,
+    ) +
+    Number(
+      stripeConnected,
+    ) +
+    Number(
+      mailConfigured,
+    );
+
   return (
     <>
       <div className="sa-page-header">
@@ -176,25 +251,59 @@ export default async function IntegrationsPage() {
           </h1>
 
           <p className="sa-subtitle">
-            Connect and manage the external
-            services used by this website.
+            External services, platform
+            connections and infrastructure
+            status in one place.
           </p>
         </div>
       </div>
 
-      <div
-        style={{
-          display:
-            "grid",
+      <div className={styles.summary}>
+        <article className={styles.summaryCard}>
+          <span>
+            Connected
+          </span>
 
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(280px, 1fr))",
+          <strong>
+            {connected}
+          </strong>
 
-          gap:
-            18,
-        }}
-      >
-        <section className="sa-card">
+          <small className="sa-note">
+            Google, billing and communication
+          </small>
+        </article>
+
+        <article className={styles.summaryCard}>
+          <span>
+            Needs attention
+          </span>
+
+          <strong>
+            {needsAttention}
+          </strong>
+
+          <small className="sa-note">
+            Connections not fully ready
+          </small>
+        </article>
+
+        <article className={styles.summaryCard}>
+          <span>
+            Platform managed
+          </span>
+
+          <strong>
+            1
+          </strong>
+
+          <small className="sa-note">
+            Cloudflare infrastructure
+          </small>
+        </article>
+      </div>
+
+      <div className={styles.grid}>
+        <section className={`sa-card ${styles.card}`}>
           <div className="sa-card__header sa-card__header--row">
             <div>
               <p className="sa-card__eyebrow">
@@ -208,8 +317,7 @@ export default async function IntegrationsPage() {
 
             <Status
               tone={
-                googleConnectedCount ===
-                  2
+                googleHealthy
                   ? "success"
                   : googleConnectedCount >
                       0
@@ -222,13 +330,12 @@ export default async function IntegrationsPage() {
           </div>
 
           <p className="sa-note">
-            Google Analytics 4 and Search
-            Console reporting for this
-            website.
+            Analytics and organic search
+            reporting for this website.
           </p>
 
-          <div className="sa-analytics-data-api">
-            <div>
+          <div className={styles.serviceRows}>
+            <div className={styles.serviceRow}>
               <span>
                 Google Analytics 4
               </span>
@@ -240,7 +347,7 @@ export default async function IntegrationsPage() {
               </strong>
             </div>
 
-            <div>
+            <div className={styles.serviceRow}>
               <span>
                 Search Console
               </span>
@@ -252,7 +359,7 @@ export default async function IntegrationsPage() {
               </strong>
             </div>
 
-            <div>
+            <div className={styles.serviceRow}>
               <span>
                 Runtime credentials
               </span>
@@ -265,22 +372,17 @@ export default async function IntegrationsPage() {
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop:
-                18,
-            }}
-          >
+          <div className={styles.actions}>
             <Link
               href="/admin/integrations/google"
               className="sa-btn"
             >
-              Manage Google services
+              Manage
             </Link>
           </div>
         </section>
 
-        <section className="sa-card">
+        <section className={`sa-card ${styles.card}`}>
           <div className="sa-card__header sa-card__header--row">
             <div>
               <p className="sa-card__eyebrow">
@@ -296,23 +398,23 @@ export default async function IntegrationsPage() {
               tone={
                 stripeConnected
                   ? "success"
-                  : "muted"
+                  : "warning"
               }
             >
               {stripeConnected
                 ? "Connected"
-                : "Not connected"}
+                : "Needs attention"}
             </Status>
           </div>
 
           <p className="sa-note">
-            Subscription, invoices and
-            payment methods for the current
-            Staark package.
+            Subscription, invoices,
+            payment methods and billing
+            portal.
           </p>
 
-          <div className="sa-analytics-data-api">
-            <div>
+          <div className={styles.serviceRows}>
+            <div className={styles.serviceRow}>
               <span>
                 Provider
               </span>
@@ -324,7 +426,7 @@ export default async function IntegrationsPage() {
               </strong>
             </div>
 
-            <div>
+            <div className={styles.serviceRow}>
               <span>
                 Subscription
               </span>
@@ -337,22 +439,17 @@ export default async function IntegrationsPage() {
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop:
-                18,
-            }}
-          >
+          <div className={styles.actions}>
             <Link
-              href="/admin/plan"
+              href="/admin/integrations/stripe"
               className="sa-btn"
             >
-              Manage billing
+              Manage
             </Link>
           </div>
         </section>
 
-        <section className="sa-card">
+        <section className={`sa-card ${styles.card}`}>
           <div className="sa-card__header sa-card__header--row">
             <div>
               <p className="sa-card__eyebrow">
@@ -378,13 +475,13 @@ export default async function IntegrationsPage() {
           </div>
 
           <p className="sa-note">
-            Transactional email transport
-            used by website notifications,
-            bookings and automations.
+            Transactional email used by
+            bookings, notifications and
+            automations.
           </p>
 
-          <div className="sa-analytics-data-api">
-            <div>
+          <div className={styles.serviceRows}>
+            <div className={styles.serviceRow}>
               <span>
                 Delivery
               </span>
@@ -396,9 +493,9 @@ export default async function IntegrationsPage() {
               </strong>
             </div>
 
-            <div>
+            <div className={styles.serviceRow}>
               <span>
-                Management
+                Transport
               </span>
 
               <strong>
@@ -407,22 +504,17 @@ export default async function IntegrationsPage() {
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop:
-                18,
-            }}
-          >
+          <div className={styles.actions}>
             <Link
-              href="/admin/site"
+              href="/admin/integrations/email"
               className="sa-btn"
             >
-              Email settings
+              Manage
             </Link>
           </div>
         </section>
 
-        <section className="sa-card">
+        <section className={`sa-card ${styles.card}`}>
           <div className="sa-card__header sa-card__header--row">
             <div>
               <p className="sa-card__eyebrow">
@@ -440,74 +532,42 @@ export default async function IntegrationsPage() {
           </div>
 
           <p className="sa-note">
-            Edge routing, SSL and hostname
-            infrastructure are managed by
-            the Staark platform.
+            Edge routing, custom hostnames,
+            DNS verification and SSL.
           </p>
 
-          <div className="sa-analytics-data-api">
-            <div>
+          <div className={styles.serviceRows}>
+            <div className={styles.serviceRow}>
               <span>
-                Configuration
+                Custom domains
               </span>
 
               <strong>
-                Platform managed
+                {customDomains.length}
               </strong>
             </div>
 
-            <div>
+            <div className={styles.serviceRow}>
               <span>
-                Domains
+                Fully active
               </span>
 
               <strong>
-                Tenant isolated
+                {cloudflareActive}
               </strong>
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop:
-                18,
-            }}
-          >
+          <div className={styles.actions}>
             <Link
-              href="/admin/domains"
+              href="/admin/integrations/cloudflare"
               className="sa-btn"
             >
-              View domains
+              Manage
             </Link>
           </div>
         </section>
       </div>
-
-      <section
-        className="sa-plan-billing-note"
-        style={{
-          marginTop:
-            20,
-        }}
-      >
-        <div>
-          <p className="sa-card__eyebrow">
-            Integration model
-          </p>
-
-          <strong>
-            One place for connected services
-          </strong>
-
-          <span>
-            Integrations contains connection
-            and service status. Reporting data
-            remains in Analytics, while
-            service-specific setup will move
-            here progressively.
-          </span>
-        </div>
-      </section>
     </>
   );
 }

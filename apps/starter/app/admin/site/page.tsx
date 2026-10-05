@@ -512,7 +512,10 @@ showToast("Settings saved.", true);
         </div>
       </section>
 
-      <section className="sa-settings-panel sa-mail-settings">
+      <section
+        id="email"
+        className="sa-settings-panel sa-mail-settings"
+      >
         <div className="sa-settings-panel__head">
           <div>
             <span className="sa-settings-kicker">Email</span>

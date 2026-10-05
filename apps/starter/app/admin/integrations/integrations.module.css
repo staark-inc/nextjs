@@ -1,0 +1,165 @@
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summaryCard {
+  display: grid;
+  gap: 5px;
+  padding: 16px 18px;
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+  background: var(--sa-surface);
+}
+
+.summaryCard span {
+  color: var(--sa-muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.summaryCard strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.card {
+  display: grid;
+  gap: 16px;
+}
+
+.cardBody {
+  display: grid;
+  gap: 12px;
+}
+
+.serviceRows {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.serviceRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--sa-line);
+}
+
+.serviceRow:last-child {
+  border-bottom: 0;
+}
+
+.serviceRow span {
+  color: var(--sa-muted);
+  font-size: 10px;
+}
+
+.serviceRow strong {
+  max-width: 62%;
+  overflow-wrap: anywhere;
+  text-align: right;
+  font-size: 11px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.detailCard {
+  display: grid;
+  gap: 14px;
+}
+
+.notice {
+  padding: 13px 15px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  background: var(--sa-surface-soft);
+  color: var(--sa-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.domainList {
+  display: grid;
+  gap: 10px;
+}
+
+.domain {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+}
+
+.domainIdentity {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.domainIdentity strong {
+  overflow-wrap: anywhere;
+}
+
+.domainIdentity span {
+  color: var(--sa-muted);
+  font-size: 10px;
+}
+
+.domainMeta {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.domainMeta span {
+  color: var(--sa-muted);
+  font-size: 9px;
+}
+
+@media (max-width: 900px) {
+  .summary,
+  .grid,
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .serviceRow,
+  .domain {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .serviceRow strong,
+  .domainMeta {
+    max-width: none;
+    text-align: left;
+    justify-items: start;
+  }
+}
