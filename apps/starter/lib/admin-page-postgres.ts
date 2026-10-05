@@ -904,6 +904,57 @@ export async function listPostgresAdminPageRevisions(
   }));
 }
 
+export async function listPostgresAdminRecentPageRevisions(
+  options: {
+    limit?: number;
+  } = {},
+): Promise<PostgresAdminRevisionSummary[]> {
+  const repositories =
+    createPostgresRepositories();
+
+  const site =
+    await requireSite(
+      repositories,
+    );
+
+  const revisions =
+    await repositories.revisions.listRecent(
+      site.id,
+      {
+        limit:
+          options.limit,
+      },
+    );
+
+  return revisions.map(
+    (revision) => ({
+      id:
+        revision.id,
+
+      file:
+        revision.pageId,
+
+      createdAt:
+        revision.createdAt,
+
+      reason:
+        revision.reason,
+
+      sha256:
+        revision.checksum,
+
+      title:
+        revision.page.title,
+
+      path:
+        revision.page.path,
+
+      blocks:
+        revision.page.blocks.length,
+    }),
+  );
+}
+
 export async function restorePostgresAdminPageRevision(
   pageId: string,
   revisionId: string,

@@ -32,6 +32,11 @@ export interface RevisionRepository {
     pageId: string,
     options?: { limit?: number },
   ): Promise<PageRevisionRecord[]>;
+
+  listRecent(
+    siteId: string,
+    options?: { limit?: number },
+  ): Promise<PageRevisionRecord[]>;
   findById(
     siteId: string,
     pageId: string,

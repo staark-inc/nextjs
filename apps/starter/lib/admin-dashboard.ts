@@ -8,7 +8,7 @@ import {
 } from "@/lib/admin-site-settings";
 import {
   adminPagesUsePostgres,
-  listPostgresAdminPageRevisions,
+  listPostgresAdminRecentPageRevisions,
 } from "@/lib/admin-page-postgres";
 import {
   normalizeWebsiteType,
@@ -85,6 +85,7 @@ export type DashboardData = {
 
 const MAX_BOOKING_TASKS = 5;
 const MAX_MESSAGE_TASKS = 5;
+const MAX_DASHBOARD_PAGE_REVISIONS = 24;
 
 function fieldText(fields: Record<string, unknown>, key: string): string {
   const value = fields[key];
@@ -155,21 +156,42 @@ async function loadPages(): Promise<DashboardPage[]> {
     );
 }
 
-async function loadRecentPageRevisions(
-  page: DashboardPage,
+async function loadLegacyRecentPageRevisions(
+  pages: DashboardPage[],
 ) {
-  if (adminPagesUsePostgres()) {
-    return (
-      await listPostgresAdminPageRevisions(
-        page.file,
-      )
-    ).slice(0, 3);
-  }
+  const revisions = (
+    await Promise.all(
+      pages.map(
+        (page) =>
+          safe(
+            () =>
+              listPageRevisions(
+                page.file,
+                {
+                  limit:
+                    3,
+                },
+              ),
+            [],
+          ),
+      ),
+    )
+  ).flat();
 
-  return listPageRevisions(
-    page.file,
-    { limit: 3 },
-  );
+  return revisions
+    .sort(
+      (a, b) =>
+        Date.parse(
+          b.createdAt,
+        ) -
+        Date.parse(
+          a.createdAt,
+        ),
+    )
+    .slice(
+      0,
+      MAX_DASHBOARD_PAGE_REVISIONS,
+    );
 }
 
 async function safe<T>(load: () => Promise<T>, fallback: T): Promise<T> {
@@ -181,10 +203,22 @@ async function safe<T>(load: () => Promise<T>, fallback: T): Promise<T> {
 }
 
 export async function loadDashboard(): Promise<DashboardData> {
-  const now = Date.now();
+  const now =
+    Date.now();
 
-  const mediaSiteId =
-    await resolveAdminMediaSiteId();
+  const postgresRevisions =
+    adminPagesUsePostgres()
+      ? safe(
+          () =>
+            listPostgresAdminRecentPageRevisions({
+              limit:
+                MAX_DASHBOARD_PAGE_REVISIONS,
+            }),
+          [],
+        )
+      : Promise.resolve(
+          null,
+        );
 
   const [
     site,
@@ -193,32 +227,47 @@ export async function loadDashboard(): Promise<DashboardData> {
     media,
     backups,
     shell,
-  ] = await Promise.all([
-    readAdminSiteSettings(),
-    loadPages(),
-    safe(listInboxSubmissions, []),
-    safe(
-      () =>
-        listMediaFiles(
-          mediaSiteId,
-        ),
-      [],
-    ),
-    safe(() => listBackupTimes(1), []),
-    safe(peekAdminShellStatus, null),
-  ]);
+    recentPostgresRevisions,
+  ] =
+    await Promise.all([
+      readAdminSiteSettings(),
 
-  const revisions = (
-    await Promise.all(
-      pages.map((page) =>
-        safe(
-          () =>
-            loadRecentPageRevisions(page),
-          [],
-        ),
+      loadPages(),
+
+      safe(
+        listInboxSubmissions,
+        [],
       ),
-    )
-  ).flat();
+
+      safe(
+        async () =>
+          listMediaFiles(
+            await resolveAdminMediaSiteId(),
+          ),
+        [],
+      ),
+
+      safe(
+        () =>
+          listBackupTimes(
+            1,
+          ),
+        [],
+      ),
+
+      safe(
+        peekAdminShellStatus,
+        null,
+      ),
+
+      postgresRevisions,
+    ]);
+
+  const revisions =
+    recentPostgresRevisions ??
+    await loadLegacyRecentPageRevisions(
+      pages,
+    );
 
   // ---- Design ----------------------------------------------------------
   const theme =

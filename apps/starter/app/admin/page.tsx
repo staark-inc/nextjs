@@ -65,19 +65,23 @@ export default async function AdminDashboard({
   // Business-oriented dashboard.
   // ----------------------------------------------------------
 
-  const data =
-    await loadDashboard();
+  const [
+    data,
+    tenantUpdates,
+    tenant,
+  ] =
+    await Promise.all([
+      loadDashboard(),
 
-  const tenantUpdates =
-    await readAdminAnnouncements(
-      3,
-    );
+      readAdminAnnouncements(
+        3,
+      ),
+
+      resolveAdminTenantContext(),
+    ]);
 
   const websiteType =
     data.websiteType;
-
-  const tenant =
-    await resolveAdminTenantContext();
 
   const planFeatures =
     adminFeaturesFromPlanEntitlements(

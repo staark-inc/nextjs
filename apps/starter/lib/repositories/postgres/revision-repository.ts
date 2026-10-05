@@ -62,6 +62,38 @@ export class PostgresRevisionRepository implements RevisionRepository {
     return rows.map(mapRevision);
   }
 
+  async listRecent(
+    siteId: string,
+    options: { limit?: number } = {},
+  ): Promise<PageRevisionRecord[]> {
+    const limit = Math.max(
+      1,
+      Math.min(
+        options.limit ?? 24,
+        250,
+      ),
+    );
+
+    const rows =
+      await this.db.pageRevision.findMany({
+        where: {
+          siteId,
+        },
+
+        orderBy: {
+          createdAt:
+            "desc",
+        },
+
+        take:
+          limit,
+      });
+
+    return rows.map(
+      mapRevision,
+    );
+  }
+
   async findById(
     siteId: string,
     pageId: string,
