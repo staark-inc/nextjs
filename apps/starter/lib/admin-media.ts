@@ -109,7 +109,10 @@ Promise<string | null> {
     try {
       if (
         (
-          await stat(candidate)
+          await stat(
+            /* turbopackIgnore: true */
+            candidate,
+          )
         ).isDirectory()
       ) {
         return candidate;
@@ -151,6 +154,7 @@ Promise<void> {
   if (source) {
     const entries =
       await readdir(
+        /* turbopackIgnore: true */
         source,
         {
           withFileTypes: true,
@@ -192,7 +196,9 @@ Promise<void> {
       await storage.write(
         key,
         await readFile(
+          /* turbopackIgnore: true */
           path.join(
+            /* turbopackIgnore: true */
             source,
             entry.name,
           ),
