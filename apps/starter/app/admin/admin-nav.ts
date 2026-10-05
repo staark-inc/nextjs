@@ -137,6 +137,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "analytics traffic visitors page views stats statistics",
   },
   {
+    href: "/admin/integrations",
+    feature: "integrations",
+    label: "Integrations",
+    description: "Connected services",
+    icon: "M8 12h8 M12 8v8 M5 5h4v4H5V5Zm10 0h4v4h-4V5ZM5 15h4v4H5v-4Zm10 0h4v4h-4v-4Z",
+    group: "Growth",
+    keywords: "integrations google analytics search console stripe email smtp cloudflare services connections",
+  },
+  {
     href: "/admin/automations",
     feature: "automations",
     label: "Automations",
