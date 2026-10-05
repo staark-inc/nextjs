@@ -165,8 +165,93 @@ export async function listRedirects(): Promise<{
 
   const repositories = createPostgresRepositories();
   const site = await requirePostgresSite(repositories);
-  const redirects = await repositories.redirects.list(site.id);
-  return { redirects, issues: inspectRedirects(redirects) };
+
+  const [
+    redirects,
+    pages,
+  ] = await Promise.all([
+    repositories.redirects.list(site.id),
+    repositories.pages.list(site.id),
+  ]);
+
+  const issues =
+    inspectRedirects(
+      redirects,
+    );
+
+  const activePagePaths =
+    new Set(
+      pages
+        .filter(
+          (page) =>
+            !page.deletedAt,
+        )
+        .map(
+          (page) =>
+            page.page.path,
+        ),
+    );
+
+  const activeRedirectSources =
+    new Set(
+      redirects
+        .filter(
+          (rule) =>
+            rule.enabled,
+        )
+        .map(
+          (rule) =>
+            rule.from,
+        ),
+    );
+
+  for (
+    const rule of redirects
+  ) {
+    if (
+      !rule.enabled
+    ) {
+      continue;
+    }
+
+    const targetPath =
+      internalRedirectTargetPath(
+        rule.to,
+      );
+
+    if (
+      !targetPath
+    ) {
+      continue;
+    }
+
+    if (
+      activePagePaths.has(
+        targetPath,
+      ) ||
+      activeRedirectSources.has(
+        targetPath,
+      )
+    ) {
+      continue;
+    }
+
+    issues.push({
+      severity:
+        "warning",
+
+      ruleId:
+        rule.id,
+
+      message:
+        `${rule.from} points to ${targetPath}, but that destination is not an active page.`,
+    });
+  }
+
+  return {
+    redirects,
+    issues,
+  };
 }
 
 export async function createRedirect(
