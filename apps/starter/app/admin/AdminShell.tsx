@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { AdminRole } from "@staark/platform/server";
@@ -15,7 +16,6 @@ import {
 } from "@/lib/website-profile";
 import LogoutLink from "./LogoutLink";
 import BrandMark from "./BrandMark";
-import CommandPalette from "./CommandPalette";
 import AdminIcon from "./AdminIcon";
 import {
   ADMIN_REALTIME_EVENT,
@@ -43,7 +43,16 @@ type AdminShellProps = {
 };
 
 const STATUS_REFRESH_MS = 60_000;
+const STATUS_REFRESH_MIN_GAP_MS = 10_000;
 const SESSION_WARNING_MS = 15 * 60_000;
+
+const CommandPalette = dynamic(
+  () =>
+    import("./CommandPalette"),
+  {
+    ssr: false,
+  },
+);
 
 function currentSection(pathname: string, navItems: AdminNavItem[]) {
   return navItems.find((item) => isNavActive(pathname, item.href))?.label ?? "Admin";
@@ -123,6 +132,11 @@ export default function AdminShell({
   const [status, setStatus] = useState<AdminShellStatus>(initialStatus);
   const [now, setNow] = useState(initialNow);
   const redirecting = useRef(false);
+
+  const lastStatusRefreshAt =
+    useRef(
+      initialNow,
+    );
 
   const profile = useMemo(
     () => resolveWebsiteProfile(activeWebsiteType),
@@ -210,16 +224,54 @@ export default function AdminShell({
     window.location.assign(loginUrlForExpiredSession());
   }, []);
 
-  const refreshStatus = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/shell/status", { cache: "no-store" });
-      if (res.ok) setStatus((await res.json()) as AdminShellStatus);
-    } catch {
-      // Keep the last known counts; the next refresh tries again.
-    }
-  }, []);
+  const refreshStatus =
+    useCallback(
+      async (
+        force = false,
+      ) => {
+        const now =
+          Date.now();
 
-  // Close the mobile menu and refresh badge counts on every navigation.
+        if (
+          !force &&
+          now -
+            lastStatusRefreshAt.current <
+            STATUS_REFRESH_MIN_GAP_MS
+        ) {
+          return;
+        }
+
+        lastStatusRefreshAt.current =
+          now;
+
+        try {
+          const res =
+            await fetch(
+              "/api/admin/shell/status",
+              {
+                cache:
+                  "no-store",
+              },
+            );
+
+          if (res.ok) {
+            const nextStatus =
+              (await res.json()) as AdminShellStatus;
+
+            setStatus(
+              nextStatus,
+            );
+          }
+        } catch {
+          // Keep the last known counts; the next refresh tries again.
+        }
+      },
+      [],
+    );
+
+  // Close the mobile menu on navigation.
+  // Badge refresh is throttled because realtime events already keep the shell
+  // current and route changes can happen in quick succession.
   useEffect(() => {
     setOpen(false);
     void refreshStatus();
@@ -228,12 +280,36 @@ export default function AdminShell({
   useEffect(() => {
     const timer = window.setInterval(() => void refreshStatus(), STATUS_REFRESH_MS);
     const onFocus = () => void refreshStatus();
-    window.addEventListener("focus", onFocus);
-    window.addEventListener(ADMIN_STATUS_CHANGED_EVENT, onFocus);
+    const onStatusChanged =
+      () =>
+        void refreshStatus(
+          true,
+        );
+
+    window.addEventListener(
+      "focus",
+      onFocus,
+    );
+
+    window.addEventListener(
+      ADMIN_STATUS_CHANGED_EVENT,
+      onStatusChanged,
+    );
+
     return () => {
-      window.clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener(ADMIN_STATUS_CHANGED_EVENT, onFocus);
+      window.clearInterval(
+        timer,
+      );
+
+      window.removeEventListener(
+        "focus",
+        onFocus,
+      );
+
+      window.removeEventListener(
+        ADMIN_STATUS_CHANGED_EVENT,
+        onStatusChanged,
+      );
     };
   }, [refreshStatus]);
 
