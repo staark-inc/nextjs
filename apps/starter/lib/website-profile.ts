@@ -247,6 +247,7 @@ export function resolveClientFeatures(
     "seo",
     "searchConsole",
     "analytics",
+    "automations",
     "domains",
     "booking",
   ] as const) {

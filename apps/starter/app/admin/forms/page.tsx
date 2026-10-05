@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  ADMIN_REALTIME_EVENT,
+  type AdminRealtimeBrowserEvent,
+} from "../admin-events";
 
 type InboxStatus =
   | "new"
@@ -85,28 +94,87 @@ export default function FormsPage() {
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch(
-          "/api/admin/forms",
-        );
+  const loadSubmissions =
+    useCallback(
+      async () => {
+        try {
+          const res =
+            await fetch(
+              "/api/admin/forms",
+              {
+                cache:
+                  "no-store",
+              },
+            );
 
-        const all: Submission[] =
-          res.ok ? await res.json() : [];
+          const all:
+            Submission[] =
+              res.ok
+                ? await res.json()
+                : [];
 
-        // Booking requests have their own business UI.
-        // Legacy "lead" submissions are normal messages.
-        setSubmissions(
-          all.filter(
-            (item) => item.kind !== "booking",
-          ),
-        );
-      } finally {
-        setLoading(false);
+          setSubmissions(
+            all.filter(
+              (item) =>
+                item.kind !==
+                "booking",
+            ),
+          );
+        } finally {
+          setLoading(
+            false,
+          );
+        }
+      },
+      [],
+    );
+
+  useEffect(
+    () => {
+      void loadSubmissions();
+    },
+    [
+      loadSubmissions,
+    ],
+  );
+
+  useEffect(
+    () => {
+      function onRealtime(
+        event: Event,
+      ) {
+        const detail =
+          (
+            event as CustomEvent<
+              AdminRealtimeBrowserEvent
+            >
+          ).detail;
+
+        if (
+          detail.type === "submission.received" ||
+          detail.type === "submission.status.changed" ||
+          detail.type === "inbox.updated"
+        ) {
+          void loadSubmissions();
+        }
       }
-    })();
-  }, []);
+
+      window.addEventListener(
+        ADMIN_REALTIME_EVENT,
+        onRealtime,
+      );
+
+      return () => {
+        window.removeEventListener(
+          ADMIN_REALTIME_EVENT,
+          onRealtime,
+        );
+      };
+    },
+    [
+      loadSubmissions,
+    ],
+  );
 
   const today =
     new Date().toDateString();

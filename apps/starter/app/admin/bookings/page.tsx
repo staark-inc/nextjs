@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Link from "next/link";
-import { ADMIN_STATUS_CHANGED_EVENT } from "../admin-events";
+import {
+  ADMIN_REALTIME_EVENT,
+  ADMIN_STATUS_CHANGED_EVENT,
+  type AdminRealtimeBrowserEvent,
+} from "../admin-events";
 
 type InboxStatus = "new" | "read" | "replied" | "archived";
 type BookingStatus = "pending" | "confirmed" | "declined";
@@ -65,14 +74,86 @@ export default function BookingsPage() {
     setTimeout(() => setToast(null), 3000);
   }
 
-  useEffect(() => {
-    void (async () => {
-      const res = await fetch("/api/admin/forms");
-      const all: Submission[] = res.ok ? await res.json() : [];
-      setBookings(all.filter((item): item is Booking => Boolean(item.bookingStatus)));
-      setLoading(false);
-    })();
-  }, []);
+  const loadBookings =
+    useCallback(
+      async () => {
+        const res =
+          await fetch(
+            "/api/admin/forms",
+            {
+              cache:
+                "no-store",
+            },
+          );
+
+        const all:
+          Submission[] =
+            res.ok
+              ? await res.json()
+              : [];
+
+        setBookings(
+          all.filter(
+            (item): item is Booking =>
+              Boolean(
+                item.bookingStatus,
+              ),
+          ),
+        );
+
+        setLoading(
+          false,
+        );
+      },
+      [],
+    );
+
+  useEffect(
+    () => {
+      void loadBookings();
+    },
+    [
+      loadBookings,
+    ],
+  );
+
+  useEffect(
+    () => {
+      function onRealtime(
+        event: Event,
+      ) {
+        const detail =
+          (
+            event as CustomEvent<
+              AdminRealtimeBrowserEvent
+            >
+          ).detail;
+
+        if (
+          detail.type === "submission.received" ||
+          detail.type === "booking.status.changed" ||
+          detail.type === "inbox.updated"
+        ) {
+          void loadBookings();
+        }
+      }
+
+      window.addEventListener(
+        ADMIN_REALTIME_EVENT,
+        onRealtime,
+      );
+
+      return () => {
+        window.removeEventListener(
+          ADMIN_REALTIME_EVENT,
+          onRealtime,
+        );
+      };
+    },
+    [
+      loadBookings,
+    ],
+  );
 
   const counts = useMemo(
     () => ({

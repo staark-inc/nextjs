@@ -17,7 +17,11 @@ import LogoutLink from "./LogoutLink";
 import BrandMark from "./BrandMark";
 import CommandPalette from "./CommandPalette";
 import AdminIcon from "./AdminIcon";
-import { ADMIN_STATUS_CHANGED_EVENT } from "./admin-events";
+import {
+  ADMIN_REALTIME_EVENT,
+  ADMIN_STATUS_CHANGED_EVENT,
+  type AdminRealtimeBrowserEvent,
+} from "./admin-events";
 import { getAdminNavGroups, getAdminNavItems, isNavActive, SEARCH_ICON, type AdminNavItem } from "./admin-nav";
 import styles from "./AdminShell.module.css";
 
@@ -232,6 +236,53 @@ export default function AdminShell({
       window.removeEventListener(ADMIN_STATUS_CHANGED_EVENT, onFocus);
     };
   }, [refreshStatus]);
+
+  // One authenticated realtime stream for the entire admin shell.
+  // PostgreSQL LISTEN/NOTIFY fans tenant events into this EventSource.
+  useEffect(() => {
+    const source =
+      new EventSource(
+        "/api/admin/events",
+      );
+
+    source.onmessage =
+      (event) => {
+        try {
+          const detail =
+            JSON.parse(
+              event.data,
+            ) as AdminRealtimeBrowserEvent;
+
+          window.dispatchEvent(
+            new CustomEvent(
+              ADMIN_REALTIME_EVENT,
+              {
+                detail,
+              },
+            ),
+          );
+
+          if (
+            detail.type === "submission.received" ||
+            detail.type === "submission.status.changed" ||
+            detail.type === "booking.status.changed" ||
+            detail.type === "inbox.updated"
+          ) {
+            window.dispatchEvent(
+              new Event(
+                ADMIN_STATUS_CHANGED_EVENT,
+              ),
+            );
+          }
+        } catch {
+          // Ignore malformed realtime frames.
+        }
+      };
+
+    return () => {
+      source.close();
+    };
+  }, []);
 
   // Any admin API call that comes back 401 means the session is gone:
   // send the user to sign in and bring them back to this page afterwards.

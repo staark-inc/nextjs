@@ -137,6 +137,15 @@ const BASE_ADMIN_NAV_ITEMS: AdminNavItem[] = [
     keywords: "analytics traffic visitors page views stats statistics",
   },
   {
+    href: "/admin/automations",
+    feature: "automations",
+    label: "Automations",
+    description: "Triggers & follow-ups",
+    icon: "M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M16.24 16.24l2.83 2.83 M2 12h4 M18 12h4 M4.93 19.07l2.83-2.83 M16.24 7.76l2.83-2.83 M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z",
+    group: "Growth",
+    keywords: "automation workflow trigger follow up lead booking rules actions",
+  },
+  {
     href: "/admin/redirects",
     feature: "redirects",
     label: "Redirects",

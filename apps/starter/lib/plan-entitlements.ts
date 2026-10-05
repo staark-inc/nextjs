@@ -56,6 +56,10 @@ export function adminFeaturesFromPlanEntitlements(
     features.push("analytics");
   }
 
+  if (canUsePlanFeature(entitlements, "automations")) {
+    features.push("automations");
+  }
+
   if (canUsePlanFeature(entitlements, "customDomain")) {
     features.push("domains");
   }

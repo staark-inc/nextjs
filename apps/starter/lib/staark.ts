@@ -19,6 +19,14 @@ import {
 } from "./repositories";
 import { ensureLocalContentSeed } from "./storage";
 import { resolveTenantContext } from "./tenant-context";
+import {
+  automationEventFromSubmission,
+  runAutomationEvent,
+} from "./automation-engine";
+
+import {
+  publishAdminRealtime,
+} from "./admin-realtime";
 
 const baseContent = createStaarkContent();
 export const publicContentConfig = resolvePublicContentConfig();
@@ -159,7 +167,7 @@ async function submitPostgresForm(
   const site = await postgresSiteRecord(siteKey);
 
   const receivedAt = new Date().toISOString();
-  await repo.submissions.create({
+  const created = await repo.submissions.create({
     siteId: site.id,
     id: newSubmissionReference(),
     formId: submission.formId,
@@ -178,6 +186,42 @@ async function submitPostgresForm(
       },
     ],
   });
+
+  await publishAdminRealtime(
+    site.id,
+    "submission.received",
+    {
+      submissionId:
+        created.id,
+      kind:
+        created.kind,
+      formId:
+        created.formId,
+    },
+  );
+
+  try {
+    await runAutomationEvent(
+      automationEventFromSubmission(
+        created,
+        {
+          eventKey:
+            `submission.received:${created.id}`,
+          eventType:
+            "submission.received",
+        },
+      ),
+    );
+  } catch (error) {
+    // The visitor submission is authoritative. Automation problems are
+    // recorded/logged separately and must never reject a valid form.
+    console.error(
+      "[automation] Submission automation dispatch failed:",
+      error instanceof Error
+        ? error.message
+        : String(error),
+    );
+  }
 }
 
 const postgresContent: StaarkContent = {

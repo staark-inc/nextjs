@@ -13,6 +13,14 @@ import type {
   SubmissionStatus,
 } from "./repositories";
 import {
+  automationEventFromSubmission,
+  runAutomationEvent,
+} from "./automation-engine";
+
+import {
+  publishAdminRealtime,
+} from "./admin-realtime";
+import {
   readStateJson,
   readStateText,
   writeStateJson,
@@ -290,7 +298,100 @@ export async function updateInboxSubmission(
     bookingStatus: patch.bookingStatus,
     appendActivity,
   });
-  return updated ? toInboxSubmission(updated) : null;
+
+  if (!updated) {
+    return null;
+  }
+
+  if (
+    patch.status &&
+    patch.status !== current.status
+  ) {
+    await publishAdminRealtime(
+      site.id,
+      "submission.status.changed",
+      {
+        submissionId:
+          updated.id,
+        from:
+          current.status,
+        to:
+          updated.status,
+      },
+    );
+  }
+
+  if (
+    patch.bookingStatus &&
+    patch.bookingStatus !== current.bookingStatus
+  ) {
+    await publishAdminRealtime(
+      site.id,
+      "booking.status.changed",
+      {
+        submissionId:
+          updated.id,
+        from:
+          current.bookingStatus ??
+          "pending",
+        to:
+          updated.bookingStatus ??
+          "pending",
+      },
+    );
+  }
+
+  try {
+    if (
+      patch.status &&
+      patch.status !== current.status
+    ) {
+      await runAutomationEvent(
+        automationEventFromSubmission(
+          updated,
+          {
+            eventKey:
+              `submission.status.changed:${updated.id}:${current.status}:${updated.status}:${updated.activity.length}`,
+            eventType:
+              "submission.status.changed",
+            previousStatus:
+              current.status,
+          },
+        ),
+      );
+    }
+
+    if (
+      patch.bookingStatus &&
+      patch.bookingStatus !== current.bookingStatus
+    ) {
+      await runAutomationEvent(
+        automationEventFromSubmission(
+          updated,
+          {
+            eventKey:
+              `booking.status.changed:${updated.id}:${current.bookingStatus ?? "pending"}:${updated.bookingStatus ?? "pending"}:${updated.activity.length}`,
+            eventType:
+              "booking.status.changed",
+            previousBookingStatus:
+              current.bookingStatus,
+          },
+        ),
+      );
+    }
+  } catch (error) {
+    // Inbox state changes remain authoritative even when an automation fails.
+    console.error(
+      "[automation] Status automation dispatch failed:",
+      error instanceof Error
+        ? error.message
+        : String(error),
+    );
+  }
+
+  return toInboxSubmission(
+    updated,
+  );
 }
 
 export async function clearInbox(): Promise<void> {

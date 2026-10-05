@@ -37,6 +37,8 @@ model Site {
   analyticsDaily          AnalyticsDaily[]
   googleAnalyticsBinding GoogleAnalyticsBinding?
   searchConsoleBinding   SearchConsoleBinding?
+  automations            Automation[]
+  automationRuns         AutomationRun[]
 
   @@index([organizationId], map: "sites_organization_id_idx")
   @@map("sites")
@@ -420,6 +422,60 @@ model AnalyticsDaily {
   @@index([siteId, date], map: "analytics_daily_site_id_date_idx")
   @@map("analytics_daily")
 }
+
+/// Tenant-owned automation rule.
+///
+/// Trigger/action configuration stays JSONB so the workflow vocabulary can
+/// evolve without schema churn. The engine validates every configuration before
+/// execution.
+model Automation {
+  id            String   @id @default(uuid()) @db.Uuid
+  siteId        String   @map("site_id") @db.Uuid
+  name          String   @db.VarChar(160)
+  enabled       Boolean  @default(true)
+  trigger       String   @db.VarChar(80)
+  triggerConfig Json     @default("{}") @map("trigger_config") @db.JsonB
+  action        String   @db.VarChar(80)
+  actionConfig  Json     @default("{}") @map("action_config") @db.JsonB
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "automations_site_id_fkey")
+  runs AutomationRun[]
+
+  @@index([siteId, enabled], map: "automations_site_id_enabled_idx")
+  @@index([siteId, trigger], map: "automations_site_id_trigger_idx")
+  @@map("automations")
+}
+
+/// Immutable execution/audit entry for one automation event.
+///
+/// automationId + eventKey prevents the same event from being processed twice
+/// by the same rule. Failed runs can be retried without creating duplicate rows.
+model AutomationRun {
+  id           String    @id @default(uuid()) @db.Uuid
+  siteId       String    @map("site_id") @db.Uuid
+  automationId String    @map("automation_id") @db.Uuid
+  eventKey     String    @map("event_key") @db.VarChar(255)
+  eventType    String    @map("event_type") @db.VarChar(80)
+  status       String    @default("pending") @db.VarChar(20)
+  attempt      Int       @default(0)
+  input        Json      @default("{}") @db.JsonB
+  output       Json?     @db.JsonB
+  error        String?   @db.Text
+  startedAt    DateTime? @map("started_at") @db.Timestamptz(3)
+  finishedAt   DateTime? @map("finished_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  site       Site       @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "automation_runs_site_id_fkey")
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade, map: "automation_runs_automation_id_fkey")
+
+  @@unique([automationId, eventKey], map: "automation_runs_automation_id_event_key_key")
+  @@index([siteId, createdAt], map: "automation_runs_site_id_created_at_idx")
+  @@index([status, createdAt], map: "automation_runs_status_created_at_idx")
+  @@map("automation_runs")
+}
+
 
 /// Inbound signed Hub -> Runtime control message.
 ///
