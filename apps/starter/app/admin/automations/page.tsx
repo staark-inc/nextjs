@@ -21,7 +21,8 @@ type Trigger =
 type Action =
   | "add_activity"
   | "set_status"
-  | "set_booking_status";
+  | "set_booking_status"
+  | "send_admin_email";
 
 type Automation = {
   id: string;
@@ -67,6 +68,8 @@ type Draft = {
   message: string;
   actionStatus: string;
   bookingStatus: string;
+  emailSubject: string;
+  emailMessage: string;
 };
 
 const INITIAL_DRAFT: Draft = {
@@ -79,6 +82,9 @@ const INITIAL_DRAFT: Draft = {
   message: "Follow up with {{name}}.",
   actionStatus: "read",
   bookingStatus: "confirmed",
+  emailSubject: "New enquiry from {{name}}",
+  emailMessage:
+    "A new {{kind}} submission was received from {{name}} ({{email}}).",
 };
 
 function triggerLabel(
@@ -118,7 +124,14 @@ function actionLabel(
     return "Change submission status";
   }
 
-  return "Change booking status";
+  if (
+    value ===
+    "set_booking_status"
+  ) {
+    return "Change booking status";
+  }
+
+  return "Send admin email";
 }
 
 export default function AutomationsPage() {
@@ -350,10 +363,18 @@ export default function AutomationsPage() {
                 status:
                   draft.actionStatus,
               }
-            : {
-                bookingStatus:
-                  draft.bookingStatus,
-              };
+            : draft.action ===
+                "set_booking_status"
+              ? {
+                  bookingStatus:
+                    draft.bookingStatus,
+                }
+              : {
+                  subject:
+                    draft.emailSubject,
+                  message:
+                    draft.emailMessage,
+                };
 
     try {
       const response =
@@ -863,6 +884,10 @@ export default function AutomationsPage() {
               <option value="set_booking_status">
                 Change booking status
               </option>
+
+              <option value="send_admin_email">
+                Send admin email
+              </option>
             </select>
           </div>
         </div>
@@ -892,6 +917,60 @@ export default function AutomationsPage() {
               Variables: {"{{name}}"}, {"{{email}}"},
               {" {{phone}}"}, {"{{submissionId}}"},
               {" {{kind}}"}, {"{{status}}"}
+            </div>
+          </div>
+        ) : null}
+
+        {draft.action ===
+        "send_admin_email" ? (
+          <div className={styles.emailFields}>
+            <div className="sa-field">
+              <label htmlFor="automation-email-subject">
+                Email subject
+              </label>
+
+              <input
+                id="automation-email-subject"
+                value={draft.emailSubject}
+                onChange={
+                  (event) =>
+                    setDraft({
+                      ...draft,
+                      emailSubject:
+                        event.target.value,
+                    })
+                }
+                placeholder="New enquiry from {{name}}"
+              />
+            </div>
+
+            <div className="sa-field">
+              <label htmlFor="automation-email-message">
+                Email message
+              </label>
+
+              <textarea
+                id="automation-email-message"
+                rows={4}
+                value={draft.emailMessage}
+                onChange={
+                  (event) =>
+                    setDraft({
+                      ...draft,
+                      emailMessage:
+                        event.target.value,
+                    })
+                }
+              />
+
+              <div className="sa-field-hint">
+                Sent to the Notification email from
+                Settings, with Contact email as fallback.
+                Variables: {"{{name}}"}, {"{{email}}"},
+                {" {{phone}}"}, {"{{company}}"},
+                {" {{submissionId}}"}, {"{{kind}}"},
+                {" {{status}}"}, {"{{message}}"}
+              </div>
             </div>
           </div>
         ) : null}

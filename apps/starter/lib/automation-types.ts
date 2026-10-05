@@ -17,6 +17,7 @@ export const AUTOMATION_ACTIONS = [
   "add_activity",
   "set_status",
   "set_booking_status",
+  "send_admin_email",
 ] as const;
 
 export type AutomationAction =
@@ -31,6 +32,7 @@ export type AutomationTriggerConfig = {
 
 export type AutomationActionConfig = {
   message?: string;
+  subject?: string;
   status?: SubmissionStatus;
   bookingStatus?: BookingStatus;
 };
@@ -225,6 +227,43 @@ export function parseAutomationDefinition(
       bookingStatus;
   }
 
+  if (
+    action ===
+    "send_admin_email"
+  ) {
+    const subject =
+      typeof actionRaw.subject === "string"
+        ? actionRaw.subject
+            .trim()
+            .slice(0, 200)
+        : "";
+
+    const message =
+      typeof actionRaw.message === "string"
+        ? actionRaw.message
+            .trim()
+            .slice(0, 5000)
+        : "";
+
+    if (!subject) {
+      throw new Error(
+        "Email subject is required.",
+      );
+    }
+
+    if (!message) {
+      throw new Error(
+        "Email message is required.",
+      );
+    }
+
+    actionConfig.subject =
+      subject;
+
+    actionConfig.message =
+      message;
+  }
+
   return {
     name,
     enabled:
@@ -295,6 +334,12 @@ export function asActionConfig(
       ? {
           message:
             raw.message,
+        }
+      : {}),
+    ...(typeof raw.subject === "string"
+      ? {
+          subject:
+            raw.subject,
         }
       : {}),
     ...(typeof raw.status === "string"

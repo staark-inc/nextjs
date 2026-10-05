@@ -58,11 +58,6 @@ services:
       # Entitlements are normally resolved from Subscription -> Plan.
       STAARK_ENTITLEMENTS: ${STAARK_ENTITLEMENTS:-}
 
-      # Notifications
-      STAARK_NOTIFICATION_MODE: ${STAARK_NOTIFICATION_MODE:-hub}
-      STAARK_NOTIFICATION_TO: ${STAARK_NOTIFICATION_TO:-}
-      STAARK_ADMIN_BASE_URL: ${STAARK_ADMIN_BASE_URL:-}
-
       # Mail transport
       STAARK_MAIL_TRANSPORT: ${STAARK_MAIL_TRANSPORT:-disabled}
       SMTP_HOST: ${SMTP_HOST:-}

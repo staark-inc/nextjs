@@ -27,6 +27,10 @@ import {
   publishAdminRealtime,
 } from "./admin-realtime";
 
+import {
+  sendAutomationAdminEmail,
+} from "./automation-email";
+
 type Rule = {
   id: string;
   siteId: string;
@@ -310,6 +314,40 @@ async function executeAction(
     return {
       action,
       message,
+    };
+  }
+
+  if (
+    action ===
+    "send_admin_email"
+  ) {
+    if (
+      !config.subject ||
+      !config.message
+    ) {
+      throw new Error(
+        "Automation email configuration is incomplete.",
+      );
+    }
+
+    const result =
+      await sendAutomationAdminEmail(
+        event,
+        {
+          subject:
+            config.subject,
+
+          message:
+            config.message,
+        },
+      );
+
+    return {
+      action,
+      sent:
+        true,
+      messageId:
+        result.messageId,
     };
   }
 

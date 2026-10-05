@@ -7,10 +7,6 @@ import {
 } from "@/lib/staark";
 
 import {
-  notifyLocalSubmission,
-} from "@/lib/mail-notifications";
-
-import {
   authorizePublicFormSubmission,
   authorizePublicFormToken,
 } from "@/lib/public-form-access";
@@ -57,7 +53,5 @@ export const {
           FORM_KINDS,
         ),
 
-    onSubmitted:
-      notifyLocalSubmission,
   },
 );
