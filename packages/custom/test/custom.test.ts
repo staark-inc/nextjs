@@ -43,6 +43,7 @@ test(
         routes: false,
         styles: true,
         layouts: false,
+      errors: false,
         navigation: false,
       },
     );

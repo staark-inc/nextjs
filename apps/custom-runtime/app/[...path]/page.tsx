@@ -19,24 +19,26 @@ async function resolvePage(params: Props["params"]) {
   const segments = (await params).path;
   const route = resolveCustomBlogPath(project, segments);
   if (route.owns) {
-    if (!blog || route.slug === null) notFound();
+    if (!blog || route.slug === null) return null;
     const post = route.slug ? await blog.get(route.slug) : null;
-    if (route.slug && !post) notFound();
+    if (route.slug && !post) return null;
     return { kind: "blog" as const, project, blog, post };
   }
   const page = await loadCustomPage(project, segments);
-  if (!page) notFound();
+  if (!page) return null;
   return { kind: "page" as const, project, page };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = await resolvePage(params);
+  if (!result) return { title: "Sidan kunde inte hittas", robots: "noindex" };
   if (result.kind === "page") return customPageMetadata(result.page, await loadCustomSite(result.project));
   return { title: result.post?.title ?? result.blog.config.title, description: result.post?.excerpt ?? result.blog.config.description };
 }
 
 export default async function CustomContentPage({ params }: Props) {
   const result = await resolvePage(params);
+  if (!result) notFound();
   if (result.kind === "page") {
     const { project, page } = result;
     const site = await loadCustomSite(project);
