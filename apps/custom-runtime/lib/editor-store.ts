@@ -50,9 +50,9 @@ export function validateEditorPage(input: unknown, project: LoadedCustomProject)
   }
   return { ...page, projectKey: project.project.key, status: raw.status };
 }
-function revision(text: string) { return createHash("sha256").update(text).digest("hex"); }
+export function revision(text: string) { return createHash("sha256").update(text).digest("hex"); }
 // Reject symlink parents and targets, including private history/lock directories.
-async function safePath(root: string, relative: string, createParents = false) {
+export async function safePath(root: string, relative: string, createParents = false) {
   const parts = relative.split("/");
   let current = root;
   for (let index = 0; index < parts.length; index++) {
@@ -140,4 +140,26 @@ export async function saveEditorPage(directory: string, project: LoadedCustomPro
     if (temp) await rm(temp, { force: true });
     await rm(lock, { recursive: true, force: true });
   }
+}
+
+export async function deleteEditorPage(directory: string, project: LoadedCustomProject, url: string, expectedRevision: string) {
+  if (url === "/") throw new EditorError(422, "The home page cannot be deleted.");
+  const relative = editorPageFile(url, project);
+  const root = await realpath(directory);
+  const key = revision(relative);
+  const lock = await safePath(root, `.custom-editor/locks/${key}`, true);
+  try { await mkdir(lock); } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "EEXIST") throw new EditorError(409, "Page is being changed. Retry shortly.");
+    throw error;
+  }
+  try {
+    const previous = await readDocument(root, relative, project);
+    if (!previous) throw new EditorError(404, "Page not found.");
+    if (previous.revision !== expectedRevision) throw new EditorError(409, "Page changed in another session. Reload it before deleting.");
+    const target = await safePath(root, relative);
+    const backup = await safePath(root, `.custom-editor/history/${key}/${Date.now()}-${randomUUID()}-deleted.json`, true);
+    // Moving to private history removes the public page and retains its exact bytes atomically.
+    await rename(target, backup);
+    return { ok: true, path: url };
+  } finally { await rm(lock, { recursive: true, force: true }); }
 }

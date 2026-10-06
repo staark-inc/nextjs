@@ -5,7 +5,7 @@ import path from "node:path";
 import os from "node:os";
 import { loadCustomProject } from "@staark/custom";
 import { adminConfig, adminCookieName, createAdminSession, hashAdminPassword, readAdminSession, verifyAdminPassword } from "../lib/editor-auth.ts";
-import { EditorError, editorPageFile, getEditorPage, listEditorPages, saveEditorPage, validateEditorPage } from "../lib/editor-store.ts";
+import { EditorError, deleteEditorPage, editorPageFile, getEditorPage, listEditorPages, saveEditorPage, validateEditorPage } from "../lib/editor-store.ts";
 import { loadCustomPage } from "../lib/custom-content.ts";
 
 const project = loadCustomProject({ schema: "staark-custom/v1", project: { key: "demo", name: "Demo", version: "1" }, runtime: { theme: { family: "custom-base", variant: "studio" }, addons: [{ key: "blog", config: { basePath: "/journal" } }] } });
@@ -95,4 +95,56 @@ test("selected projects do not share pages or accept each other's documents", as
   assert.equal((await getEditorPage(studio, project, "/about")).page.title, "About");
   assert.equal((await getEditorPage(forma, other, "/about")).page.title, "Forma");
   await assert.rejects(saveEditorPage(studio, project, { ...page, projectKey: "other" }, null), /different project/);
+});
+
+
+test("deleting a nested page removes it publicly and from the list, retaining exact history bytes", async t => {
+  const directory = await fixture(t);
+  const saved = await saveEditorPage(directory, project, { ...page, path: "/guides/start", status: "published" }, null);
+  const bytes = await readFile(path.join(directory, "content/pages/guides/start.json"), "utf8");
+  assert.ok(await loadCustomPage(project, ["guides", "start"], directory));
+  assert.deepEqual(await deleteEditorPage(directory, project, "/guides/start", saved.revision), { ok: true, path: "/guides/start" });
+  assert.equal(await loadCustomPage(project, ["guides", "start"], directory), null);
+  assert.deepEqual(await listEditorPages(directory, project), []);
+  await assert.rejects(getEditorPage(directory, project, "/guides/start"), error => error instanceof EditorError && error.status === 404);
+  const [folder] = await readdir(path.join(directory, ".custom-editor/history"));
+  const [file] = await readdir(path.join(directory, ".custom-editor/history", folder!));
+  assert.ok(file!.endsWith("-deleted.json"));
+  assert.equal(await readFile(path.join(directory, ".custom-editor/history", folder!, file!), "utf8"), bytes);
+  // The URL can be reused explicitly after deletion; deleting never recursively removes child pages.
+  await saveEditorPage(directory, project, { ...page, path: "/guides/start" }, null);
+});
+test("deletion protects home, reserved routes, foreign content and stale revisions", async t => {
+  const directory = await fixture(t);
+  const first = await saveEditorPage(directory, project, page, null);
+  await assert.rejects(deleteEditorPage(directory, project, "/", first.revision), /home page/);
+  for (const url of ["/api/health", "/admin", "/media/demo/file", "/journal", "/../escape"]) await assert.rejects(deleteEditorPage(directory, project, url, first.revision), EditorError);
+  await assert.rejects(deleteEditorPage(directory, other, "/about", first.revision), /different project/);
+  const latest = await saveEditorPage(directory, project, { ...first.page, title: "Updated" }, first.revision);
+  await assert.rejects(deleteEditorPage(directory, project, "/about", first.revision), error => error instanceof EditorError && error.status === 409);
+  assert.equal((await getEditorPage(directory, project, "/about")).revision, latest.revision);
+});
+test("saving and deleting use the same lock and cannot silently overwrite each other", async t => {
+  const directory = await fixture(t);
+  const saved = await saveEditorPage(directory, project, page, null);
+  const results = await Promise.allSettled([
+    deleteEditorPage(directory, project, "/about", saved.revision),
+    saveEditorPage(directory, project, { ...saved.page, title: "Concurrent edit" }, saved.revision),
+  ]);
+  assert.equal(results.filter(item => item.status === "fulfilled").length, 1);
+  assert.equal(results.filter(item => item.status === "rejected" && item.reason.status === 409).length, 1);
+});
+test("deleting rejects symlinked targets and history without touching external files", async t => {
+  const directory = await fixture(t); const outside = await fixture(t);
+  const saved = await saveEditorPage(directory, project, page, null);
+  const filename = path.join(directory, "content/pages/about.json");
+  const bytes = await readFile(filename, "utf8");
+  await writeFile(path.join(outside, "about.json"), bytes);
+  await rm(filename); await symlink(path.join(outside, "about.json"), filename);
+  await assert.rejects(deleteEditorPage(directory, project, "/about", saved.revision), /regular project/);
+  assert.equal(await readFile(path.join(outside, "about.json"), "utf8"), bytes);
+  await rm(filename); await writeFile(filename, bytes);
+  await symlink(outside, path.join(directory, ".custom-editor/history"), "dir");
+  await assert.rejects(deleteEditorPage(directory, project, "/about", saved.revision), /regular project/);
+  assert.equal(await readFile(filename, "utf8"), bytes);
 });

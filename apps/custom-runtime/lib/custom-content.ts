@@ -47,7 +47,7 @@ export async function loadCustomHome(project: LoadedCustomProject, directory = r
 
 export function customPagePath(segments: readonly string[]): string | null {
   if (!segments.length || segments.some(segment => !/^[a-z0-9][a-z0-9-]*$/.test(segment))) return null;
-  if (["api", "admin", "dashboard", "_next"].includes(segments[0]!)) return null;
+  if (["api", "admin", "dashboard", "media", "_next"].includes(segments[0]!)) return null;
   return `/${segments.join("/")}`;
 }
 

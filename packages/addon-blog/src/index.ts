@@ -1,37 +1,11 @@
 import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
-import { z } from "zod";
+import { BlogContentSchema, type EditableBlogPost } from "./content.ts";
 import type { CustomExtensionDefinition } from "@staark/custom";
 import { BlogConfigSchema, type BlogConfig } from "./config.ts";
 
-const PostSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
-  title: z.string().trim().min(1).max(200),
-  excerpt: z.string().trim().max(600),
-  paragraphs: z.array(z.string().trim().min(1)).min(1),
-  status: z.enum(["draft", "published"]).default("draft"),
-  publishedAt: z.iso.datetime().optional(),
-}).refine(post => post.status !== "published" || Boolean(post.publishedAt), "Published posts require publishedAt");
-
-const ContentSchema = z.object({
-  projectKey: z.string().min(1),
-  posts: z.array(PostSchema).default([]),
-}).superRefine((content, ctx) => {
-  const seen = new Set<string>();
-  content.posts.forEach((post, index) => {
-    if (seen.has(post.slug)) ctx.addIssue({ code: "custom", path: ["posts", index, "slug"], message: "Duplicate blog slug" });
-    seen.add(post.slug);
-  });
-});
-
-export type BlogPost = {
-  slug: string;
-  title: string;
-  excerpt: string;
-  paragraphs: string[];
-  publishedAt: string;
-};
-export type BlogSummary = Omit<BlogPost, "paragraphs">;
+export type BlogPost = Omit<EditableBlogPost, "status" | "publishedAt"> & { publishedAt: string };
+export type BlogSummary = Omit<BlogPost, "paragraphs" | "body">;
 export type BlogService = {
   config: BlogConfig;
   list(): Promise<BlogSummary[]>;
@@ -63,16 +37,16 @@ export function createBlogService(input: {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
       throw error;
     }
-    const content = ContentSchema.parse(JSON.parse(text));
+    const content = BlogContentSchema.parse(JSON.parse(text));
     if (content.projectKey !== input.projectKey) throw new Error("Blog content belongs to a different project.");
     return content.posts
       .filter(post => post.status === "published" && Date.parse(post.publishedAt!) <= now())
-      .map(post => ({ slug: post.slug, title: post.title, excerpt: post.excerpt, paragraphs: post.paragraphs, publishedAt: post.publishedAt! }))
+      .map(({ status: _status, ...post }) => ({ ...post, publishedAt: post.publishedAt! }))
       .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
   }
   return {
     config,
-    async list() { return (await published()).map(({ paragraphs: _paragraphs, ...summary }) => summary); },
+    async list() { return (await published()).map(({ paragraphs: _paragraphs, body: _body, ...summary }) => summary); },
     async get(slug) {
       if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) return null;
       return (await published()).find(post => post.slug === slug) ?? null;
