@@ -32,8 +32,8 @@ import {
 import {
   ADMIN_LOGIN_PATH,
   isAdminSessionActive,
-  resolveAdminAuthConfig,
   resolveAdminRole,
+  resolveAdminSessionSecret,
   safeAdminNext,
 } from "@staark/platform/server";
 
@@ -302,7 +302,7 @@ export async function proxy(req: NextRequest) {
 
   let sessionSecret: string;
   try {
-    sessionSecret = resolveAdminAuthConfig().sessionSecret;
+    sessionSecret = resolveAdminSessionSecret();
   } catch (error) {
     // The login page stays reachable so it can explain the problem on submit.
     if (isLoginPage) return NextResponse.next();
@@ -332,9 +332,24 @@ export async function proxy(req: NextRequest) {
     const contentConfig =
       resolvePublicContentConfig();
 
+    const managerRecovery =
+      role === "manager" &&
+      session.recoveryMode ===
+        true;
+
+    /*
+     * Recovery Manager is deliberately
+     * database-independent.
+     *
+     * Do not resolve Host -> Domain -> Site
+     * through Prisma here, otherwise a
+     * PostgreSQL outage prevents the Manager
+     * recovery console from opening at all.
+     */
     const tenant =
       contentConfig.source ===
-        "postgres"
+        "postgres" &&
+      !managerRecovery
         ? await resolveTenantContext({
             host:
               req.headers.get(
@@ -405,7 +420,10 @@ export async function proxy(req: NextRequest) {
       return NextResponse.redirect(new URL("/admin", req.url));
     }
 
-    if (!setupRequest) {
+    if (
+      !setupRequest &&
+      !managerRecovery
+    ) {
       try {
         await readAdminSiteSettings();
       } catch (error) {
