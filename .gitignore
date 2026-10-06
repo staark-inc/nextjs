@@ -5,9 +5,11 @@ dist/
 *.tsbuildinfo
 .env
 .env.local
+.env.docker
 .env.*.local
 next-env.d.ts
 .staark/
+.custom-editor/
 
 *.patch
 apps/starter/generated/prisma/
