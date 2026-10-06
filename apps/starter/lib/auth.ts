@@ -7,6 +7,10 @@ import {
   resolveAdminAuthConfig,
 } from "@staark/platform/server";
 
+import {
+  resolveAdminSessionSecret,
+} from "@staark/platform/admin-auth";
+
 export type SessionData = {
   isLoggedIn: boolean;
   username?: string;
@@ -16,6 +20,13 @@ export type SessionData = {
   siteId?: string;
   sessionVersion?: number;
   authScope?: "tenant" | "platform";
+
+  /**
+   * True only when the session was created through the database-independent
+   * Manager recovery login.
+   */
+  recoveryMode?: boolean;
+
   loginAt?: number;
   expiresAt?: number;
   remember?: boolean;
@@ -44,7 +55,7 @@ export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
   return getIronSession<SessionData>(
     cookieStore,
-    adminSessionOptions(resolveAdminAuthConfig().sessionSecret),
+    adminSessionOptions(resolveAdminSessionSecret()),
   );
 }
 

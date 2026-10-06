@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   resolveAdminAuthConfig,
+  resolveAdminSessionSecret,
   StaarkConfigurationError,
 } from "../src/admin/auth-config.ts";
 
@@ -43,3 +44,18 @@ test("short session secrets are rejected in every environment", () => {
     /at least 32 characters/,
   );
 });
+
+
+test(
+  "production session secret does not require legacy admin credentials",
+  () => {
+    assert.equal(
+      resolveAdminSessionSecret({
+        NODE_ENV: "production",
+        ADMIN_SESSION_SECRET:
+          "0123456789abcdef0123456789abcdef",
+      }),
+      "0123456789abcdef0123456789abcdef",
+    );
+  },
+);

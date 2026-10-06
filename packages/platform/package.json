@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
-    "./config": "./src/config.ts"
+    "./config": "./src/config.ts",
+    "./admin-auth": "./src/admin/auth-config.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

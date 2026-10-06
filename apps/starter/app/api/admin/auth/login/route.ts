@@ -16,6 +16,12 @@ import {
   resolveSaasLoginAccount,
   verifySaasSecondFactor,
 } from "@/lib/saas-auth";
+import {
+  managerRecoveryUsernameMatches,
+  resolveManagerRecoveryConfig,
+  verifyManagerRecoveryPassword,
+  verifyManagerRecoveryTotp,
+} from "@/lib/manager-recovery";
 
 // Keep one limiter per server process, also across dev hot reloads.
 const globalForLimiter = globalThis as typeof globalThis & {
@@ -273,6 +279,368 @@ export async function POST(
         status: 400,
       },
     );
+  }
+
+  /*
+   * REC-01
+   *
+   * Manager recovery MUST run before SaaS / Prisma authentication.
+   * If the database is unavailable, an exact recovery username can still
+   * authenticate and receive a platform-scoped Manager session.
+   */
+  let recoveryConfig:
+    ReturnType<
+      typeof resolveManagerRecoveryConfig
+    > | null =
+      null;
+
+  try {
+    recoveryConfig =
+      resolveManagerRecoveryConfig();
+  } catch (error) {
+    await authLog({
+      level:
+        "error",
+
+      action:
+        "manager_recovery.config_failed",
+
+      message:
+        "Manager recovery configuration is invalid.",
+
+      host,
+
+      durationMs:
+        Date.now() -
+        startedAt,
+
+      result:
+        "configuration_error",
+
+      errorName:
+        error instanceof Error
+          ? error.name
+          : "unknown",
+    });
+  }
+
+  if (
+    recoveryConfig &&
+    recoveryConfig.enabled &&
+    managerRecoveryUsernameMatches(
+      recoveryConfig,
+      username,
+    )
+  ) {
+    const recoveryStartedAt =
+      Date.now();
+
+    await authLog({
+      action:
+        "manager_recovery.started",
+
+      message:
+        "Manager recovery authentication started.",
+
+      host,
+
+      role:
+        "manager",
+
+      authScope:
+        "platform",
+    });
+
+    const passwordValid =
+      await verifyManagerRecoveryPassword(
+        recoveryConfig,
+        password,
+      );
+
+    if (!passwordValid) {
+      const after =
+        limiter.recordFailure(
+          key,
+        );
+
+      await authLog({
+        level:
+          "warning",
+
+        action:
+          "manager_recovery.failed",
+
+        message:
+          "Manager recovery authentication failed.",
+
+        host,
+
+        durationMs:
+          Date.now() -
+          recoveryStartedAt,
+
+        result:
+          "invalid_credentials",
+
+        role:
+          "manager",
+
+        authScope:
+          "platform",
+      });
+
+      if (
+        !after.allowed
+      ) {
+        return tooManyAttempts(
+          after.retryAfterSeconds,
+        );
+      }
+
+      return NextResponse.json(
+        {
+          ok: false,
+          code:
+            "invalid",
+
+          remaining:
+            after.remaining,
+        },
+        {
+          status:
+            401,
+        },
+      );
+    }
+
+    if (
+      typeof twoFactorCode !==
+        "string" ||
+      !twoFactorCode.trim()
+    ) {
+      await authLog({
+        action:
+          "manager_recovery.two_factor_required",
+
+        message:
+          "Manager recovery requires TOTP verification.",
+
+        host,
+
+        durationMs:
+          Date.now() -
+          recoveryStartedAt,
+
+        result:
+          "required",
+
+        role:
+          "manager",
+
+        authScope:
+          "platform",
+      });
+
+      return NextResponse.json(
+        {
+          ok: false,
+
+          code:
+            "two_factor_required",
+
+          mode:
+            "manager_recovery",
+        },
+        {
+          status:
+            202,
+        },
+      );
+    }
+
+    const totpValid =
+      verifyManagerRecoveryTotp(
+        recoveryConfig,
+        twoFactorCode,
+      );
+
+    if (!totpValid) {
+      const after =
+        limiter.recordFailure(
+          key,
+        );
+
+      await authLog({
+        level:
+          "warning",
+
+        action:
+          "manager_recovery.two_factor_invalid",
+
+        message:
+          "Manager recovery TOTP verification failed.",
+
+        host,
+
+        durationMs:
+          Date.now() -
+          recoveryStartedAt,
+
+        result:
+          "invalid",
+
+        role:
+          "manager",
+
+        authScope:
+          "platform",
+      });
+
+      if (
+        !after.allowed
+      ) {
+        return tooManyAttempts(
+          after.retryAfterSeconds,
+        );
+      }
+
+      return NextResponse.json(
+        {
+          ok: false,
+
+          code:
+            "two_factor_invalid",
+
+          remaining:
+            after.remaining,
+
+          mode:
+            "manager_recovery",
+        },
+        {
+          status:
+            401,
+        },
+      );
+    }
+
+    limiter.reset(
+      key,
+    );
+
+    const session =
+      await getSession();
+
+    const loginAt =
+      Date.now();
+
+    const remembered =
+      remember === true;
+
+    const ttlSeconds =
+      remembered
+        ? ADMIN_REMEMBER_TTL_SECONDS
+        : ADMIN_SESSION_TTL_SECONDS;
+
+    session.isLoggedIn =
+      true;
+
+    session.username =
+      recoveryConfig.username;
+
+    session.role =
+      "manager";
+
+    session.userId =
+      undefined;
+
+    session.organizationId =
+      undefined;
+
+    session.siteId =
+      undefined;
+
+    session.sessionVersion =
+      undefined;
+
+    session.authScope =
+      "platform";
+
+    session.recoveryMode =
+      true;
+
+    session.loginAt =
+      loginAt;
+
+    session.expiresAt =
+      loginAt +
+      ttlSeconds *
+        1000;
+
+    session.remember =
+      remembered;
+
+    await session.save();
+
+    await authLog({
+      action:
+        "manager_recovery.success",
+
+      message:
+        "Manager recovery authentication succeeded.",
+
+      host,
+
+      durationMs:
+        Date.now() -
+        recoveryStartedAt,
+
+      result:
+        "success",
+
+      role:
+        "manager",
+
+      authScope:
+        "platform",
+    });
+
+    await authLog({
+      action:
+        "login.success",
+
+      message:
+        "Admin login succeeded through Manager recovery.",
+
+      host,
+
+      durationMs:
+        Date.now() -
+        startedAt,
+
+      result:
+        "success",
+
+      role:
+        "manager",
+
+      authScope:
+        "platform",
+    });
+
+    return NextResponse.json({
+      ok:
+        true,
+
+      recoveryMode:
+        true,
+
+      expiresAt:
+        session.expiresAt,
+
+      remember:
+        remembered,
+    });
   }
 
   const saasStartedAt =
@@ -662,6 +1030,9 @@ export async function POST(
     session.authScope =
       "platform";
   }
+
+  session.recoveryMode =
+    false;
 
   session.loginAt =
     loginAt;

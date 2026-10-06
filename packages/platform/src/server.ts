@@ -36,6 +36,7 @@ export {
 
 export {
   resolveAdminAuthConfig,
+  resolveAdminSessionSecret,
   StaarkConfigurationError,
   type AdminAuthConfig,
 } from "./admin/auth-config";

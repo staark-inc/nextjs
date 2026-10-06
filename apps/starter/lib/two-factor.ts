@@ -8,8 +8,8 @@ import {
 } from "node:crypto";
 
 import {
-  resolveAdminAuthConfig,
-} from "@staark/platform/server";
+  resolveAdminSessionSecret,
+} from "@staark/platform/admin-auth";
 
 const BASE32 =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -24,7 +24,7 @@ function encryptionKey(): Buffer {
 
   const source =
     explicit ||
-    `${resolveAdminAuthConfig().sessionSecret}:staark:2fa:v1`;
+    `${resolveAdminSessionSecret()}:staark:2fa:v1`;
 
   return createHash("sha256")
     .update(source)
