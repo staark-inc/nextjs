@@ -49,7 +49,9 @@ const nextConfig:
           "/:path*",
 
         headers:
-          staarkSecurityHeaders(),
+          staarkSecurityHeaders(process.env.STAARK_CUSTOM_HTTP_TEST === "true"
+            ? { hsts: false, upgradeInsecure: false }
+            : {}),
       },
     ];
   },

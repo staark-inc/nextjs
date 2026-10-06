@@ -76,9 +76,14 @@ From the repository root:
 cp apps/custom-runtime/.env.docker.example apps/custom-runtime/.env.docker
 secret=$(openssl rand -hex 32)
 sed -i "s/^CUSTOM_FORMS_SECRET=.*/CUSTOM_FORMS_SECRET=$secret/" apps/custom-runtime/.env.docker
-docker compose -f compose.custom-runtime.yml up -d --build
-docker compose -f compose.custom-runtime.yml logs -f custom-runtime
+docker compose -f compose.custom-runtime.yml -f compose.custom-http.yml up -d --build
+docker compose -f compose.custom-runtime.yml -f compose.custom-http.yml logs -f custom-runtime
 ```
+
+The HTTP test override disables HSTS and CSP HTTPS upgrades at build time.
+Without it, production headers can upgrade CSS/JS requests to HTTPS and break
+a plain HTTP LAN preview. Rebuild after switching this setting. Omit the override
+for real HTTPS deployments; normal Docker builds retain HTTPS hardening.
 
 The app is at `http://localhost:3300/kontakt`; captured messages are at
 `http://localhost:8025`. The app and Mailpit web UI are published only to loopback.
@@ -101,7 +106,7 @@ recipient to your provider, enable TLS, and restart the app. Mailpit is a test
 sink and does not forward these messages to real recipients.
 
 ```bash
-docker compose -f compose.custom-runtime.yml down
+docker compose -f compose.custom-runtime.yml -f compose.custom-http.yml down
 ```
 
 ## Validation

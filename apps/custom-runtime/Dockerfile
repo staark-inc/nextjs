@@ -3,6 +3,9 @@ FROM node:24-bookworm-slim AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
 WORKDIR /repo
+# Headers are baked into the Next build. Enable only for plain HTTP test images.
+ARG STAARK_CUSTOM_HTTP_TEST=false
+ENV STAARK_CUSTOM_HTTP_TEST=$STAARK_CUSTOM_HTTP_TEST
 COPY . .
 RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm --filter @staark/custom-runtime build
