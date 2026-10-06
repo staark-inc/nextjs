@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth";
 
 import ProfileSecurity from "./ProfileSecurity";
+import styles from "./profile.module.css";
 
 export const dynamic =
   "force-dynamic";
@@ -71,177 +72,113 @@ async function ManagerProfile() {
           </p>
 
           <h1 className="sa-h1">
-            Profile & security
+            Manager account
           </h1>
 
           <p className="sa-subtitle">
-            Technical sign-in information for this Staark Manager session.
+            Your Staark Manager sign-in and security status.
           </p>
         </div>
-
-        <span className="sa-topbar__pill">
-          Staark Manager
-        </span>
       </section>
 
-      <div
-        className="sa-card"
-        style={{
-          maxWidth:
-            "900px",
-        }}
-      >
-        <div className="sa-card__header">
-          <div>
-            <span className="sa-card__eyebrow">
-              Manager identity
-            </span>
+      <div className={styles.managerGrid}>
+        <section className="sa-card">
+          <div className={styles.managerIdentity}>
+            <div className={styles.managerAvatar}>
+              M
+            </div>
 
-            <h2>
-              Recovery & platform access
-            </h2>
+            <div>
+              <span className="sa-card__eyebrow">
+                Staark Manager
+              </span>
+
+              <h2>
+                {session.username ??
+                  "Manager"}
+              </h2>
+
+              <p>
+                Platform-level support access for this tenant.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <dl
-          style={{
-            display:
-              "grid",
+          <div className={styles.managerStatus}>
+            <div>
+              <span>
+                Sign-in
+              </span>
 
-            gap:
-              "0",
+              <strong>
+                {recoveryMode
+                  ? "Recovery access"
+                  : "Platform access"}
+              </strong>
+            </div>
 
-            margin:
-              0,
-          }}
-        >
-          {[
-            [
-              "Account",
-              session.username ??
-                "manager",
-            ],
+            <div>
+              <span>
+                Two-factor authentication
+              </span>
 
-            [
-              "Account type",
-              "Staark Manager",
-            ],
+              <strong>
+                {recoveryMode
+                  ? "Required"
+                  : "Enabled by policy"}
+              </strong>
+            </div>
 
-            [
-              "Authentication",
-              recoveryMode
-                ? "Recovery"
-                : "Platform",
-            ],
+            <div>
+              <span>
+                Session
+              </span>
 
-            [
-              "Scope",
-              "Platform",
-            ],
-
-            [
-              "Two-factor authentication",
-              recoveryMode
-                ? "Required"
-                : "Runtime policy",
-            ],
-
-            [
-              "Credentials",
-              "Runtime-managed",
-            ],
-
-            [
-              "Session",
-              `${formatRemaining(
-                expiresAt,
-              )} remaining`,
-            ],
-          ].map(
-            (
-              [
-                label,
-                value,
-              ],
-            ) => (
-              <div
-                key={
-                  label
-                }
-                style={{
-                  display:
-                    "grid",
-
-                  gridTemplateColumns:
-                    "minmax(180px, 260px) 1fr",
-
-                  gap:
-                    "24px",
-
-                  padding:
-                    "16px 0",
-
-                  borderBottom:
-                    "1px solid var(--sa-border, #dbe3ef)",
-                }}
-              >
-                <dt
-                  style={{
-                    color:
-                      "var(--sa-muted, #64748b)",
-                  }}
-                >
-                  {label}
-                </dt>
-
-                <dd
-                  style={{
-                    margin:
-                      0,
-
-                    fontWeight:
-                      600,
-                  }}
-                >
-                  {value}
-                </dd>
-              </div>
-            ),
-          )}
-        </dl>
-      </div>
-
-      <div
-        className="sa-card"
-        style={{
-          maxWidth:
-            "900px",
-
-          marginTop:
-            "20px",
-        }}
-      >
-        <div className="sa-card__header">
-          <div>
-            <span className="sa-card__eyebrow">
-              Security
-            </span>
-
-            <h2>
-              Runtime-managed credentials
-            </h2>
+              <strong>
+                {formatRemaining(
+                  expiresAt,
+                )}{" "}
+                remaining
+              </strong>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <p className="sa-subtitle">
-          Manager credentials are managed through the runtime environment and cannot be changed from a tenant admin.
-        </p>
+        <section className="sa-card">
+          <div className="sa-card__header">
+            <div>
+              <span className="sa-card__eyebrow">
+                Security
+              </span>
 
-        {recoveryMode ? (
-          <p className="sa-note">
-            This session was created through database-independent Manager recovery authentication.
-          </p>
-        ) : null}
+              <h2>
+                Centrally managed
+              </h2>
+            </div>
+          </div>
+
+          <div className={styles.managerSecurity}>
+            <div className={styles.managerSecurityIcon}>
+              ✓
+            </div>
+
+            <div>
+              <strong>
+                Manager credentials are protected outside the tenant database.
+              </strong>
+
+              <p>
+                Password and authenticator settings are managed through the Staark runtime and cannot be changed from this tenant admin.
+              </p>
+
+              {recoveryMode ? (
+                <small>
+                  This session was created using database-independent Manager recovery access.
+                </small>
+              ) : null}
+            </div>
+          </div>
+        </section>
       </div>
     </>
   );

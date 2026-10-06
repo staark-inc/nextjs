@@ -273,3 +273,124 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+.managerGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, .85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.managerIdentity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--sa-line);
+}
+
+.managerIdentity h2 {
+  margin: 4px 0 3px;
+  color: var(--sa-ink);
+  font-size: 22px;
+}
+
+.managerIdentity p {
+  margin: 0;
+  color: var(--sa-muted);
+  font-size: 12px;
+}
+
+.managerAvatar {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+  border: 1px solid var(--sa-line);
+  border-radius: 14px;
+  background: var(--sa-primary-soft);
+  color: var(--sa-primary);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.managerStatus {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.managerStatus > div {
+  padding: 14px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  background: var(--sa-surface-soft);
+}
+
+.managerStatus span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--sa-muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.managerStatus strong {
+  color: var(--sa-ink);
+  font-size: 13px;
+}
+
+.managerSecurity {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+
+.managerSecurityIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 999px;
+  background: var(--sa-success-soft);
+  color: var(--sa-success);
+  font-weight: 800;
+}
+
+.managerSecurity strong {
+  display: block;
+  color: var(--sa-ink);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.managerSecurity p {
+  margin: 6px 0 0;
+  color: var(--sa-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.managerSecurity small {
+  display: block;
+  margin-top: 12px;
+  color: var(--sa-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .managerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .managerStatus {
+    grid-template-columns: 1fr;
+  }
+}

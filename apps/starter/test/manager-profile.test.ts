@@ -54,12 +54,12 @@ test(
 
     assert.match(
       source,
-      /Runtime-managed/,
+      /Centrally managed/,
     );
 
     assert.match(
       source,
-      /database-independent Manager recovery authentication/,
+      /database-independent Manager recovery access/,
     );
   },
 );
