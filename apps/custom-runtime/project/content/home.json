@@ -122,12 +122,12 @@
         "intro": "",
         "links": [
           {
-            "label": "Våra möjligheter",
-            "href": "#services"
+            "label": "Lär känna oss",
+            "href": "/om-oss"
           },
           {
-            "label": "Utvalda riktningar",
-            "href": "#work"
+            "label": "Våra tjänster",
+            "href": "/tjanster"
           },
           {
             "label": "Starta ett samtal",

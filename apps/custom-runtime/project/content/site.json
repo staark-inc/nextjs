@@ -11,8 +11,12 @@
   "navigation": {
     "primary": [
       {
-        "label": "Vår riktning",
-        "href": "/#story"
+        "label": "Om oss",
+        "href": "/om-oss"
+      },
+      {
+        "label": "Tjänster",
+        "href": "/tjanster"
       },
       {
         "label": "Utvalda idéer",

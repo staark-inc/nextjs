@@ -1,0 +1,144 @@
+{
+  "projectKey": "custom-demo",
+  "status": "published",
+  "path": "/tjanster",
+  "title": "Tjänster",
+  "seo": {
+    "title": "Tjänster | Custom Studio",
+    "description": "Design, innehåll och teknik i en genomtänkt helhet.",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Tjänster",
+        "heading": "Från idé\ntill upplevelse.",
+        "intro": "Design, innehåll och teknik i en genomtänkt helhet.",
+        "artwork": false,
+        "primary": {
+          "label": "Låt oss prata",
+          "href": "#contact"
+        },
+        "secondary": {
+          "label": "Utforska arbetet",
+          "href": "#gallery"
+        }
+      }
+    },
+    {
+      "id": "story",
+      "type": "imageText",
+      "props": {
+        "anchor": "story",
+        "heading": "Det personliga\ngör skillnad.",
+        "intro": "Ett nära samarbete, från första skiss till sista detalj.",
+        "paragraphs": [
+          "Vi börjar med att förstå din idé, dina besökare och det du vill åstadkomma.",
+          "Sedan formar vi en upplevelse som är enkel att använda och tydlig att känna igen."
+        ],
+        "image": {
+          "src": "/custom-demo/studio.svg",
+          "alt": "Lila cirkel och mörkt band",
+          "caption": "Studio / En tydlig riktning",
+          "width": 1200,
+          "height": 900
+        },
+        "side": "right"
+      }
+    },
+    {
+      "id": "services",
+      "type": "services",
+      "props": {
+        "heading": "Tre sätt\natt komma vidare.",
+        "items": [
+          {
+            "title": "Visuell riktning",
+            "text": "Identitet, typografi och ett sammanhängande formspråk.",
+            "label": "Design"
+          },
+          {
+            "title": "Digital upplevelse",
+            "text": "Sidor och komponenter som hjälper besökaren att hitta rätt.",
+            "label": "Webb"
+          },
+          {
+            "title": "Löpande utveckling",
+            "text": "Nya funktioner och integrationer när behovet växer.",
+            "label": "Build"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gallery",
+      "type": "gallery",
+      "props": {
+        "anchor": "gallery",
+        "eyebrow": "Visuella studier",
+        "heading": "Form. Färg.\nEtt eget uttryck.",
+        "intro": "Öppna en bild för att se detaljerna. Dessa bilder är konceptstudier.",
+        "items": [
+          {
+            "src": "/custom-demo/studio.svg",
+            "alt": "Lila cirkel och mörkt band",
+            "caption": "Studio / En tydlig riktning",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/custom-demo/forma.svg",
+            "alt": "Grön rundad form med öppet centrum",
+            "caption": "Forma / Balans och utrymme",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/custom-demo/edition.svg",
+            "alt": "Tre terrakottafärgade pelare",
+            "caption": "Edition / Rytm och struktur",
+            "width": 1200,
+            "height": 900
+          }
+        ],
+        "columns": 3
+      }
+    },
+    {
+      "id": "faq",
+      "type": "faq",
+      "props": {
+        "heading": "Bra att veta.",
+        "intro": "Några frågor innan vi börjar.",
+        "items": [
+          {
+            "question": "Hur börjar ett projekt?",
+            "answer": "Med ett samtal om mål, innehåll och vilken riktning som passar."
+          },
+          {
+            "question": "Kan vi bygga vidare senare?",
+            "answer": "Ja. Sidor, blocks och addons kan läggas till när projektet växer."
+          },
+          {
+            "question": "Delar alla projekt samma innehåll?",
+            "answer": "Nej. Varje projekt har egna sidor, bilder och inställningar."
+          }
+        ]
+      }
+    },
+    {
+      "id": "contact",
+      "type": "cta",
+      "props": {
+        "heading": "Nästa steg\nbörjar här.",
+        "intro": "Berätta vad du vill skapa.",
+        "link": {
+          "label": "Säg hej",
+          "href": "mailto:hello@example.com"
+        }
+      }
+    }
+  ]
+}

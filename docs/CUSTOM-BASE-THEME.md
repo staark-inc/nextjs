@@ -35,6 +35,9 @@ layout/styles.
 | `stats` | `numbers` | Number strip |
 | `shortcuts` | `links` | Navigation links |
 | `cta` | `contact` | Closing invitation |
+| `imageText` | `split` | Image and body text |
+| `faq` | `questions` | Expandable answers |
+| `gallery` | `photos` | Image grid with modal viewer |
 
 Each block has a renderer, Zod props validation and a Blocks v2 definition with
 field descriptors, defaults, category and required fields. The hero also has a
@@ -88,7 +91,7 @@ next request. TypeScript/CSS changes require a build. Copy/mount the project
 directory and its content into standalone production deployments.
 
 The base chrome is used when there is no allowed project chrome override. The
-same frame wraps the homepage and blog, so preset changes apply consistently.
+same frame wraps the homepage, project pages and blog, so preset changes apply consistently.
 An enabled blog contributes a header link using its configured basePath.
 Project-authored static navigation links remain operator-owned content.
 
@@ -134,7 +137,10 @@ pnpm --filter @staark/custom-runtime build
 pnpm --filter @staark/custom-runtime dev
 ```
 
-Open `/`, `/blog`, `/api/runtime/blocks`, and `/api/runtime/health`. Try all
+See [Custom pages and gallery](CUSTOM-PAGES-AND-GALLERY.md) for page files, media
+props, publication status and route precedence.
+
+Open `/`, `/om-oss`, `/tjanster`, `/blog`, `/api/runtime/blocks`, and `/api/runtime/health`. Try all
 three manifest presets, and verify project content and disabled addon behavior.
 The demo gallery is explicitly conceptual artwork, not a claim of completed
 client work. A dashboard/editor and write permissions are separate future work.

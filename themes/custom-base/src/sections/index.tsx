@@ -1,3 +1,4 @@
+import { GalleryViewer } from "../components/GalleryViewer";
 import type { SectionComponent } from "@staark/theme-kit";
 import { customBaseBlockSchemas as schemas } from "../blocks.ts";
 import { Button, Container, Eyebrow } from "../components/primitives";
@@ -32,4 +33,20 @@ export const Shortcuts: SectionComponent<any> = ({ props }) => {
 export const Cta: SectionComponent<any> = ({ props }) => {
   const p = schemas.cta.parse(props);
   return <section className="cb-cta" id="contact"><Container><Eyebrow>{p.eyebrow}</Eyebrow><div className="cb-cta__grid"><h2>{p.heading}</h2><div><p>{p.intro}</p>{p.link ? <Button href={p.link.href}>{p.link.label}</Button> : null}</div><span className="cb-cta__star" aria-hidden="true">✳</span></div></Container></section>;
+};
+
+export const ImageText: SectionComponent<any> = ({ props }) => {
+  const p = schemas.imageText.parse(props);
+  return <section className="cb-section" id={p.anchor}><Container className={`cb-split cb-split--${p.side}`}>
+    {p.image ? <figure><img src={p.image.src} alt={p.image.alt} width={p.image.width} height={p.image.height} loading="lazy" />{p.image.caption ? <figcaption>{p.image.caption}</figcaption> : null}</figure> : null}
+    <div><Eyebrow>{p.eyebrow}</Eyebrow><h2>{p.heading}</h2><p className="cb-intro">{p.intro}</p>{p.paragraphs.map((text, i) => <p key={i}>{text}</p>)}</div>
+  </Container></section>;
+};
+export const Faq: SectionComponent<any> = ({ props }) => {
+  const p = schemas.faq.parse(props);
+  return <section className="cb-section cb-section--surface" id={p.anchor}><Container><div className="cb-section__heading"><div><Eyebrow>{p.eyebrow}</Eyebrow><h2>{p.heading}</h2></div><p>{p.intro}</p></div><div className="cb-faq">{p.items.map((item, i) => <details key={i} open={p.openFirst && i === 0}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div></Container></section>;
+};
+export const Gallery: SectionComponent<any> = ({ props }) => {
+  const p = schemas.gallery.parse(props);
+  return <section className="cb-section" id={p.anchor}><Container><div className="cb-section__heading"><div><Eyebrow>{p.eyebrow}</Eyebrow><h2>{p.heading}</h2></div><p>{p.intro}</p></div><GalleryViewer items={p.items} columns={p.columns} label={p.heading} /></Container></section>;
 };
