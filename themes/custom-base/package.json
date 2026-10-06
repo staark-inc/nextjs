@@ -1,0 +1,35 @@
+{
+  "name": "@staark/theme-custom-base",
+  "version": "0.1.0",
+  "description": "Independent Custom parent theme with blocks, shortcuts and project chrome.",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css",
+    "./blocks": "./src/blocks.ts",
+    "./manifest": "./src/manifest.ts",
+    "./presets": "./src/presets.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@staark/core": "workspace:*",
+    "@staark/theme-kit": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

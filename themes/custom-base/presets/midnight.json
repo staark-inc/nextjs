@@ -1,0 +1,36 @@
+{
+  "id": "midnight",
+  "name": "Midnight",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "paper": "#17171d",
+      "surface": "#23232d",
+      "ink": "#f4f1e9",
+      "muted": "#b0afbd",
+      "line": "#393943",
+      "primary": "#c8bcff",
+      "primarySoft": "#39304f",
+      "accent": "#cbe996"
+    },
+    "typography": {
+      "body": "Arial, Helvetica, sans-serif",
+      "display": "Arial, Helvetica, sans-serif"
+    },
+    "radius": {
+      "sm": "6px",
+      "md": "12px",
+      "lg": "20px"
+    },
+    "layout": {
+      "wide": "1280px",
+      "content": "760px"
+    }
+  },
+  "components": {
+    "hero": "editorial",
+    "header": "minimal",
+    "footer": "editorial",
+    "buttons": "solid"
+  }
+}
