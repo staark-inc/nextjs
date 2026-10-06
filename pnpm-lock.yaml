@@ -18,6 +18,46 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  apps/custom-runtime:
+    dependencies:
+      '@staark/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@staark/custom':
+        specifier: workspace:*
+        version: link:../../packages/custom
+      '@staark/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
+      '@staark/theme-kit':
+        specifier: workspace:*
+        version: link:../../packages/theme-kit
+      '@staark/theme-light':
+        specifier: workspace:*
+        version: link:../../themes/light
+      next:
+        specifier: ^16.3.6
+        version: 16.3.6(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.3.0
+        version: 19.3.0(react@19.3.0)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   apps/starter:
     dependencies:
       '@next/third-parties':
@@ -142,6 +182,25 @@ importers:
       react:
         specifier: ^19.3.0
         version: 19.3.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/custom:
+    dependencies:
+      '@staark/core':
+        specifier: workspace:*
+        version: link:../core
+      '@staark/theme-kit':
+        specifier: workspace:*
+        version: link:../theme-kit
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

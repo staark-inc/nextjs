@@ -1,0 +1,30 @@
+{
+  "name": "@staark/custom-runtime",
+  "version": "0.1.0",
+  "description": "Staark Custom project runtime.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3300",
+    "build": "next build",
+    "start": "next start -p 3300",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@staark/core": "workspace:*",
+    "@staark/custom": "workspace:*",
+    "@staark/platform": "workspace:*",
+    "@staark/theme-kit": "workspace:*",
+    "@staark/theme-light": "workspace:*",
+    "next": "^16.3.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

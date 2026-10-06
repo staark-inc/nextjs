@@ -1,0 +1,27 @@
+{
+  "schema": "staark-custom/v1",
+  "project": {
+    "key": "custom-demo",
+    "name": "Staark Custom Demo",
+    "version": "1.0.0"
+  },
+  "runtime": {
+    "mode": "custom",
+    "theme": {
+      "family": "light"
+    },
+    "overrides": {
+      "components": true,
+      "routes": true,
+      "styles": true,
+      "layouts": true,
+      "navigation": true
+    },
+    "custom": {
+      "componentNamespace": "custom-demo",
+      "routeNamespace": "/custom",
+      "allowCustomLayouts": true,
+      "allowThemeExtensions": true
+    }
+  }
+}

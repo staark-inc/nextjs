@@ -1,0 +1,30 @@
+{
+  "name": "@staark/custom",
+  "version": "0.1.0",
+  "description": "Staark Custom Runtime contracts, plugin registry and deployment configuration.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config.ts",
+    "./registry": "./src/registry.ts",
+    "./loader": "./src/loader.ts",
+    "./manifest": "./src/manifest.ts",
+    "./composition": "./src/composition.ts",
+    "./source": "./src/source.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@staark/core": "workspace:*",
+    "@staark/theme-kit": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "^5.9.3"
+  }
+}
