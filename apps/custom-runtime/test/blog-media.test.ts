@@ -99,3 +99,22 @@ test("media rejects symlinks and public reads require committed metadata", async
   await writeFile(path.join(directory, "content/media", id), png);
   await assert.rejects(readPublicMedia(directory, "demo", "demo", id), /not found/);
 });
+
+
+test("publish now replaces a future timestamp with server time and exposes the article immediately", async t => {
+  const directory = await fixture(t);
+  const first = await saveEditorPost(directory, project, { projectKey: "demo", post: { ...post, status: "published", publishedAt: "2099-01-01T00:00:00Z" }, revision: null, originalSlug: null });
+  const service = createBlogService({ projectKey: "demo", projectDirectory: directory, config: {} });
+  assert.equal(await service.get("story"), null);
+  const before = Date.now();
+  const published = await saveEditorPost(directory, project, { ...first, publishNow: true });
+  assert.equal(published.post.status, "published");
+  assert.ok(Date.parse(published.post.publishedAt!) >= before);
+  assert.ok(Date.parse(published.post.publishedAt!) <= Date.now());
+  assert.equal((await service.get("story"))?.slug, "story");
+});
+test("publish now validates article content and cannot publish an empty draft", async t => {
+  const directory = await fixture(t);
+  await assert.rejects(saveEditorPost(directory, project, { projectKey: "demo", post: { ...post, body: [] }, revision: null, originalSlug: null, publishNow: true }), /require content/);
+  assert.deepEqual((await listEditorPosts(directory, project)).posts, []);
+});

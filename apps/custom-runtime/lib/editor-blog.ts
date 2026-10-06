@@ -27,10 +27,12 @@ export async function getEditorPost(directory: string, project: LoadedCustomProj
   if (!post) throw new EditorError(404, "Article not found.");
   return { projectKey: project.project.key, post: { ...post, body: blogPostBody(post) }, revision: stored!.revision, originalSlug: post.slug };
 }
-export async function saveEditorPost(directory: string, project: LoadedCustomProject, input: { projectKey: string; post: unknown; revision: string | null; originalSlug: string | null }) {
+export async function saveEditorPost(directory: string, project: LoadedCustomProject, input: { projectKey: string; post: unknown; revision: string | null; originalSlug: string | null; publishNow?: boolean }) {
   editorBlogConfig(project);
   if (input.projectKey !== project.project.key) throw new EditorError(422, "Article belongs to a different project.");
-  const parsed = BlogPostSchema.safeParse(input.post);
+  const candidate = input.publishNow === true && input.post && typeof input.post === "object" && !Array.isArray(input.post)
+    ? { ...input.post, status: "published", publishedAt: new Date().toISOString() } : input.post;
+  const parsed = BlogPostSchema.safeParse(candidate);
   if (!parsed.success) throw new EditorError(422, parsed.error.issues.map(issue => `${issue.path.join(".")}: ${issue.message}`).join("; ").slice(0, 1200));
   const post: EditableBlogPost = { ...parsed.data, body: blogPostBody(parsed.data), updatedAt: new Date().toISOString() };
   // Body is authoritative; preserve a plain-paragraph representation for older API consumers.

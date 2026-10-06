@@ -42,7 +42,7 @@ export function MediaLibrary({ csrf, onSelect, onBusy }: { csrf: string; onSelec
     {!loaded && <p>Loading images…</p>}{loaded && !items.length && <p className="ce-empty">Upload your first project image.</p>}
     <div className="ce-media-grid">{items.filter(item => `${item.name} ${item.alt}`.toLowerCase().includes(search.toLowerCase())).map(item => <article className="ce-media-item" key={item.id}>
       <img src={item.src} alt={item.alt} width={item.width} height={item.height} loading="lazy" /><strong>{item.name}</strong><small>{item.width} × {item.height} · {Math.ceil(item.bytes / 1024)} KB</small><p>{item.alt}</p>
-      {onSelect ? <button type="button" disabled={busy} onClick={() => onSelect({ src: item.src, alt: item.alt, width: item.width, height: item.height, caption: item.caption })}>Use image</button> : <a href={item.src} target="_blank" rel="noreferrer">Open image ↗</a>}
+      {onSelect ? <button type="button" disabled={busy} onClick={() => onSelect({ src: item.src, alt: item.alt, width: item.width, height: item.height, caption: item.caption })}>Use image</button> : <a href={`${item.src}?view=1`} target="_blank" rel="noreferrer">Open image ↗</a>}
     </article>)}</div>
   </section>;
 }

@@ -79,8 +79,8 @@ export async function PUT(request: Request, { params }: Props) {
     const input = await body(request);
     if (!input || (input.revision !== null && (typeof input.revision !== "string" || !/^[a-f0-9]{64}$/.test(input.revision)))) throw new EditorError(400, "Supply a page revision, or null for a new page.");
     if (action === "blog/post") {
-      if (typeof input.projectKey !== "string" || !(input.originalSlug === null || typeof input.originalSlug === "string")) throw new EditorError(400, "Supply the project and original article slug.");
-      return json(await saveEditorPost(context.directory, context.project, { projectKey: input.projectKey, post: input.post, originalSlug: input.originalSlug, revision: input.revision as string | null }));
+      if (typeof input.projectKey !== "string" || !(input.originalSlug === null || typeof input.originalSlug === "string") || (input.publishNow !== undefined && typeof input.publishNow !== "boolean")) throw new EditorError(400, "Supply the project and original article slug.");
+      return json(await saveEditorPost(context.directory, context.project, { projectKey: input.projectKey, post: input.post, originalSlug: input.originalSlug, revision: input.revision as string | null, publishNow: input.publishNow as boolean | undefined }));
     }
     return json(await saveEditorPage(context.directory, context.project, input.page, input.revision as string | null));
   } catch (error) { return failure(error); }

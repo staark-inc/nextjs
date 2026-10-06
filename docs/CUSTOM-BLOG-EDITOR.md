@@ -8,7 +8,9 @@ CSRF/origin checks. No extra environment variables or database are required.
 
 Open an article or choose **New article**. Set title, slug, excerpt, cover,
 visibility and optional publication time. Existing slugs are fixed.
-Publication time is explicitly UTC; leaving it empty while publishing uses now.
+Publication time uses the browser’s local timezone and is stored as UTC.
+**Publish now** uses server time and overrides draft/future-date settings.
+Saving without that action keeps the selected visibility/publication time.
 A future published timestamp keeps the article off public routes/API until that
 time. Drafts stay private regardless of their date.
 
@@ -16,7 +18,8 @@ Content supports paragraphs, headings, ordered/unordered lists, links and images
 with reordering/removal. React escapes text; HTML is not interpreted.
 SEO overrides title, description, indexing and sharing image. Public articles
 generate canonical and Open Graph metadata; sharing images fall back to covers.
-The blog index can show covers.
+The blog index can show covers. Articles appear in the configured blog listing
+(Studio: /blog, Forma: /journal), not automatically on the home page.
 
 **Save & preview** saves first and opens an authenticated preview using the actual
 project theme. Public draft/scheduled article URLs return 404.
