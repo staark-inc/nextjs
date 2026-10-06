@@ -5,7 +5,7 @@ import { customBasePresets } from "../src/presets.ts";
 import customBaseManifest from "../src/manifest.ts";
 
 test("every block definition has valid defaults and a matching manifest entry", () => {
-  assert.equal(customBaseBlockDefinitions.length, 7);
+  assert.equal(customBaseBlockDefinitions.length, 10);
   assert.deepEqual(new Set(customBaseBlockDefinitions.map(item => item.type)), new Set(customBaseManifest.blocks));
   for (const definition of customBaseBlockDefinitions) {
     assert.doesNotThrow(() => createCustomBaseBlock(definition.type, definition.type));
@@ -36,4 +36,19 @@ test("presets provide the same token keys and different colors", () => {
   for (const preset of Object.values(customBasePresets)) assert.deepEqual(Object.keys(preset.tokens.colors!), Object.keys(studio.tokens.colors!));
   assert.notEqual(studio.tokens.colors!.paper, customBasePresets.midnight!.tokens.colors!.paper);
   assert.equal(customBaseManifest.parentId, undefined);
+});
+
+test("media blocks validate image sources, dimensions, layout and anchors", () => {
+  const image = { src: "/cover.svg", alt: "Cover" };
+  assert.equal(createCustomBaseBlock("photos", "g", { items: [image] }).props.columns, 3);
+  assert.equal((createCustomBaseBlock("split", "s", { image }).props.image as { width: number }).width, 1200);
+  for (const src of ["javascript:alert(1)", "data:image/svg+xml,test", "//example.com/x", "http://example.com/x", "/\\example.com/x", "/bad image.svg"]) {
+    assert.throws(() => createCustomBaseBlock("gallery", "g", { items: [{ ...image, src }] }));
+  }
+  assert.doesNotThrow(() => createCustomBaseBlock("gallery", "g", { items: [{ ...image, src: "https://example.com/cover.jpg" }], columns: 4 }));
+  assert.throws(() => createCustomBaseBlock("gallery", "g", { columns: 5 }));
+  assert.throws(() => createCustomBaseBlock("imageText", "s", { side: "top" }));
+  assert.throws(() => createCustomBaseBlock("imageText", "s", { image: { ...image, width: 0 } }));
+  assert.throws(() => createCustomBaseBlock("faq", "f", { anchor: "bad anchor" }));
+  assert.throws(() => createCustomBaseBlock("faq", "f", { items: [{ question: "?", answer: "" }] }));
 });

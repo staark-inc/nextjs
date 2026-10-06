@@ -5,6 +5,11 @@ const safeHref = z.string().trim().min(1).refine(value =>
   !/[\u0000-\u0020]/.test(value) && (/^(https?:|mailto:|tel:)/i.test(value) || value.startsWith("#") || (value.startsWith("/") && !value.startsWith("//") && !value.includes("\\"))),
   "Use a local path, anchor, HTTPS/HTTP, email or phone link.",
 );
+const image = z.object({
+  src: z.string().refine(value => !/[\u0000-\u0020\\]/.test(value) && (/^https:\/\//i.test(value) || (value.startsWith("/") && !value.startsWith("//"))), "Use a local image path or HTTPS URL."),
+  alt: z.string().min(1), width: z.number().int().positive().default(1200), height: z.number().int().positive().default(900), caption: z.string().default(""),
+});
+const anchor = z.string().regex(/^[a-z][a-z0-9-]*$/).optional();
 const link = z.object({ label: z.string().min(1), href: safeHref });
 const heading = z.string().min(1);
 const intro = z.string().default("");
@@ -15,7 +20,10 @@ const fields: BlockField[] = [
   { name: "intro", label: "Introduction", type: "textarea" },
 ];
 export const customBaseBlockSchemas = {
-  hero: z.object({ eyebrow, heading, intro, primary: link.optional(), secondary: link.optional(), note: z.string().default(""), artwork: z.boolean().default(true) }),
+  imageText: z.object({ eyebrow, heading, intro, paragraphs: z.array(z.string()).default([]), image: image.optional(), side: z.enum(["left", "right"]).default("left"), anchor }),
+  faq: z.object({ eyebrow, heading, intro, items: z.array(z.object({ question: heading, answer: heading })).default([]), openFirst: z.boolean().default(false), anchor }),
+  gallery: z.object({ eyebrow, heading, intro, items: z.array(image).default([]), columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).default(3), anchor }),
+  hero: z.object({ eyebrow, heading, intro, primary: link.optional(), secondary: link.optional(), more: link.optional(), note: z.string().default(""), artwork: z.boolean().default(true) }),
   text: z.object({ eyebrow, heading, intro, paragraphs: z.array(z.string()).default([]) }),
   services: z.object({ eyebrow, heading, intro, items: z.array(z.object({ title: heading, text: z.string(), label: z.string().optional() })).default([]) }),
   projectsShowcase: z.object({ eyebrow, heading, intro, items: z.array(z.object({ title: heading, category: z.string(), description: z.string(), href: safeHref.optional(), tone: z.enum(["lavender", "sage", "sand"]).default("lavender") })).default([]) }),
@@ -26,8 +34,11 @@ export const customBaseBlockSchemas = {
 export type CustomBaseBlockType = keyof typeof customBaseBlockSchemas;
 
 export const customBaseBlockDefinitions: BlockDefinition[] = [
+  defineBlock({ type: "imageText", label: "Image and text", category: "content", version: 2, fields: [...fields, { name: "paragraphs", label: "Paragraphs", type: "array" }, { name: "image", label: "Image", type: "object", fields: [{ name: "src", label: "Source", type: "text" }, { name: "alt", label: "Alternative text", type: "text" }, { name: "caption", label: "Caption", type: "text" }, { name: "width", label: "Width", type: "number" }, { name: "height", label: "Height", type: "number" }] }, { name: "side", label: "Image side", type: "select", options: ["left", "right"] }, { name: "anchor", label: "Anchor", type: "text" }], required: ["heading"], defaults: { eyebrow: "Vår process", heading: "Form med omtanke.", intro: "Från första idé till färdig upplevelse.", paragraphs: [], side: "left" } }),
+  defineBlock({ type: "faq", label: "Frequently asked questions", category: "content", version: 2, fields: [...fields, { name: "items", label: "Questions", type: "array", fields: [{ name: "question", label: "Question", type: "text" }, { name: "answer", label: "Answer", type: "textarea" }] }, { name: "openFirst", label: "Open first answer", type: "boolean" }, { name: "anchor", label: "Anchor", type: "text" }], required: ["heading"], defaults: { heading: "Vanliga frågor", intro: "", eyebrow: "Bra att veta", items: [{ question: "Kan vi anpassa uttrycket?", answer: "Ja. Varje projekt väljer sitt innehåll och sin visuella riktning." }], openFirst: false } }),
+  defineBlock({ type: "gallery", label: "Image gallery", category: "portfolio", version: 2, fields: [...fields, { name: "items", label: "Images", type: "array", fields: [{ name: "src", label: "Source", type: "text" }, { name: "alt", label: "Alternative text", type: "text" }, { name: "caption", label: "Caption", type: "text" }, { name: "width", label: "Width", type: "number" }, { name: "height", label: "Height", type: "number" }] }, { name: "columns", label: "Columns", type: "select", options: [2, 3, 4] }, { name: "anchor", label: "Anchor", type: "text" }], required: ["heading"], defaults: { heading: "Ett urval", intro: "", eyebrow: "Galleri", items: [], columns: 3 } }),
   defineBlock({ type: "hero", label: "Editorial hero", description: "Large type, two actions and optional geometric artwork.", icon: "layout", category: "intro", version: 2,
-    fields: [...fields, { name: "primary", label: "Primary action", type: "link" }, { name: "secondary", label: "Secondary action", type: "link" }, { name: "note", label: "Small note", type: "text" }, { name: "artwork", label: "Geometric artwork", type: "boolean" }],
+    fields: [...fields, { name: "primary", label: "Primary action", type: "link" }, { name: "secondary", label: "Secondary action", type: "link" }, { name: "more", label: "Discover link", type: "link" }, { name: "note", label: "Small note", type: "text" }, { name: "artwork", label: "Geometric artwork", type: "boolean" }],
     required: ["heading"], defaults: { eyebrow: "Independent by design", heading: "En egen idé.\nEn egen riktning.", intro: "En genomtänkt digital plats, formad efter det du vill skapa.", primary: { label: "Utforska", href: "#work" }, secondary: { label: "Ta kontakt", href: "#contact" }, note: "Skapad med omsorg. Byggd för att växa.", artwork: true },
     presets: [{ id: "type-only", label: "Typography only", props: { artwork: false } }], capabilities: { background: true } }),
   defineBlock({ type: "text", label: "Editorial text", description: "Two-column introduction with readable body text.", icon: "text", category: "content", version: 2,
@@ -50,7 +61,7 @@ export const customBaseBlockDefinitions: BlockDefinition[] = [
 
 /** Block type shortcuts, like the SaaS block picker; these are not routes. */
 export const customBaseShortcuts: Record<string, CustomBaseBlockType> = {
-  intro: "hero", story: "text", features: "services", work: "projectsShowcase", numbers: "stats", links: "shortcuts", contact: "cta",
+  photos: "gallery", questions: "faq", split: "imageText", intro: "hero", story: "text", features: "services", work: "projectsShowcase", numbers: "stats", links: "shortcuts", contact: "cta",
 };
 export const customBaseBlockTemplates = customBaseBlockDefinitions.map(blockDefinitionToLegacyTemplate);
 

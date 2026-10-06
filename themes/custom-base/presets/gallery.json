@@ -11,7 +11,10 @@
       "line": "#d7e0d8",
       "primary": "#176857",
       "primarySoft": "#deeee7",
-      "accent": "#f0c8a9"
+      "accent": "#f0c8a9",
+      "blog-paper": "#fafafa",
+      "blog-surface": "#ffffff",
+      "blog-line": "#e4e4e7"
     },
     "typography": {
       "body": "Arial, Helvetica, sans-serif",
