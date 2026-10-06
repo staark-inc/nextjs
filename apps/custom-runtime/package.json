@@ -27,7 +27,8 @@
     "@staark/theme-salong": "workspace:*",
     "@staark/theme-skonhet": "workspace:*",
     "@staark/theme-verkstad": "workspace:*",
-    "@staark/theme-webb": "workspace:*"
+    "@staark/theme-webb": "workspace:*",
+    "@staark/addon-blog": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",

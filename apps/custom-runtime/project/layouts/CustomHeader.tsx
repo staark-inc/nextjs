@@ -1,3 +1,4 @@
+import { BlogConfigSchema } from "@staark/addon-blog/config";
 import type {
   CustomLayoutProjectProps,
 } from "@/lib/custom-layouts";
@@ -5,6 +6,8 @@ import type {
 export function CustomHeader({
   project,
 }: CustomLayoutProjectProps) {
+  const addon = project.runtime.config.addons.find(item => item.key === "blog" && item.enabled);
+  const blog = addon ? BlogConfigSchema.parse(addon.config) : null;
   return (
     <header className="custom-project-header">
       <div className="custom-project-header__inner">
@@ -41,6 +44,7 @@ export function CustomHeader({
           >
             Services
           </a>
+          {blog ? <a href={blog.basePath}>{blog.title}</a> : null}
         </nav>
       </div>
     </header>

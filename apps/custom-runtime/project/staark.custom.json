@@ -34,6 +34,14 @@
         "config": {
           "label": "Staark Custom Demo"
         }
+      },
+      {
+        "key": "blog",
+        "config": {
+          "basePath": "/blog",
+          "title": "Blog",
+          "description": "Nyheter, id\u00e9er och inspiration fr\u00e5n Staark Custom Demo."
+        }
       }
     ],
     "integrations": []
