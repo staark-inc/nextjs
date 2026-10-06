@@ -1,0 +1,69 @@
+{
+  "projectKey": "custom-demo",
+  "status": "published",
+  "path": "/kontakt",
+  "title": "Kontakt",
+  "seo": {
+    "title": "Kontakt | Custom Studio",
+    "description": "Berätta om din idé och starta ett samtal med Custom Studio.",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Kontakt",
+        "heading": "Vad vill\ndu skapa?",
+        "intro": "En ny webbplats, ett eget uttryck eller nästa steg för ditt projekt. Vi börjar med ett samtal.",
+        "artwork": false,
+        "primary": {
+          "label": "Skriv ett mejl",
+          "href": "mailto:hello@example.com"
+        },
+        "secondary": {
+          "label": "Se våra tjänster",
+          "href": "/tjanster"
+        },
+        "more": {
+          "label": "Utforska galleriet →",
+          "href": "/galleri"
+        }
+      }
+    },
+    {
+      "id": "contact-details",
+      "type": "text",
+      "props": {
+        "eyebrow": "Ett första samtal",
+        "heading": "Berätta om\ndin idé.",
+        "intro": "hello@example.com",
+        "paragraphs": [
+          "Beskriv gärna vad du vill skapa, vilka besökare du vill nå och ungefär när du vill komma igång.",
+          "Det här är en demosida. Byt ut e-postadressen i projektets innehåll innan publicering."
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "type": "shortcuts",
+      "props": {
+        "heading": "Lär känna oss först.",
+        "links": [
+          {
+            "label": "Om vår studio",
+            "href": "/om-oss"
+          },
+          {
+            "label": "Våra tjänster",
+            "href": "/tjanster"
+          },
+          {
+            "label": "Visuella studier",
+            "href": "/galleri"
+          }
+        ]
+      }
+    }
+  ]
+}

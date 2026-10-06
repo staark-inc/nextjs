@@ -50,7 +50,7 @@ export default async function CustomContentPage({ params }: Props) {
   const { project, blog, post } = result;
   const posts = post ? [] : await blog.list();
   const site = await loadCustomSite(project);
-  return <CustomProjectFrame project={project} site={site}>
+  return <CustomProjectFrame project={project} site={site} appearance="blog">
       <main className="custom-blog">
         {post ? (
           <article className="custom-blog__article">

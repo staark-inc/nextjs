@@ -11,6 +11,10 @@
   "navigation": {
     "primary": [
       {
+        "label": "Hem",
+        "href": "/"
+      },
+      {
         "label": "Om oss",
         "href": "/om-oss"
       },
@@ -19,18 +23,38 @@
         "href": "/tjanster"
       },
       {
-        "label": "Utvalda idéer",
-        "href": "/#work"
+        "label": "Galleri",
+        "href": "/galleri"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
       }
     ],
     "cta": {
-      "label": "Säg hej",
-      "href": "/#contact"
+      "label": "Starta ett projekt",
+      "href": "/kontakt"
     },
     "footer": [
       {
-        "label": "Till toppen",
+        "label": "Hem",
         "href": "/"
+      },
+      {
+        "label": "Om oss",
+        "href": "/om-oss"
+      },
+      {
+        "label": "Tjänster",
+        "href": "/tjanster"
+      },
+      {
+        "label": "Galleri",
+        "href": "/galleri"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
       }
     ]
   },

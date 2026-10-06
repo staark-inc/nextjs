@@ -140,7 +140,7 @@ pnpm --filter @staark/custom-runtime dev
 See [Custom pages and gallery](CUSTOM-PAGES-AND-GALLERY.md) for page files, media
 props, publication status and route precedence.
 
-Open `/`, `/om-oss`, `/tjanster`, `/blog`, `/api/runtime/blocks`, and `/api/runtime/health`. Try all
+Open `/`, `/om-oss`, `/tjanster`, `/galleri`, `/kontakt`, `/blog`, `/api/runtime/blocks`, and `/api/runtime/health`. Try all
 three manifest presets, and verify project content and disabled addon behavior.
 The demo gallery is explicitly conceptual artwork, not a claim of completed
 client work. A dashboard/editor and write permissions are separate future work.

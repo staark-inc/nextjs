@@ -8,7 +8,7 @@ export const Hero: SectionComponent<any> = ({ props }) => {
   return <section className={`cb-hero${p.artwork ? "" : " cb-hero--type"}`}><Container className="cb-hero__grid">
     <div className="cb-hero__copy"><Eyebrow>{p.eyebrow}</Eyebrow><h1>{p.heading}</h1><p>{p.intro}</p><div className="cb-actions">{p.primary ? <Button href={p.primary.href}>{p.primary.label}</Button> : null}{p.secondary ? <Button href={p.secondary.href} secondary>{p.secondary.label}</Button> : null}</div><span className="cb-hero__note">{p.note}</span></div>
     {p.artwork ? <div className="cb-art" aria-hidden="true"><span className="cb-art__label">A NEW PERSPECTIVE / 001</span><div className="cb-art__disc" /><div className="cb-art__bar" /><span className="cb-art__star">✳</span><div className="cb-art__caption"><span>Form follows<br />your idea.</span><span>↗</span></div></div> : null}
-  </Container><Container className="cb-hero__bottom"><span>Independent spirit. Shared foundations.</span><a href="#story">Upptäck mer ↓</a></Container></section>;
+  </Container><Container className="cb-hero__bottom"><span>Independent spirit. Shared foundations.</span>{p.more ? <a href={p.more.href}>{p.more.label}</a> : null}</Container></section>;
 };
 export const Text: SectionComponent<any> = ({ props }) => {
   const p = schemas.text.parse(props);

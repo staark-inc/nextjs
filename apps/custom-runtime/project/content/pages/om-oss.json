@@ -19,11 +19,15 @@
         "artwork": false,
         "primary": {
           "label": "Låt oss prata",
-          "href": "#contact"
+          "href": "/kontakt"
         },
         "secondary": {
-          "label": "Utforska arbetet",
-          "href": "#gallery"
+          "label": "Utforska galleriet",
+          "href": "/galleri"
+        },
+        "more": {
+          "label": "Lär känna oss →",
+          "href": "/om-oss"
         }
       }
     },
@@ -111,8 +115,8 @@
         "heading": "Nästa steg\nbörjar här.",
         "intro": "Berätta vad du vill skapa.",
         "link": {
-          "label": "Säg hej",
-          "href": "mailto:hello@example.com"
+          "label": "Kontakta oss",
+          "href": "/kontakt"
         }
       }
     }

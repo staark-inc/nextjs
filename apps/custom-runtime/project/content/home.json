@@ -15,15 +15,19 @@
         "heading": "En egen idé.\nEn egen riktning.",
         "intro": "En genomtänkt digital plats, formad efter det du vill skapa.",
         "primary": {
-          "label": "Utforska",
-          "href": "#work"
+          "label": "Se våra tjänster",
+          "href": "/tjanster"
         },
         "secondary": {
-          "label": "Ta kontakt",
-          "href": "#contact"
+          "label": "Utforska galleriet",
+          "href": "/galleri"
         },
         "note": "Skapad med omsorg. Byggd för att växa.",
-        "artwork": true
+        "artwork": true,
+        "more": {
+          "label": "Lär känna oss →",
+          "href": "/om-oss"
+        }
       }
     },
     {
@@ -96,19 +100,22 @@
             "title": "Studio North",
             "category": "Identitet / Digitalt",
             "description": "Ett lugnt och självsäkert uttryck.",
-            "tone": "lavender"
+            "tone": "lavender",
+            "href": "/galleri"
           },
           {
             "title": "Forma",
             "category": "Koncept / Plattform",
             "description": "Mjuka former med en tydlig struktur.",
-            "tone": "sage"
+            "tone": "sage",
+            "href": "/galleri"
           },
           {
             "title": "Edition 01",
             "category": "Innehåll / Redaktionellt",
             "description": "En plats där berättelsen står i centrum.",
-            "tone": "sand"
+            "tone": "sand",
+            "href": "/galleri"
           }
         ]
       }
@@ -130,8 +137,12 @@
             "href": "/tjanster"
           },
           {
+            "label": "Utforska galleriet",
+            "href": "/galleri"
+          },
+          {
             "label": "Starta ett samtal",
-            "href": "#contact"
+            "href": "/kontakt"
           }
         ]
       }
@@ -144,8 +155,8 @@
         "heading": "Vad vill\ndu skapa?",
         "intro": "Berätta om din idé. Vi börjar med ett samtal.",
         "link": {
-          "label": "Säg hej",
-          "href": "mailto:hello@example.com"
+          "label": "Kontakta oss",
+          "href": "/kontakt"
         }
       }
     }

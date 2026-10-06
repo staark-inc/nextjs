@@ -62,7 +62,11 @@ captions and answers render as plain text. No HTML from JSON is executed.
 Gallery defaults contain no assets; the host supplies its images. The demo's
 three SVG illustrations under `public/custom-demo` are conceptual artwork.
 
-The included `/om-oss` and `/tjanster` pages exercise the new blocks. The block
+The included `/om-oss`, `/tjanster`, `/galleri` and `/kontakt` pages exercise
+the new blocks. Demo navigation and hero buttons use separate page URLs; the
+hero accepts an optional `more` link instead of a hardcoded `#story` link.
+Contact uses an email action, with no simulated form submission. Replace the
+demo email in site and page content before publishing. The block
 catalog at `/api/runtime/blocks` contains ten Custom Base definitions. This
 adds public pages and presentation blocks; content editing and image upload
 remain separate work.
@@ -78,4 +82,8 @@ pnpm --filter @staark/custom-runtime build
 pnpm --filter @staark/custom-runtime dev
 ```
 
-Visit `/`, `/om-oss`, `/tjanster`, `/blog` and `/api/runtime/blocks`.
+Visit `/`, `/om-oss`, `/tjanster`, `/galleri`, `/kontakt`, `/blog` and `/api/runtime/blocks`.
+
+Blog pages use a neutral surface scoped to `.cb-root--blog`, with preset-owned
+`blog-paper`, `blog-surface` and `blog-line` tokens. Studio/Gallery use grey-white
+surfaces; Midnight retains its dark palette. Homepage colors remain preset-owned.

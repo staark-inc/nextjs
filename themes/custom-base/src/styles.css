@@ -146,3 +146,5 @@
 .cb-lightbox figcaption { padding-top: 12px; }
 @media (max-width: 760px) { .cb-split { grid-template-columns: 1fr; gap: 32px; } .cb-split--right > figure { order: 0; } .cb-gallery--3, .cb-gallery--4 { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .cb-gallery { grid-template-columns: 1fr; } }
+
+.cb-root--blog { --cb-paper: var(--sk-color-blog-paper, #fafafa); --cb-surface: var(--sk-color-blog-surface, #fff); --cb-line: var(--sk-color-blog-line, #e4e4e7); }
