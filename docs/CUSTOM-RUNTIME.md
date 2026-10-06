@@ -1,5 +1,8 @@
 # Custom runtime extensions and shared projects
 
+For the authenticated Custom Base dashboard, page/block editor and persistent
+Docker test, see [CUSTOM-EDITOR.md](CUSTOM-EDITOR.md).
+
 `apps/custom-runtime` is the shared Next.js host. `packages/custom` provides
 manifest validation, extension resolution and a server API client factory.
 Manifests select trusted bundled code; they cannot import arbitrary packages.
