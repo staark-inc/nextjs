@@ -180,7 +180,10 @@ async function loadManagerContent(): Promise<{
 export async function loadManagerDashboard():
 Promise<ManagerDashboardData> {
   const mediaSiteId =
-    await resolveAdminMediaSiteId();
+    await safe(
+      resolveAdminMediaSiteId,
+      null,
+    );
 
   const [
     content,
