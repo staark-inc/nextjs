@@ -1,0 +1,62 @@
+{
+  "schema": "staark-custom/v1",
+  "project": {
+    "key": "forma-demo",
+    "name": "Forma Atelier Demo",
+    "version": "1.0.0"
+  },
+  "runtime": {
+    "mode": "custom",
+    "theme": {
+      "family": "custom-base",
+      "variant": "midnight"
+    },
+    "overrides": {
+      "components": false,
+      "routes": true,
+      "styles": false,
+      "layouts": false,
+      "navigation": true,
+      "errors": true
+    },
+    "custom": {
+      "allowCustomLayouts": false,
+      "allowThemeExtensions": true
+    },
+    "modules": [
+      {
+        "key": "project-info"
+      }
+    ],
+    "addons": [
+      {
+        "key": "project-label",
+        "config": {
+          "label": "Forma Atelier"
+        }
+      },
+      {
+        "key": "blog",
+        "config": {
+          "basePath": "/journal",
+          "title": "Journal",
+          "description": "Anteckningar om material, former och små detaljer."
+        }
+      },
+      {
+        "key": "forms",
+        "config": {
+          "forms": [
+            {
+              "key": "inquiry",
+              "recipientEnv": "CUSTOM_FORMA_TO",
+              "subject": "Ny förfrågan · Forma Atelier",
+              "phone": false
+            }
+          ]
+        }
+      }
+    ],
+    "integrations": []
+  }
+}

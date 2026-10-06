@@ -1,0 +1,56 @@
+{
+  "projectKey": "forma-demo",
+  "name": "Forma Atelier",
+  "tagline": "Objekt med karaktär. Skapade med omtanke.",
+  "websiteType": "custom",
+  "locale": "sv-SE",
+  "url": "http://127.0.0.1:3303",
+  "contact": {
+    "email": "atelier@example.com"
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Hem",
+        "href": "/"
+      },
+      {
+        "label": "Ateljén",
+        "href": "/ateljen"
+      },
+      {
+        "label": "Kollektion",
+        "href": "/kollektion"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "footer": [
+      {
+        "label": "Hem",
+        "href": "/"
+      },
+      {
+        "label": "Ateljén",
+        "href": "/ateljen"
+      },
+      {
+        "label": "Kollektion",
+        "href": "/kollektion"
+      },
+      {
+        "label": "Kontakt",
+        "href": "/kontakt"
+      }
+    ],
+    "cta": {
+      "label": "Prata med oss",
+      "href": "/kontakt"
+    }
+  },
+  "seo": {
+    "defaultDescription": "En konceptateljé för form, material och vardagens objekt."
+  }
+}

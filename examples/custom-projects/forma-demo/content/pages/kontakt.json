@@ -1,0 +1,57 @@
+{
+  "projectKey": "forma-demo",
+  "status": "published",
+  "path": "/kontakt",
+  "title": "Kontakt",
+  "seo": {
+    "title": "Kontakt | Forma Atelier",
+    "description": "Starta ett samtal med Forma Atelier.",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Kontakt",
+        "heading": "Vad vill\ndu forma?",
+        "intro": "Berätta om ditt projekt, ditt material eller din idé.",
+        "artwork": false,
+        "primary": {
+          "label": "Skriv ett mejl",
+          "href": "mailto:atelier@example.com"
+        },
+        "secondary": {
+          "label": "Kontakta ateljén",
+          "href": "/kontakt"
+        },
+        "more": {
+          "label": "Läs om ateljén →",
+          "href": "/ateljen"
+        },
+        "note": "En konceptkollektion. Ett eget perspektiv."
+      }
+    },
+    {
+      "id": "inquiry",
+      "type": "contactForm",
+      "props": {
+        "eyebrow": "Ett första samtal",
+        "heading": "Din idé\nbörjar här.",
+        "intro": "Namn, e-post och några rader om det du vill skapa.",
+        "form": "inquiry"
+      }
+    },
+    {
+      "id": "email",
+      "type": "text",
+      "props": {
+        "heading": "Ett direkt samtal.",
+        "intro": "atelier@example.com",
+        "paragraphs": [
+          "Detta är en demosida. Byt ut adressen och konfigurera ditt eget SMTP innan publicering."
+        ]
+      }
+    }
+  ]
+}
