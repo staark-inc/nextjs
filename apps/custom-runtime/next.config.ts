@@ -23,6 +23,7 @@ const nextConfig:
     ),
 
   transpilePackages: [
+    "@staark/theme-custom-base",
     "@staark/addon-blog",
     "@staark/core",
     "@staark/custom",

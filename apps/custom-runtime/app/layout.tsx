@@ -12,6 +12,8 @@ import "@staark/theme-skonhet/styles.css";
 import "@staark/theme-verkstad/styles.css";
 import "@staark/theme-webb/styles.css";
 
+import "@staark/theme-custom-base/styles.css";
+
 export const metadata:
   Metadata = {
   title:

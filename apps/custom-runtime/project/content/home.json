@@ -1,0 +1,153 @@
+{
+  "projectKey": "custom-demo",
+  "path": "/",
+  "title": "Custom Studio",
+  "seo": {
+    "title": "Custom Studio",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Independent by design",
+        "heading": "En egen idé.\nEn egen riktning.",
+        "intro": "En genomtänkt digital plats, formad efter det du vill skapa.",
+        "primary": {
+          "label": "Utforska",
+          "href": "#work"
+        },
+        "secondary": {
+          "label": "Ta kontakt",
+          "href": "#contact"
+        },
+        "note": "Skapad med omsorg. Byggd för att växa.",
+        "artwork": true
+      }
+    },
+    {
+      "id": "numbers",
+      "type": "stats",
+      "props": {
+        "items": [
+          {
+            "value": "01",
+            "label": "Gemensam grund"
+          },
+          {
+            "value": "03",
+            "label": "Visuella riktningar"
+          },
+          {
+            "value": "∞",
+            "label": "Möjligheter att bygga vidare"
+          }
+        ]
+      }
+    },
+    {
+      "id": "story",
+      "type": "text",
+      "props": {
+        "eyebrow": "01 / Vår riktning",
+        "heading": "Det börjar med\nen bra idé.",
+        "intro": "Tydlig form. Ett eget uttryck.",
+        "paragraphs": [
+          "Vi tror på digitala upplevelser som känns självklara att använda och personliga att möta."
+        ]
+      }
+    },
+    {
+      "id": "services",
+      "type": "services",
+      "props": {
+        "eyebrow": "02 / Möjligheter",
+        "heading": "En bas.\nFlera möjligheter.",
+        "intro": "Välj det som passar, och bygg vidare därifrån.",
+        "items": [
+          {
+            "title": "Ett eget uttryck",
+            "text": "Färger, typografi och detaljer som känns som du.",
+            "label": "Design"
+          },
+          {
+            "title": "Plats för innehåll",
+            "text": "Sidor, artiklar och projekt i en sammanhängande upplevelse.",
+            "label": "Content"
+          },
+          {
+            "title": "Redo för nästa steg",
+            "text": "Funktioner som kan växa tillsammans med projektet.",
+            "label": "Build"
+          }
+        ]
+      }
+    },
+    {
+      "id": "work",
+      "type": "projectsShowcase",
+      "props": {
+        "eyebrow": "03 / Utvalda riktningar",
+        "heading": "Olika idéer.\nSamma omtanke.",
+        "intro": "Tre visuella exempel på hur en gemensam grund kan få ett eget uttryck.",
+        "items": [
+          {
+            "title": "Studio North",
+            "category": "Identitet / Digitalt",
+            "description": "Ett lugnt och självsäkert uttryck.",
+            "tone": "lavender"
+          },
+          {
+            "title": "Forma",
+            "category": "Koncept / Plattform",
+            "description": "Mjuka former med en tydlig struktur.",
+            "tone": "sage"
+          },
+          {
+            "title": "Edition 01",
+            "category": "Innehåll / Redaktionellt",
+            "description": "En plats där berättelsen står i centrum.",
+            "tone": "sand"
+          }
+        ]
+      }
+    },
+    {
+      "id": "links",
+      "type": "shortcuts",
+      "props": {
+        "eyebrow": "Hitta rätt",
+        "heading": "Vad vill du utforska?",
+        "intro": "",
+        "links": [
+          {
+            "label": "Våra möjligheter",
+            "href": "#services"
+          },
+          {
+            "label": "Utvalda riktningar",
+            "href": "#work"
+          },
+          {
+            "label": "Starta ett samtal",
+            "href": "#contact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contact",
+      "type": "cta",
+      "props": {
+        "eyebrow": "Nästa kapitel",
+        "heading": "Vad vill\ndu skapa?",
+        "intro": "Berätta om din idé. Vi börjar med ett samtal.",
+        "link": {
+          "label": "Säg hej",
+          "href": "mailto:hello@example.com"
+        }
+      }
+    }
+  ]
+}

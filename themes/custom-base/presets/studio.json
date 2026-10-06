@@ -1,0 +1,36 @@
+{
+  "id": "studio",
+  "name": "Studio",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "paper": "#f7f5ef",
+      "surface": "#eeebe4",
+      "ink": "#20201f",
+      "muted": "#6c6b65",
+      "line": "#dbd8d0",
+      "primary": "#6553ed",
+      "primarySoft": "#e6e1ff",
+      "accent": "#d1eb94"
+    },
+    "typography": {
+      "body": "Arial, Helvetica, sans-serif",
+      "display": "Arial, Helvetica, sans-serif"
+    },
+    "radius": {
+      "sm": "6px",
+      "md": "12px",
+      "lg": "20px"
+    },
+    "layout": {
+      "wide": "1280px",
+      "content": "760px"
+    }
+  },
+  "components": {
+    "hero": "editorial",
+    "header": "minimal",
+    "footer": "editorial",
+    "buttons": "solid"
+  }
+}
