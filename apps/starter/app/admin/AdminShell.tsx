@@ -39,6 +39,7 @@ type AdminShellProps = {
   subscriptionStatus: string | null;
   billingWarning: boolean;
   subscriptionSuspended: boolean;
+  tenantDataUnavailable: boolean;
   development: boolean;
 };
 
@@ -123,6 +124,7 @@ export default function AdminShell({
   subscriptionStatus,
   billingWarning,
   subscriptionSuspended,
+  tenantDataUnavailable,
   development,
 }: AdminShellProps) {
   const pathname = usePathname();
@@ -515,7 +517,36 @@ export default function AdminShell({
 
         <main className="sa-main sa-main--v2">
           <div className="sa-main__inner">
-            {billingWarning || subscriptionSuspended ? (
+            {tenantDataUnavailable ? (
+              <div
+                className="sa-recovery-alert"
+                role="status"
+              >
+                <div className="sa-recovery-alert__status">
+                  <span
+                    className="sa-recovery-alert__dot"
+                    aria-hidden="true"
+                  />
+
+                  <div>
+                    <strong>
+                      Tenant data is temporarily unavailable
+                    </strong>
+
+                    <span>
+                      PostgreSQL cannot be reached. Manager recovery access remains active, but tenant and subscription information may be incomplete.
+                    </span>
+                  </div>
+                </div>
+
+                <span className="sa-recovery-alert__badge">
+                  Recovery mode
+                </span>
+              </div>
+            ) : null}
+
+            {!tenantDataUnavailable &&
+            (billingWarning || subscriptionSuspended) ? (
               <div
                 className={`sa-billing-alert${
                   subscriptionSuspended

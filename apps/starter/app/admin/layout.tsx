@@ -94,8 +94,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const role = resolveAdminRole(session.role);
 
-  const tenant =
-    await resolveAdminTenantContext();
+  const managerRecovery =
+    role === "manager" &&
+    session.recoveryMode === true;
+
+  let tenant: Awaited<
+    ReturnType<typeof resolveAdminTenantContext>
+  > | null = null;
+
+  try {
+    tenant =
+      await resolveAdminTenantContext();
+  } catch {
+    /*
+     * PostgreSQL may be unavailable during
+     * Manager recovery.
+     *
+     * The Admin shell must remain usable with
+     * degraded tenant/subscription metadata.
+     */
+  }
 
   const planFeatures =
     adminFeaturesFromPlanEntitlements(
@@ -121,10 +139,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const displayName =
     await resolveDisplayName(session.username, role);
 
+  const tenantDataUnavailable =
+    managerRecovery &&
+    tenant === null;
+
   const subscriptionPolicy =
-    getSubscriptionAccessPolicy(
-      tenant?.subscriptionStatus,
-    );
+    tenantDataUnavailable
+      ? {
+          publicAccess: false,
+          adminAccess: true,
+          billingWarning: false,
+          suspended: false,
+        }
+      : getSubscriptionAccessPolicy(
+          tenant?.subscriptionStatus,
+        );
 
   const initialNow = Date.now();
 
@@ -135,7 +164,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <AdminShell
       websiteType={websiteType}
-      siteName={site?.name?.trim() || "Staark Hub"}
+      siteName={
+        site?.name?.trim() ||
+        (tenantDataUnavailable
+          ? "Tenant unavailable"
+          : "Staark Hub")
+      }
       username={displayName}
       role={role}
       features={features}
@@ -151,6 +185,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       }
       subscriptionSuspended={
         subscriptionPolicy.suspended
+      }
+      tenantDataUnavailable={
+        tenantDataUnavailable
       }
       development={process.env.NODE_ENV !== "production"}
     >
