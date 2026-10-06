@@ -12,7 +12,8 @@
     "./loader": "./src/loader.ts",
     "./manifest": "./src/manifest.ts",
     "./composition": "./src/composition.ts",
-    "./source": "./src/source.ts"
+    "./source": "./src/source.ts",
+    "./integrations": "./src/integrations.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

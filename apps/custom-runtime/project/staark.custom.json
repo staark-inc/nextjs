@@ -22,6 +22,20 @@
       "routeNamespace": "/custom",
       "allowCustomLayouts": true,
       "allowThemeExtensions": true
-    }
+    },
+    "modules": [
+      {
+        "key": "project-info"
+      }
+    ],
+    "addons": [
+      {
+        "key": "project-label",
+        "config": {
+          "label": "Staark Custom Demo"
+        }
+      }
+    ],
+    "integrations": []
   }
 }

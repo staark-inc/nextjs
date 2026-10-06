@@ -19,7 +19,15 @@
     "@staark/theme-light": "workspace:*",
     "next": "^16.3.6",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "@staark/theme-byra": "workspace:*",
+    "@staark/theme-el": "workspace:*",
+    "@staark/theme-gastfrihet": "workspace:*",
+    "@staark/theme-kreator": "workspace:*",
+    "@staark/theme-salong": "workspace:*",
+    "@staark/theme-skonhet": "workspace:*",
+    "@staark/theme-verkstad": "workspace:*",
+    "@staark/theme-webb": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",

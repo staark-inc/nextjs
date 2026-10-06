@@ -3,6 +3,14 @@ import type {
 } from "next";
 
 import "@staark/theme-light/styles.css";
+import "@staark/theme-byra/styles.css";
+import "@staark/theme-el/styles.css";
+import "@staark/theme-gastfrihet/styles.css";
+import "@staark/theme-kreator/styles.css";
+import "@staark/theme-salong/styles.css";
+import "@staark/theme-skonhet/styles.css";
+import "@staark/theme-verkstad/styles.css";
+import "@staark/theme-webb/styles.css";
 
 export const metadata:
   Metadata = {

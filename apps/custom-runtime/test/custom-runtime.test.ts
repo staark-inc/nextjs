@@ -6,6 +6,16 @@ import {
   resolveCustomProjectSource,
 } from "../lib/custom-project.ts";
 
+test("shared root selects a project without permitting traversal", () => {
+  assert.deepEqual(resolveCustomProjectSource({ STAARK_CUSTOM_PROJECTS_ROOT: "/srv/projects", STAARK_CUSTOM_PROJECT_KEY: "salon" }), {
+    type: "directory", location: "/srv/projects/salon",
+  });
+  for (const key of ["../other", "/etc", "a/b", "UPPER"]) {
+    assert.throws(() => resolveCustomProjectSource({ STAARK_CUSTOM_PROJECTS_ROOT: "/srv/projects", STAARK_CUSTOM_PROJECT_KEY: key }), /valid PROJECT_KEY/);
+  }
+  assert.throws(() => resolveCustomProjectSource({ STAARK_CUSTOM_PROJECTS_ROOT: "/srv/projects" }), /valid PROJECT_KEY/);
+});
+
 test(
   "custom runtime prefers explicit manifest path",
   () => {

@@ -1,3 +1,5 @@
+import { resolveCustomServices } from "@/lib/custom-services";
+import { resolveCustomTheme } from "@/lib/custom-theme";
 import {
   NextResponse,
 } from "next/server";
@@ -14,7 +16,12 @@ export async function GET() {
     const project =
       await loadActiveCustomProject();
 
+    const services = resolveCustomServices(project);
+    resolveCustomTheme(project, services.extensions.sections);
     return NextResponse.json({
+      modules: services.extensions.definitions.filter(item => item.kind === "module").map(item => item.key),
+      addons: services.extensions.definitions.filter(item => item.kind === "addon").map(item => item.key),
+      integrations: Array.from(services.integrations.keys()),
       ok:
         true,
 
@@ -43,9 +50,6 @@ export async function GET() {
         project.runtime
           .capabilities,
 
-      unknownAddons:
-        project.runtime
-          .unknownAddons,
     });
   } catch (error) {
     return NextResponse.json(
@@ -57,9 +61,7 @@ export async function GET() {
           "custom",
 
         error:
-          error instanceof Error
-            ? error.message
-            : "Custom runtime failed to load.",
+          "Custom runtime failed to load.",
       },
 
       {

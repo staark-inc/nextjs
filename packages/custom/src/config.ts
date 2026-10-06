@@ -113,6 +113,16 @@ export const CustomRuntimeConfigSchema =
             .optional(),
       }),
 
+    modules: z.array(CustomAddonSchema).default([]),
+
+    integrations: z.array(z.object({
+      key: z.string().trim().min(1),
+      enabled: z.boolean().default(true),
+      baseUrl: z.url().refine(value => new URL(value).protocol === "https:", "API integrations require HTTPS"),
+      tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
+      timeoutMs: z.number().int().min(100).max(60000).default(10000),
+    })).default([]),
+
     addons:
       z.array(
         CustomAddonSchema,

@@ -27,7 +27,16 @@ const nextConfig:
     "@staark/custom",
     "@staark/platform",
     "@staark/theme-kit",
+    "@staark/theme-kit",
     "@staark/theme-light",
+    "@staark/theme-byra",
+    "@staark/theme-el",
+    "@staark/theme-gastfrihet",
+    "@staark/theme-kreator",
+    "@staark/theme-salong",
+    "@staark/theme-skonhet",
+    "@staark/theme-verkstad",
+    "@staark/theme-webb",
   ],
 
   async headers() {

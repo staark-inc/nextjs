@@ -1,3 +1,4 @@
+import { resolveCustomServices } from "@/lib/custom-services";
 import {
   SiteSettingsSchema,
   type Block,
@@ -5,6 +6,8 @@ import {
 
 import {
   BlockRenderer,
+  presetToCssVars,
+  resolvePreset,
 } from "@staark/theme-kit";
 
 import {
@@ -38,10 +41,8 @@ export default async function Page() {
   const project =
     await loadActiveCustomProject();
 
-  const theme =
-    resolveCustomTheme(
-      project,
-    );
+  const services = resolveCustomServices(project);
+  const { theme, registry } = resolveCustomTheme(project, services.extensions.sections);
 
   const layouts =
     resolveCustomLayouts(
@@ -79,9 +80,8 @@ export default async function Page() {
         "http://localhost:3300",
 
       theme: {
-        family:
-          project.runtime
-            .config.theme.family,
+        family: project.runtime.config.theme.family,
+        preset: project.runtime.config.theme.variant,
       },
     });
 
@@ -137,10 +137,7 @@ export default async function Page() {
           theme
         }
 
-        registry={{
-          light:
-            theme,
-        }}
+        registry={registry}
       />
     </main>
   );
@@ -164,6 +161,7 @@ export default async function Page() {
 
   const rendered = (
     <div
+      style={presetToCssVars(resolvePreset(theme, project.runtime.config.theme.variant))}
       data-staark-custom-styles={
         styles
           ? "true"
