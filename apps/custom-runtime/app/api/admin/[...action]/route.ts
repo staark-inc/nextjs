@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { customBaseBlockDefinitions, customBaseShortcuts } from "@staark/theme-custom-base/blocks";
 import { editorContext, requireEditorOrigin, requireEditorSession } from "@/lib/editor-request";
 import { ADMIN_SESSION_SECONDS, createAdminSession, verifyAdminPassword } from "@/lib/editor-auth";
-import { EditorError, getEditorPage, listEditorPages, MAX_EDITOR_BYTES, saveEditorPage } from "@/lib/editor-store";
+import { EditorError, deleteEditorPage, getEditorPage, listEditorPages, MAX_EDITOR_BYTES, saveEditorPage } from "@/lib/editor-store";
 import { allowFormRequest, readFormJson } from "@/lib/form-request";
 
 import { getEditorPost, listEditorPosts, saveEditorPost } from "@/lib/editor-blog";
@@ -83,5 +83,19 @@ export async function PUT(request: Request, { params }: Props) {
       return json(await saveEditorPost(context.directory, context.project, { projectKey: input.projectKey, post: input.post, originalSlug: input.originalSlug, revision: input.revision as string | null }));
     }
     return json(await saveEditorPage(context.directory, context.project, input.page, input.revision as string | null));
+  } catch (error) { return failure(error); }
+}
+
+
+export async function DELETE(request: Request, { params }: Props) {
+  try {
+    const context = await editorContext();
+    requireEditorSession(context);
+    requireEditorOrigin(request, context);
+    if ((await params).action.join("/") !== "page") return json({ error: "Unknown editor endpoint." }, 404);
+    const input = await body(request);
+    if (!input || input.projectKey !== context.project.project.key) throw new EditorError(422, "Page belongs to a different project.");
+    if (typeof input.path !== "string" || typeof input.revision !== "string" || !/^[a-f0-9]{64}$/.test(input.revision)) throw new EditorError(400, "Supply the saved page URL and revision.");
+    return json(await deleteEditorPage(context.directory, context.project, input.path, input.revision));
   } catch (error) { return failure(error); }
 }

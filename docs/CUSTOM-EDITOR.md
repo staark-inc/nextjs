@@ -103,7 +103,13 @@ of a false successful save. The runtime stays non-root without a Docker socket.
 Pages remain in `content/home.json` and `content/pages/<path>.json`, with
 `projectKey` and `status`. Public routes omit drafts. Reserved admin/API/dashboard
 routes and configured blog namespaces cannot be page URLs. Existing URLs cannot
-be renamed in this version.
+be renamed in this version. Saved pages other than home can be deleted using
+**Delete page**, with confirmation. The saved file is atomically moved into
+private history; the page then disappears from the list and public routes.
+Deletion requires the current revision and the same project session/origin/CSRF
+as saving. Unsaved changes are discarded only after confirmation. Home cannot
+be deleted. Child pages, navigation links and addon content are not deleted;
+update any links pointing to the removed URL separately.
 
 Reads return a SHA-256 revision of the file bytes. Saving requires that revision
 (or `null` for new files). Other saves or external edits produce a 409 conflict.
