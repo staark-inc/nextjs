@@ -38,6 +38,7 @@ layout/styles.
 | `imageText` | `split` | Image and body text |
 | `faq` | `questions` | Expandable answers |
 | `gallery` | `photos` | Image grid with modal viewer |
+| `contactForm` | `form` | Email form connected to the forms addon |
 
 Each block has a renderer, Zod props validation and a Blocks v2 definition with
 field descriptors, defaults, category and required fields. The hero also has a
@@ -144,3 +145,5 @@ Open `/`, `/om-oss`, `/tjanster`, `/galleri`, `/kontakt`, `/blog`, `/api/runtime
 three manifest presets, and verify project content and disabled addon behavior.
 The demo gallery is explicitly conceptual artwork, not a claim of completed
 client work. A dashboard/editor and write permissions are separate future work.
+
+See [Custom email forms](CUSTOM-EMAIL-FORMS.md) for SMTP setup and Docker/Mailpit testing.

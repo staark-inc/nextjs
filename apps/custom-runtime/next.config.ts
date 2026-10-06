@@ -25,6 +25,7 @@ const nextConfig:
   transpilePackages: [
     "@staark/theme-custom-base",
     "@staark/addon-blog",
+    "@staark/addon-forms",
     "@staark/core",
     "@staark/custom",
     "@staark/platform",
@@ -48,7 +49,9 @@ const nextConfig:
           "/:path*",
 
         headers:
-          staarkSecurityHeaders(),
+          staarkSecurityHeaders(process.env.STAARK_CUSTOM_HTTP_TEST === "true"
+            ? { hsts: false, upgradeInsecure: false }
+            : {}),
       },
     ];
   },

@@ -65,9 +65,10 @@ three SVG illustrations under `public/custom-demo` are conceptual artwork.
 The included `/om-oss`, `/tjanster`, `/galleri` and `/kontakt` pages exercise
 the new blocks. Demo navigation and hero buttons use separate page URLs; the
 hero accepts an optional `more` link instead of a hardcoded `#story` link.
-Contact uses an email action, with no simulated form submission. Replace the
-demo email in site and page content before publishing. The block
-catalog at `/api/runtime/blocks` contains ten Custom Base definitions. This
+Contact includes an email action and a `contactForm` block. Configure the forms
+addon and SMTP settings as described in [Custom email forms](CUSTOM-EMAIL-FORMS.md).
+Replace the demo email in site and page content before publishing. The block
+catalog at `/api/runtime/blocks` contains eleven Custom Base definitions. This
 adds public pages and presentation blocks; content editing and image upload
 remain separate work.
 

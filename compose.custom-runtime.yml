@@ -1,0 +1,37 @@
+name: staark-custom-test
+services:
+  custom-runtime:
+    build:
+      context: .
+      dockerfile: apps/custom-runtime/Dockerfile
+    image: staark-custom-runtime:local
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: apps/custom-runtime/.env.docker
+        required: true
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      STAARK_CUSTOM_PROJECT_DIR: /data/project
+    ports:
+      - "127.0.0.1:3300:3000"
+    volumes:
+      - ./apps/custom-runtime/project:/data/project:ro
+    depends_on:
+      mailpit:
+        condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+  mailpit:
+    image: axllent/mailpit:v1.30
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+    environment:
+      MP_MAX_MESSAGES: "200"
+    security_opt:
+      - no-new-privileges:true
