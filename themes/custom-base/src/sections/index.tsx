@@ -1,3 +1,4 @@
+import { ContactForm } from "../components/ContactForm";
 import { GalleryViewer } from "../components/GalleryViewer";
 import type { SectionComponent } from "@staark/theme-kit";
 import { customBaseBlockSchemas as schemas } from "../blocks.ts";
@@ -49,4 +50,9 @@ export const Faq: SectionComponent<any> = ({ props }) => {
 export const Gallery: SectionComponent<any> = ({ props }) => {
   const p = schemas.gallery.parse(props);
   return <section className="cb-section" id={p.anchor}><Container><div className="cb-section__heading"><div><Eyebrow>{p.eyebrow}</Eyebrow><h2>{p.heading}</h2></div><p>{p.intro}</p></div><GalleryViewer items={p.items} columns={p.columns} label={p.heading} /></Container></section>;
+};
+
+export const ContactFormSection: SectionComponent<any> = ({ props }) => {
+  const p = schemas.contactForm.parse(props);
+  return <section className="cb-section cb-section--surface"><Container className="cb-editorial"><div><Eyebrow>{p.eyebrow}</Eyebrow><h2>{p.heading}</h2><p className="cb-intro">{p.intro}</p></div><ContactForm formKey={p.form} /></Container></section>;
 };

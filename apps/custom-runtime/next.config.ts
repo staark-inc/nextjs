@@ -25,6 +25,7 @@ const nextConfig:
   transpilePackages: [
     "@staark/theme-custom-base",
     "@staark/addon-blog",
+    "@staark/addon-forms",
     "@staark/core",
     "@staark/custom",
     "@staark/platform",
