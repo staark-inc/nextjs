@@ -132,3 +132,9 @@ pnpm --filter @staark/custom-runtime build
 The homepage remains a demonstration with fixed example blocks. Connecting
 project-owned content, business modules and authorized API routes is separate
 application work; the extension host provides the mechanism for it.
+
+## Project error pages
+
+`overrides.errors` independently enables project-owned 404/error views. It defaults
+to false. See [Custom error pages](CUSTOM-ERROR-PAGES.md) for registry, fallback
+and recovery behavior.
