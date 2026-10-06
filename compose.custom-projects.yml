@@ -1,0 +1,68 @@
+# Independent side-by-side test stack; does not replace the existing test containers.
+name: staark-custom-projects-test
+x-runtime: &runtime
+  image: staark-custom-runtime:projects-test
+  build:
+    context: .
+    dockerfile: apps/custom-runtime/Dockerfile
+    args:
+      STAARK_CUSTOM_HTTP_TEST: "true"
+  restart: unless-stopped
+  init: true
+  env_file:
+    - path: apps/custom-runtime/.env.docker
+      required: true
+  volumes:
+    - ./apps/custom-runtime/project:/data/projects/custom-demo:ro
+    - ./examples/custom-projects/forma-demo:/data/projects/forma-demo:ro
+  depends_on:
+    custom-projects-mailpit:
+      condition: service_started
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+x-environment: &environment
+  NODE_ENV: production
+  PORT: "3000"
+  HOSTNAME: 0.0.0.0
+  # Empty explicit sources let shared-root selection take effect.
+  STAARK_CUSTOM_MANIFEST_PATH: ""
+  STAARK_CUSTOM_PROJECT_DIR: ""
+  STAARK_CUSTOM_PROJECTS_ROOT: /data/projects
+  CUSTOM_SMTP_HOST: custom-projects-mailpit
+  CUSTOM_SMTP_PORT: "1025"
+  CUSTOM_SMTP_SECURE: "false"
+  CUSTOM_SMTP_REQUIRE_TLS: "false"
+  CUSTOM_SMTP_USER: ""
+  CUSTOM_SMTP_PASSWORD: ""
+  CUSTOM_SMTP_FROM: demo@example.com
+  CUSTOM_CONTACT_TO: studio-inbox@example.com
+  CUSTOM_FORMA_TO: forma-inbox@example.com
+  CUSTOM_FORMS_TRUST_PROXY: "false"
+services:
+  studio:
+    <<: *runtime
+    environment:
+      <<: *environment
+      STAARK_CUSTOM_PROJECT_KEY: custom-demo
+      STAARK_CUSTOM_SITE_URL: http://${CUSTOM_TEST_BIND_IP:-127.0.0.1}:3302
+    ports:
+      - "${CUSTOM_TEST_BIND_IP:-127.0.0.1}:3302:3000"
+  forma:
+    <<: *runtime
+    environment:
+      <<: *environment
+      STAARK_CUSTOM_PROJECT_KEY: forma-demo
+      STAARK_CUSTOM_SITE_URL: http://${CUSTOM_TEST_BIND_IP:-127.0.0.1}:3303
+    ports:
+      - "${CUSTOM_TEST_BIND_IP:-127.0.0.1}:3303:3000"
+  custom-projects-mailpit:
+    image: axllent/mailpit:v1.30
+    restart: unless-stopped
+    ports:
+      - "${CUSTOM_TEST_BIND_IP:-127.0.0.1}:8027:8025"
+    environment:
+      MP_MAX_MESSAGES: "200"
+    security_opt:
+      - no-new-privileges:true

@@ -1,0 +1,98 @@
+{
+  "projectKey": "forma-demo",
+  "status": "published",
+  "path": "/kollektion",
+  "title": "Kollektion",
+  "seo": {
+    "title": "Kollektion | Forma Atelier",
+    "description": "Tre illustrerade koncept: Arc, Fold och Orbit.",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Kollektion",
+        "heading": "Ett litet urval.\nEtt tydligt uttryck.",
+        "intro": "Öppna bilderna och upptäck konceptens former.",
+        "artwork": false,
+        "primary": {
+          "label": "Se kollektionen",
+          "href": "/kollektion"
+        },
+        "secondary": {
+          "label": "Kontakta ateljén",
+          "href": "/kontakt"
+        },
+        "more": {
+          "label": "Läs om ateljén →",
+          "href": "/ateljen"
+        },
+        "note": "En konceptkollektion. Ett eget perspektiv."
+      }
+    },
+    {
+      "id": "objects",
+      "type": "gallery",
+      "props": {
+        "heading": "Arc. Fold. Orbit.",
+        "intro": "Illustrationer av konceptobjekt, inte verkliga produkter till försäljning.",
+        "items": [
+          {
+            "src": "/forma-demo/arc.svg",
+            "alt": "Illustration av en ljus keramisk vas",
+            "caption": "Arc / Volym och balans",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/forma-demo/fold.svg",
+            "alt": "Illustration av ett vikt objekt i terrakotta",
+            "caption": "Fold / Rörelse i materialet",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/forma-demo/orbit.svg",
+            "alt": "Illustration av en cirkulär form i grön ton",
+            "caption": "Orbit / En mjuk rytm",
+            "width": 1200,
+            "height": 900
+          }
+        ],
+        "columns": 2
+      }
+    },
+    {
+      "id": "faq",
+      "type": "faq",
+      "props": {
+        "heading": "Om kollektionen.",
+        "items": [
+          {
+            "question": "Kan jag köpa objekten?",
+            "answer": "Detta är en konceptdemo. Illustrationerna visar hur temat kan presentera en kollektion."
+          },
+          {
+            "question": "Kan vi skapa en egen kollektion?",
+            "answer": "Kontakta oss med din idé, så börjar vi med ett samtal."
+          }
+        ]
+      }
+    },
+    {
+      "id": "closing",
+      "type": "cta",
+      "props": {
+        "eyebrow": "Skapa tillsammans",
+        "heading": "En idé.\nEtt nytt objekt.",
+        "intro": "Vi börjar med materialet, formen och det du vill uttrycka.",
+        "link": {
+          "label": "Starta ett samtal",
+          "href": "/kontakt"
+        }
+      }
+    }
+  ]
+}
