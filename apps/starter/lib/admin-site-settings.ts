@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import {
   PageSchema,
   SiteSettingsSchema,
@@ -7,7 +6,11 @@ import {
 } from "@staark/core";
 
 import { resolvePublicContentConfig } from "./content-source";
-import { resolveTenantContext } from "./tenant-context";
+import {
+  requireAdminSiteKey,
+  resolveAdminTenant,
+} from "./admin-tenant";
+import { readAdminRecoveryBundle } from "./admin-recovery-store";
 import {
   createPostgresRepositories,
   withPostgresTransaction,
@@ -35,28 +38,14 @@ export function adminSiteSettingsUsePostgres(
 
 async function postgresSiteKey(): Promise<string> {
   const config = resolvePublicContentConfig();
+
   if (config.source !== "postgres") {
     throw new Error(
       "PostgreSQL Admin Site Settings requires STAARK_DATA_SOURCE=postgres.",
     );
   }
 
-  try {
-    const requestHeaders = await headers();
-    const tenant = await resolveTenantContext({
-      host: requestHeaders.get("host"),
-      forwardedHost: requestHeaders.get("x-forwarded-host"),
-    });
-    if (tenant) return tenant.siteKey;
-  } catch {
-    // Build jobs and one-shot scripts may not have request context.
-  }
-
-  if (config.siteKey) return config.siteKey;
-
-  throw new Error(
-    "No PostgreSQL admin tenant could be resolved from the request hostname.",
-  );
+  return requireAdminSiteKey();
 }
 
 async function requirePostgresSite(
@@ -78,11 +67,28 @@ async function readLegacySiteSettings(): Promise<SiteSettings> {
 
 export async function readAdminSiteSettings(): Promise<SiteSettings> {
   if (!adminSiteSettingsUsePostgres()) return readLegacySiteSettings();
+
+  const resolution =
+    await resolveAdminTenant();
+
+  if (
+    resolution.resolvedBy === "snapshot" &&
+    resolution.tenant
+  ) {
+    const bundle =
+      await readAdminRecoveryBundle(
+        resolution.tenant.siteId,
+      );
+
+    if (bundle?.siteSettings) {
+      return SiteSettingsSchema.parse(
+        bundle.siteSettings,
+      );
+    }
+  }
+
   const site = await requirePostgresSite(createPostgresRepositories());
 
-  // Existing tenants may predate newer SiteSettings fields.
-  // Always parse on read so schema defaults are applied without requiring
-  // a destructive data migration.
   return SiteSettingsSchema.parse(
     site.settings,
   );

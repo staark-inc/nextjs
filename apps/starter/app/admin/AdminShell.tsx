@@ -40,6 +40,8 @@ type AdminShellProps = {
   billingWarning: boolean;
   subscriptionSuspended: boolean;
   tenantDataUnavailable: boolean;
+  tenantRecoverySnapshot: boolean;
+  tenantSnapshotUpdatedAt: string | null;
   development: boolean;
 };
 
@@ -125,6 +127,8 @@ export default function AdminShell({
   billingWarning,
   subscriptionSuspended,
   tenantDataUnavailable,
+  tenantRecoverySnapshot,
+  tenantSnapshotUpdatedAt,
   development,
 }: AdminShellProps) {
   const pathname = usePathname();
@@ -517,7 +521,36 @@ export default function AdminShell({
 
         <main className="sa-main sa-main--v2">
           <div className="sa-main__inner">
-            {tenantDataUnavailable ? (
+            {tenantRecoverySnapshot ? (
+              <div
+                className="sa-recovery-alert"
+                role="status"
+              >
+                <div className="sa-recovery-alert__status">
+                  <span
+                    className="sa-recovery-alert__dot"
+                    aria-hidden="true"
+                  />
+
+                  <div>
+                    <strong>
+                      Recovery snapshot active
+                    </strong>
+
+                    <span>
+                      PostgreSQL cannot be reached. Manager is showing the last known tenant diagnostics from persistent recovery storage.
+                      {tenantSnapshotUpdatedAt
+                        ? ` Last synced ${tenantSnapshotUpdatedAt.slice(0, 16).replace("T", " ")} UTC.`
+                        : ""}
+                    </span>
+                  </div>
+                </div>
+
+                <span className="sa-recovery-alert__badge">
+                  REC-02
+                </span>
+              </div>
+            ) : tenantDataUnavailable ? (
               <div
                 className="sa-recovery-alert"
                 role="status"
@@ -546,6 +579,7 @@ export default function AdminShell({
             ) : null}
 
             {!tenantDataUnavailable &&
+            !tenantRecoverySnapshot &&
             (billingWarning || subscriptionSuspended) ? (
               <div
                 className={`sa-billing-alert${

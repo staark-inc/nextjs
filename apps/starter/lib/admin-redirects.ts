@@ -15,7 +15,11 @@ import {
   appendAdminAction,
 } from "./admin-audit";
 import { resolvePublicContentConfig } from "./content-source";
-import { requireAdminSiteKey } from "./admin-tenant";
+import {
+  requireAdminSiteKey,
+  resolveAdminTenant,
+} from "./admin-tenant";
+import { readAdminRecoveryBundle } from "./admin-recovery-store";
 import {
   createPostgresRepositories,
   withPostgresTransaction,
@@ -163,6 +167,29 @@ export async function listRedirects(): Promise<{
       redirects: [...document.redirects].sort((a, b) => a.from.localeCompare(b.from)),
       issues: inspectRedirects(document.redirects),
     };
+  }
+
+  const resolution =
+    await resolveAdminTenant();
+
+  if (
+    resolution.resolvedBy === "snapshot" &&
+    resolution.tenant
+  ) {
+    const bundle =
+      await readAdminRecoveryBundle(
+        resolution.tenant.siteId,
+      );
+
+    if (bundle) {
+      return {
+        redirects:
+          bundle.redirects.redirects as RedirectRule[],
+
+        issues:
+          bundle.redirects.issues as RedirectIssue[],
+      };
+    }
   }
 
   const repositories = createPostgresRepositories();

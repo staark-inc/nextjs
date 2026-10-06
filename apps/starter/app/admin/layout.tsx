@@ -11,7 +11,8 @@ import {
   resolveAdminEntitlements,
 } from "@/lib/admin-features";
 import { readAdminSiteSettings } from "@/lib/admin-site-settings";
-import { resolveAdminTenantContext } from "@/lib/admin-tenant";
+import { resolveAdminTenant } from "@/lib/admin-tenant";
+import { refreshAdminRecoveryBundle } from "@/lib/admin-recovery-bundle";
 import { adminFeaturesFromPlanEntitlements } from "@/lib/plan-entitlements";
 import { getSubscriptionAccessPolicy } from "@/lib/subscription-access";
 import AdminShell from "./AdminShell";
@@ -47,77 +48,149 @@ async function resolveDisplayName(
   username: string | undefined,
   role: ReturnType<typeof resolveAdminRole>,
 ): Promise<string> {
-  const fallback = username?.trim() || "Admin";
+  const fallback =
+    username?.trim() ||
+    "Admin";
 
-  if (role !== "client" || !fallback.includes("@")) {
+  if (
+    role !== "client" ||
+    !fallback.includes("@")
+  ) {
     return fallback;
   }
 
   try {
-    const user = await getPrismaClient().user.findUnique({
-      where: { email: fallback.toLowerCase() },
-      select: { name: true },
-    });
+    const user =
+      await getPrismaClient()
+        .user
+        .findUnique({
+          where: {
+            email:
+              fallback.toLowerCase(),
+          },
+          select: {
+            name: true,
+          },
+        });
 
-    return user?.name?.trim() || fallback;
+    return (
+      user?.name?.trim() ||
+      fallback
+    );
   } catch {
     return fallback;
   }
 }
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Admin config may be missing (e.g. ADMIN_* unset in production). Never let that
-  // throw during render — treat it as "not signed in" and show the child (the
-  // login page). The auth API then reports the configuration problem on submit.
-  let session: Awaited<ReturnType<typeof getSession>> | null = null;
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  let session:
+    Awaited<
+      ReturnType<typeof getSession>
+    > | null =
+    null;
+
   try {
-    session = await getSession();
+    session =
+      await getSession();
   } catch {
     return children;
   }
 
-  if (!isSessionActive(session)) return children;
-
-  let site: Awaited<
-    ReturnType<typeof readAdminSiteSettings>
-  > | null = null;
-
-  try {
-    site = await readAdminSiteSettings();
-  } catch {
-    // Admin remains usable if the active content source
-    // is temporarily unavailable.
+  if (
+    !isSessionActive(
+      session,
+    )
+  ) {
+    return children;
   }
 
-  const websiteType: WebsiteType =
-    normalizeWebsiteType(site?.websiteType);
-
-  const role = resolveAdminRole(session.role);
+  const role =
+    resolveAdminRole(
+      session.role,
+    );
 
   const managerRecovery =
     role === "manager" &&
-    session.recoveryMode === true;
+    session.recoveryMode ===
+      true;
 
-  let tenant: Awaited<
-    ReturnType<typeof resolveAdminTenantContext>
-  > | null = null;
+  let tenantResolution:
+    Awaited<
+      ReturnType<
+        typeof resolveAdminTenant
+      >
+    > | null =
+    null;
 
   try {
-    tenant =
-      await resolveAdminTenantContext();
+    tenantResolution =
+      await resolveAdminTenant();
   } catch {
     /*
-     * PostgreSQL may be unavailable during
-     * Manager recovery.
-     *
-     * The Admin shell must remain usable with
-     * degraded tenant/subscription metadata.
+     * Manager recovery must remain usable
+     * even when neither PostgreSQL nor the
+     * recovery snapshot can be resolved.
      */
   }
 
+  const tenant =
+    tenantResolution?.tenant ??
+    null;
+
+  /*
+   * REC-02
+   *
+   * Every healthy PostgreSQL-backed Manager
+   * request refreshes the tenant diagnostic
+   * recovery bundle at most once per minute.
+   */
+  if (
+    tenant &&
+    tenantResolution?.resolvedBy ===
+      "database"
+  ) {
+    await refreshAdminRecoveryBundle(
+      tenant,
+    ).catch(() => {
+      /*
+       * Recovery persistence is best effort.
+       * Never break healthy Admin traffic.
+       */
+    });
+  }
+
+  let site:
+    Awaited<
+      ReturnType<
+        typeof readAdminSiteSettings
+      >
+    > | null =
+    null;
+
+  try {
+    site =
+      await readAdminSiteSettings();
+  } catch {
+    /*
+     * Live tenant data and REC-02 may both
+     * be unavailable. The shell still loads.
+     */
+  }
+
+  const websiteType:
+    WebsiteType =
+    normalizeWebsiteType(
+      site?.websiteType,
+    );
+
   const planFeatures =
     adminFeaturesFromPlanEntitlements(
-      tenant?.entitlements ?? {},
+      tenant?.entitlements ??
+        {},
     );
 
   const features =
@@ -137,59 +210,117 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     await peekAdminShellStatus();
 
   const displayName =
-    await resolveDisplayName(session.username, role);
+    await resolveDisplayName(
+      session.username,
+      role,
+    );
 
   const tenantDataUnavailable =
     managerRecovery &&
     tenant === null;
 
+  const tenantRecoverySnapshot =
+    managerRecovery &&
+    tenant !== null &&
+    tenantResolution
+      ?.resolvedBy ===
+      "snapshot";
+
+  /*
+   * Snapshot subscription data is useful
+   * diagnostically, but stale billing state
+   * must never suspend anything.
+   */
   const subscriptionPolicy =
-    tenantDataUnavailable
+    tenantDataUnavailable ||
+    tenantRecoverySnapshot
       ? {
-          publicAccess: false,
-          adminAccess: true,
-          billingWarning: false,
-          suspended: false,
+          publicAccess:
+            false,
+          adminAccess:
+            true,
+          billingWarning:
+            false,
+          suspended:
+            false,
         }
       : getSubscriptionAccessPolicy(
-          tenant?.subscriptionStatus,
+          tenant
+            ?.subscriptionStatus,
         );
 
-  const initialNow = Date.now();
+  const initialNow =
+    Date.now();
 
   const sessionExpiresAt =
-    adminSessionExpiresAt(session) ??
+    adminSessionExpiresAt(
+      session,
+    ) ??
     initialNow;
 
   return (
     <AdminShell
-      websiteType={websiteType}
+      websiteType={
+        websiteType
+      }
       siteName={
         site?.name?.trim() ||
-        (tenantDataUnavailable
-          ? "Tenant unavailable"
-          : "Staark Hub")
+        tenant?.siteName?.trim() ||
+        (
+          tenantDataUnavailable
+            ? "Tenant unavailable"
+            : "Staark Hub"
+        )
       }
-      username={displayName}
-      role={role}
-      features={features}
-      entitlements={entitlements}
-      sessionExpiresAt={sessionExpiresAt}
-      initialNow={initialNow}
-      initialStatus={status}
+      username={
+        displayName
+      }
+      role={
+        role
+      }
+      features={
+        features
+      }
+      entitlements={
+        entitlements
+      }
+      sessionExpiresAt={
+        sessionExpiresAt
+      }
+      initialNow={
+        initialNow
+      }
+      initialStatus={
+        status
+      }
       subscriptionStatus={
-        tenant?.subscriptionStatus ?? null
+        tenant
+          ?.subscriptionStatus ??
+        null
       }
       billingWarning={
-        subscriptionPolicy.billingWarning
+        subscriptionPolicy
+          .billingWarning
       }
       subscriptionSuspended={
-        subscriptionPolicy.suspended
+        subscriptionPolicy
+          .suspended
       }
       tenantDataUnavailable={
         tenantDataUnavailable
       }
-      development={process.env.NODE_ENV !== "production"}
+      tenantRecoverySnapshot={
+        tenantRecoverySnapshot
+      }
+      tenantSnapshotUpdatedAt={
+        tenantResolution
+          ?.snapshotUpdatedAt ??
+        null
+      }
+      development={
+        process.env.NODE_ENV !==
+        "production"
+      }
     >
       {children}
     </AdminShell>

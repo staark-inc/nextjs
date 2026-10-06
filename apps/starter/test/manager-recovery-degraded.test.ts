@@ -23,7 +23,7 @@ const shell =
   );
 
 test(
-  "Manager recovery distinguishes missing tenant data from suspension",
+  "Manager recovery distinguishes missing tenant data from snapshot recovery",
   () => {
     assert.match(
       layout,
@@ -37,22 +37,37 @@ test(
 
     assert.match(
       layout,
-      /billingWarning: false/,
+      /tenantRecoverySnapshot[\s\S]*resolvedBy[\s\S]*"snapshot"/,
     );
 
     assert.match(
       layout,
-      /suspended: false/,
+      /billingWarning:[\s\S]*false/,
+    );
+
+    assert.match(
+      layout,
+      /suspended:[\s\S]*false/,
     );
   },
 );
 
 test(
-  "Admin shell renders a recovery degraded-state banner",
+  "Admin shell renders recovery banners and suppresses billing alerts",
   () => {
     assert.match(
       shell,
-      /tenantDataUnavailable/,
+      /tenantRecoverySnapshot/,
+    );
+
+    assert.match(
+      shell,
+      /Recovery snapshot active/,
+    );
+
+    assert.match(
+      shell,
+      /REC-02/,
     );
 
     assert.match(
@@ -62,12 +77,7 @@ test(
 
     assert.match(
       shell,
-      /Manager recovery access remains active/,
-    );
-
-    assert.match(
-      shell,
-      /!tenantDataUnavailable[\s\S]*billingWarning/,
+      /!tenantRecoverySnapshot[\s\S]*billingWarning/,
     );
   },
 );

@@ -18,18 +18,23 @@ test(
   () => {
     assert.match(
       source,
-      /let tenant:[\s\S]*null = null/,
+      /let tenantResolution:[\s\S]*null/,
     );
 
     assert.match(
       source,
-      /try \{[\s\S]*resolveAdminTenantContext\(\)[\s\S]*\} catch \{/,
+      /try \{[\s\S]*resolveAdminTenant\(\)[\s\S]*\} catch \{/,
+    );
+
+    assert.match(
+      source,
+      /tenantResolution\?\.tenant[\s\S]*null/,
     );
   },
 );
 
 test(
-  "Admin shell can continue without tenant subscription metadata",
+  "Admin shell can use tenant subscription metadata or recovery snapshot",
   () => {
     assert.match(
       source,
@@ -38,7 +43,17 @@ test(
 
     assert.match(
       source,
-      /tenant\?\.subscriptionStatus/,
+      /subscriptionStatus[\s\S]*tenant[\s\S]*subscriptionStatus/,
+    );
+
+    assert.match(
+      source,
+      /tenantRecoverySnapshot/,
+    );
+
+    assert.match(
+      source,
+      /snapshotUpdatedAt/,
     );
   },
 );
