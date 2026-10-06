@@ -4,7 +4,11 @@ import path from "node:path";
 for (const [source, target] of [["/data/project", "/seed/studio"], ["/opt/custom-projects/forma-demo", "/seed/forma"]]) {
   const entries = await readdir(target);
   if (entries.length === 0) {
-    await cp(source, target, { recursive: true, force: false, errorOnExist: true });
+    // Docker creates the volume root before starting this container. Copy each
+    // child into that empty directory rather than copying over the mount root.
+    for (const entry of await readdir(source)) {
+      await cp(path.join(source, entry), path.join(target, entry), { recursive: true, force: false, errorOnExist: true });
+    }
     async function owner(directory) {
       await chown(directory, 1001, 1001);
       for (const entry of await readdir(directory)) {
