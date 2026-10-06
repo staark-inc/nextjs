@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-TAG="${1:-}"
-
-if [ -z "$TAG" ]; then
-  echo "Usage: $0 <tag>"
-  echo "Example: $0 b2.3.2"
-  exit 1
-fi
-
 REPO_DIR="/home/debian/staark-next"
+
+cd "$REPO_DIR"
+
+# Explicit tag wins; otherwise use the current Git commit.
+TAG="${1:-$(git rev-parse --short=7 HEAD)}"
 COMPOSE_DIR="/srv/saas/runtime"
 COMPOSE_FILE="$COMPOSE_DIR/docker-compose.yml"
 IMAGE="staark-saas-runtime:$TAG"
@@ -18,8 +15,6 @@ echo
 echo "==> Staark Runtime deploy"
 echo "    tag: $TAG"
 echo
-
-cd "$REPO_DIR"
 
 echo "==> 1/8 Generate Prisma client"
 DATABASE_URL=postgresql://staark:build-only@127.0.0.1:5432/staark   pnpm --filter @staark/starter db:generate
