@@ -135,3 +135,5 @@ on two processes. Docker needs testing on a machine with a Docker daemon.
 Browser acceptance: sign in to both workspaces, edit a heading, move a block,
 add gallery/FAQ items, save a draft, preview and publish. Also check unsaved-change
 prompts, keyboard access and mobile layout.
+
+Blog administration and project image uploads: [CUSTOM-BLOG-EDITOR.md](CUSTOM-BLOG-EDITOR.md).

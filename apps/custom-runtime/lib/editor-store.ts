@@ -50,9 +50,9 @@ export function validateEditorPage(input: unknown, project: LoadedCustomProject)
   }
   return { ...page, projectKey: project.project.key, status: raw.status };
 }
-function revision(text: string) { return createHash("sha256").update(text).digest("hex"); }
+export function revision(text: string) { return createHash("sha256").update(text).digest("hex"); }
 // Reject symlink parents and targets, including private history/lock directories.
-async function safePath(root: string, relative: string, createParents = false) {
+export async function safePath(root: string, relative: string, createParents = false) {
   const parts = relative.split("/");
   let current = root;
   for (let index = 0; index < parts.length; index++) {

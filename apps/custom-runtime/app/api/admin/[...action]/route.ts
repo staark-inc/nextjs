@@ -5,6 +5,9 @@ import { ADMIN_SESSION_SECONDS, createAdminSession, verifyAdminPassword } from "
 import { EditorError, getEditorPage, listEditorPages, MAX_EDITOR_BYTES, saveEditorPage } from "@/lib/editor-store";
 import { allowFormRequest, readFormJson } from "@/lib/form-request";
 
+import { getEditorPost, listEditorPosts, saveEditorPost } from "@/lib/editor-blog";
+import { listEditorMedia, readUploadBody, uploadEditorMedia } from "@/lib/editor-media";
+
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 type Props = { params: Promise<{ action: string[] }> };
@@ -29,6 +32,9 @@ export async function GET(request: Request, { params }: Props) {
       addons: context.project.runtime.config.addons.filter(addon => addon.enabled).map(addon => addon.key),
       csrf: session.csrf, pages: await listEditorPages(context.directory, context.project),
       blocks: customBaseBlockDefinitions, shortcuts: customBaseShortcuts });
+    if (action === "blog/posts") return json(await listEditorPosts(context.directory, context.project));
+    if (action === "blog/post") return json(await getEditorPost(context.directory, context.project, new URL(request.url).searchParams.get("slug") ?? ""));
+    if (action === "media") return json({ items: await listEditorMedia(context.directory, context.project.project.key) });
     if (action === "page") return json(await getEditorPage(context.directory, context.project, new URL(request.url).searchParams.get("path") ?? "/"));
     return json({ error: "Unknown editor endpoint." }, 404);
   } catch (error) { return failure(error); }
@@ -48,6 +54,13 @@ export async function POST(request: Request, { params }: Props) {
       response.cookies.set(context.cookieName, token, { httpOnly: true, secure: context.origin.startsWith("https:"), sameSite: "strict", path: "/", maxAge: ADMIN_SESSION_SECONDS });
       return response;
     }
+    if (action === "media") {
+      requireEditorSession(context);
+      if (!allowFormRequest(`admin-media:${context.project.project.key}`, 30)) throw new EditorError(429, "Too many uploads. Retry in 10 minutes.");
+      if (!["image/jpeg", "image/png", "image/webp"].includes(request.headers.get("content-type") ?? "")) throw new EditorError(415, "Upload JPEG, PNG or static WebP.");
+      const query = new URL(request.url).searchParams;
+      return json(await uploadEditorMedia(context.directory, context.project.project.key, await readUploadBody(request), query.get("alt") ?? "", query.get("name") ?? ""), 201);
+    }
     if (action === "logout") {
       const response = json({ ok: true });
       response.cookies.set(context.cookieName, "", { httpOnly: true, secure: context.origin.startsWith("https:"), sameSite: "strict", path: "/", maxAge: 0 });
@@ -61,9 +74,14 @@ export async function PUT(request: Request, { params }: Props) {
     const context = await editorContext();
     requireEditorSession(context);
     requireEditorOrigin(request, context);
-    if ((await params).action.join("/") !== "page") return json({ error: "Unknown editor endpoint." }, 404);
+    const action = (await params).action.join("/");
+    if (!["page", "blog/post"].includes(action)) return json({ error: "Unknown editor endpoint." }, 404);
     const input = await body(request);
     if (!input || (input.revision !== null && (typeof input.revision !== "string" || !/^[a-f0-9]{64}$/.test(input.revision)))) throw new EditorError(400, "Supply a page revision, or null for a new page.");
+    if (action === "blog/post") {
+      if (typeof input.projectKey !== "string" || !(input.originalSlug === null || typeof input.originalSlug === "string")) throw new EditorError(400, "Supply the project and original article slug.");
+      return json(await saveEditorPost(context.directory, context.project, { projectKey: input.projectKey, post: input.post, originalSlug: input.originalSlug, revision: input.revision as string | null }));
+    }
     return json(await saveEditorPage(context.directory, context.project, input.page, input.revision as string | null));
   } catch (error) { return failure(error); }
 }
