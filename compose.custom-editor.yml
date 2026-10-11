@@ -1,0 +1,34 @@
+# Opt-in editor overlay for compose.custom-projects.yml.
+# Named volumes preserve edited pages, history and project identity across rebuilds.
+services:
+  editor-init:
+    image: staark-custom-runtime:projects-test
+    user: "0:0"
+    command: ["node", "/opt/custom-projects/init-editor-projects.mjs"]
+    restart: "no"
+    volumes:
+      - custom-studio-content:/seed/studio
+      - custom-forma-content:/seed/forma
+    security_opt:
+      - no-new-privileges:true
+  studio:
+    environment:
+      CUSTOM_ADMIN_ENABLED: "true"
+      CUSTOM_ADMIN_ALLOW_HTTP: "true"
+    volumes:
+      - custom-studio-content:/data/projects/custom-demo
+    depends_on:
+      editor-init:
+        condition: service_completed_successfully
+  forma:
+    environment:
+      CUSTOM_ADMIN_ENABLED: "true"
+      CUSTOM_ADMIN_ALLOW_HTTP: "true"
+    volumes:
+      - custom-forma-content:/data/projects/forma-demo
+    depends_on:
+      editor-init:
+        condition: service_completed_successfully
+volumes:
+  custom-studio-content:
+  custom-forma-content:
