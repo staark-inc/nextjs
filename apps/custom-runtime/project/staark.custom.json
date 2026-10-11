@@ -8,13 +8,14 @@
   "runtime": {
     "mode": "custom",
     "theme": {
-      "family": "light"
+      "family": "custom-base",
+      "variant": "studio"
     },
     "overrides": {
-      "components": true,
+      "components": false,
       "routes": true,
-      "styles": true,
-      "layouts": true,
+      "styles": false,
+      "layouts": false,
       "navigation": true
     },
     "custom": {

@@ -1,0 +1,36 @@
+{
+  "id": "gallery",
+  "name": "Gallery",
+  "version": 1,
+  "tokens": {
+    "colors": {
+      "paper": "#fafbf9",
+      "surface": "#edf0eb",
+      "ink": "#173a32",
+      "muted": "#67786f",
+      "line": "#d7e0d8",
+      "primary": "#176857",
+      "primarySoft": "#deeee7",
+      "accent": "#f0c8a9"
+    },
+    "typography": {
+      "body": "Arial, Helvetica, sans-serif",
+      "display": "Arial, Helvetica, sans-serif"
+    },
+    "radius": {
+      "sm": "6px",
+      "md": "12px",
+      "lg": "20px"
+    },
+    "layout": {
+      "wide": "1280px",
+      "content": "760px"
+    }
+  },
+  "components": {
+    "hero": "editorial",
+    "header": "minimal",
+    "footer": "editorial",
+    "buttons": "solid"
+  }
+}

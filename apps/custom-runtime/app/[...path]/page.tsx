@@ -2,13 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { matchBlogPath } from "@staark/addon-blog/config";
-import { presetToCssVars, resolvePreset } from "@staark/theme-kit";
 import { loadCustomBlog } from "@/lib/custom-blog";
-import { resolveCustomTheme } from "@/lib/custom-theme";
-import { resolveCustomLayouts } from "@/lib/custom-layouts";
-import { resolveCustomStyles } from "@/lib/custom-styles";
-import { customProjectLayouts } from "@/project/layouts";
-import { customProjectStyles } from "@/project/styles";
+import { loadCustomSite } from "@/lib/custom-content";
+import { CustomProjectFrame } from "@/lib/custom-frame";
 import "./blog.css";
 
 export const dynamic = "force-dynamic";
@@ -32,16 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPage({ params }: Props) {
   const { project, blog, post } = await resolveBlogPage(params);
   const posts = post ? [] : await blog.list();
-  const { theme } = resolveCustomTheme(project);
-  const layouts = resolveCustomLayouts(project, customProjectLayouts);
-  const styles = resolveCustomStyles(project, customProjectStyles);
-  const Header = layouts.header;
-  const Footer = layouts.footer;
-  const Shell = layouts.page;
-  const body = (
-    <div data-staark-custom-styles={styles ? "true" : undefined} style={presetToCssVars(resolvePreset(theme))}>
-      {styles ? <style dangerouslySetInnerHTML={{ __html: styles.css }} /> : null}
-      {Header ? <Header project={project} /> : null}
+  const site = await loadCustomSite(project);
+  return <CustomProjectFrame project={project} site={site}>
       <main className="custom-blog">
         {post ? (
           <article className="custom-blog__article">
@@ -69,8 +57,5 @@ export default async function BlogPage({ params }: Props) {
           </>
         )}
       </main>
-      {Footer ? <Footer project={project} /> : null}
-    </div>
-  );
-  return Shell ? <Shell project={project}>{body}</Shell> : body;
+  </CustomProjectFrame>;
 }

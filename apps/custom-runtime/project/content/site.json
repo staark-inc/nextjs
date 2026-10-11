@@ -1,0 +1,36 @@
+{
+  "projectKey": "custom-demo",
+  "name": "Custom Studio",
+  "tagline": "En egen riktning. En genomtänkt grund.",
+  "websiteType": "custom",
+  "locale": "sv-SE",
+  "url": "http://localhost:3300",
+  "contact": {
+    "email": "hello@example.com"
+  },
+  "navigation": {
+    "primary": [
+      {
+        "label": "Vår riktning",
+        "href": "/#story"
+      },
+      {
+        "label": "Utvalda idéer",
+        "href": "/#work"
+      }
+    ],
+    "cta": {
+      "label": "Säg hej",
+      "href": "/#contact"
+    },
+    "footer": [
+      {
+        "label": "Till toppen",
+        "href": "/"
+      }
+    ]
+  },
+  "seo": {
+    "defaultDescription": "En självständig designgrund för egna digitala projekt."
+  }
+}

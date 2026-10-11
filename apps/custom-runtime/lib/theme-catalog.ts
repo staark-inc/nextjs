@@ -1,3 +1,4 @@
+import customBaseTheme from "@staark/theme-custom-base";
 import type { ThemeDefinition } from "@staark/theme-kit";
 import lightTheme from "@staark/theme-light";
 import salongTheme, { salongRegistry } from "@staark/theme-salong";
@@ -18,6 +19,7 @@ export type ThemeRuntime = {
 };
 
 const THEMES: Record<string, ThemeRuntime> = {
+  "custom-base": { id: "custom-base", name: "Custom Base", description: "Independent parent theme for Custom projects.", theme: customBaseTheme, registry: { "custom-base": customBaseTheme } },
   light: {
     id: "light",
     name: lightTheme.name,

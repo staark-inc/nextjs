@@ -80,6 +80,11 @@ export function resolveCustomProjectSource(
   };
 }
 
+export function resolveActiveCustomProjectDirectory(): string {
+  const source = resolveCustomProjectSource();
+  return source.type === "file" ? path.dirname(source.location) : source.location;
+}
+
 export async function loadActiveCustomProject():
 Promise<LoadedCustomProject> {
   const source =
