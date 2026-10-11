@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { assertSaaSRuntimeKind } from "../lib/saas-runtime-kind";
+import { assertSaaSRuntimeKind } from "../lib/saas-runtime-kind.ts";
 
 test("SaaS Runtime accepts explicit SaaS discriminator", () => {
   assert.doesNotThrow(() => assertSaaSRuntimeKind("saas"));
