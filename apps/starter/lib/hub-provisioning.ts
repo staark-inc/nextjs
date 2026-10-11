@@ -390,7 +390,7 @@ export async function provisionFromHub(raw: HubProvisioningInput) {
 
   if (
     owner &&
-    !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
       owner.email,
     )
   ) {
