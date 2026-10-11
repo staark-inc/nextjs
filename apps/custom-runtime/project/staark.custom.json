@@ -1,0 +1,49 @@
+{
+  "schema": "staark-custom/v1",
+  "project": {
+    "key": "custom-demo",
+    "name": "Staark Custom Demo",
+    "version": "1.0.0"
+  },
+  "runtime": {
+    "mode": "custom",
+    "theme": {
+      "family": "light"
+    },
+    "overrides": {
+      "components": true,
+      "routes": true,
+      "styles": true,
+      "layouts": true,
+      "navigation": true
+    },
+    "custom": {
+      "componentNamespace": "custom-demo",
+      "routeNamespace": "/custom",
+      "allowCustomLayouts": true,
+      "allowThemeExtensions": true
+    },
+    "modules": [
+      {
+        "key": "project-info"
+      }
+    ],
+    "addons": [
+      {
+        "key": "project-label",
+        "config": {
+          "label": "Staark Custom Demo"
+        }
+      },
+      {
+        "key": "blog",
+        "config": {
+          "basePath": "/blog",
+          "title": "Blog",
+          "description": "Nyheter, id\u00e9er och inspiration fr\u00e5n Staark Custom Demo."
+        }
+      }
+    ],
+    "integrations": []
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "projectKey": "custom-demo",
+  "posts": [
+    {
+      "slug": "valkommen-till-bloggen",
+      "title": "Välkommen till vår blogg",
+      "excerpt": "Nu har vårt Custom-projekt en egen blogg, aktiverad som ett addon.",
+      "paragraphs": [
+        "Det här är den första artikeln i vår testblogg. Bloggens funktionalitet delas mellan projekten, medan innehållet ligger i det här projektets egen katalog.",
+        "Vi kan aktivera bloggen för ett projekt och stänga av den för ett annat. Både sidan och det publika API:et kontrollerar att addon är aktiverat."
+      ],
+      "status": "published",
+      "publishedAt": "2026-10-06T10:00:00Z"
+    },
+    {
+      "slug": "en-gemensam-bas",
+      "title": "En gemensam bas, ett eget innehåll",
+      "excerpt": "Så kan flera projekt använda samma kod utan att dela sina artiklar.",
+      "paragraphs": [
+        "Varje projekt har sitt eget manifest och sin egen content/blog.json. Bloggen kontrollerar att projektets nyckel stämmer överens med innehållets projectKey.",
+        "Nästa steg kan vara ett redigeringsgränssnitt i projektets dashboard. I den här versionen redigerar vi artiklarna direkt i JSON-filen."
+      ],
+      "status": "published",
+      "publishedAt": "2026-10-05T10:00:00Z"
+    },
+    {
+      "slug": "hemligt-utkast",
+      "title": "PRIVATE DRAFT TEST",
+      "excerpt": "Detta utkast får aldrig synas publikt.",
+      "paragraphs": [
+        "Draft-only text."
+      ],
+      "status": "draft"
+    }
+  ]
+}
