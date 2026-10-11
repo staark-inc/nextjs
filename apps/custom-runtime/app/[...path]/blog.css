@@ -17,3 +17,12 @@
 .custom-blog a:hover { text-decoration: underline; }
 .custom-blog a:focus-visible { outline: 2px solid var(--cb-primary, #6553ed); outline-offset: 5px; }
 @media (max-width: 600px) { .custom-blog { padding: 48px 20px 72px; } .custom-blog__card { padding: 28px; } .custom-blog__heading { margin-bottom: 40px; } }
+
+.custom-blog__image { margin: 32px 0; }
+.custom-blog__image img { display: block; width: 100%; height: auto; border-radius: 6px; }
+.custom-blog__image figcaption { margin-top: 10px; font-size: 14px; line-height: 1.6; color: var(--cb-muted, #63636b); }
+.custom-blog__card .custom-blog__image { margin: 0 0 28px; }
+.custom-blog__card .custom-blog__image img { aspect-ratio: 3 / 2; object-fit: cover; }
+.custom-blog__body li { margin-bottom: 8px; }
+.custom-blog__body h2 { margin-top: 40px; }
+.custom-blog__body p { white-space: pre-line; }

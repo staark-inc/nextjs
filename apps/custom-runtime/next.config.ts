@@ -43,16 +43,16 @@ const nextConfig:
   ],
 
   async headers() {
+    const headers = staarkSecurityHeaders(process.env.STAARK_CUSTOM_HTTP_TEST === "true"
+      ? { hsts: false, upgradeInsecure: false } : {});
+    const policy = headers.find(header => header.key === "Content-Security-Policy")!.value;
     return [
-      {
-        source:
-          "/:path*",
-
-        headers:
-          staarkSecurityHeaders(process.env.STAARK_CUSTOM_HTTP_TEST === "true"
-            ? { hsts: false, upgradeInsecure: false }
-            : {}),
-      },
+      { source: "/:path*", headers },
+      // Keep the image document policy in the final header rule, so global headers cannot replace it.
+      { source: "/media/:project/:id", headers: [{
+        key: "Content-Security-Policy",
+        value: `default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; ${policy}`,
+      }] },
     ];
   },
   

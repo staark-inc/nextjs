@@ -10,6 +10,7 @@ import { resolveCustomServices } from "@/lib/custom-services";
 import { BlockRenderer } from "@staark/theme-kit";
 import { CustomProjectFrame } from "@/lib/custom-frame";
 import "./blog.css";
+import { BlogArticle, ArticleImage } from "@/components/BlogArticle";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ path: string[] }> };
@@ -33,7 +34,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = await resolvePage(params);
   if (!result) return { title: "Sidan kunde inte hittas", robots: "noindex" };
   if (result.kind === "page") return customPageMetadata(result.page, await loadCustomSite(result.project));
-  return { title: result.post?.title ?? result.blog.config.title, description: result.post?.excerpt ?? result.blog.config.description };
+  const site = await loadCustomSite(result.project);
+  const post = result.post;
+  const title = post?.seo?.title || post?.title || result.blog.config.title;
+  const description = post?.seo?.description || post?.excerpt || result.blog.config.description;
+  const url = new URL(result.blog.config.basePath + (post ? `/${post.slug}` : ""), site.url).href;
+  const image = post?.seo?.image ?? post?.cover;
+  return { title, description, alternates: { canonical: url }, robots: { index: !post?.seo?.noindex, follow: true },
+    openGraph: { title, description, url, type: post ? "article" : "website", siteName: site.name,
+      ...(post ? { publishedTime: post.publishedAt, modifiedTime: post.updatedAt } : {}),
+      ...(image ? { images: [{ url: new URL(image.src, site.url).href, width: image.width, height: image.height, alt: image.alt }] } : {}) } };
 }
 
 export default async function CustomContentPage({ params }: Props) {
@@ -55,15 +65,7 @@ export default async function CustomContentPage({ params }: Props) {
   return <CustomProjectFrame project={project} site={site} appearance="blog">
       <main className="custom-blog">
         {post ? (
-          <article className="custom-blog__article">
-            <Link className="custom-blog__back" href={blog.config.basePath}>← {blog.config.title}</Link>
-            <time dateTime={post.publishedAt}>{post.publishedAt.slice(0, 10)}</time>
-            <h1>{post.title}</h1>
-            <p className="custom-blog__intro">{post.excerpt}</p>
-            <div className="custom-blog__body">
-              {post.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
-            </div>
-          </article>
+          <BlogArticle post={post} basePath={blog.config.basePath} title={blog.config.title} />
         ) : (
           <>
             <div className="custom-blog__heading"><span className="custom-blog__eyebrow">{project.project.name}</span>
@@ -71,6 +73,7 @@ export default async function CustomContentPage({ params }: Props) {
             </div>
             {posts.length ? <div className="custom-blog__grid">{posts.map(item => (
               <article className="custom-blog__card" key={item.slug}>
+                {item.cover && <Link href={`${blog.config.basePath}/${item.slug}`}><ArticleImage image={item.cover} /></Link>}
                 <time dateTime={item.publishedAt}>{item.publishedAt.slice(0, 10)}</time>
                 <h2><Link href={`${blog.config.basePath}/${item.slug}`}>{item.title}</Link></h2>
                 <p>{item.excerpt}</p>

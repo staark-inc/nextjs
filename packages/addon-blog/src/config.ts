@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const BlogConfigSchema = z.object({
   basePath: z.string().regex(/^\/[a-z0-9][a-z0-9-]*(?:\/[a-z0-9][a-z0-9-]*)*$/)
-    .refine(value => !["api", "dashboard", "admin", "_next"].includes(value.split("/")[1]!), "Reserved blog path")
+    .refine(value => !["api", "dashboard", "media", "admin", "_next"].includes(value.split("/")[1]!), "Reserved blog path")
     .default("/blog"),
   title: z.string().trim().min(1).max(160).default("Blog"),
   description: z.string().trim().max(500).default("Nyheter och inspiration från oss."),
