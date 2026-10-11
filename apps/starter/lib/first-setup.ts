@@ -10,6 +10,7 @@ import { resolvePublicContentConfig } from "./content-source";
 import { getPrismaClient } from "./db/prisma";
 import { hashPassword, verifyPassword } from "./password";
 import { createPostgresRepositories } from "./repositories";
+import { initializePublishedPages } from "./initial-page-publication";
 import {
   resolveTenantContext,
   type TenantRequestInput,
@@ -465,9 +466,25 @@ export async function createFirstSetup(
       settings,
     });
 
-    for (const page of pages) {
-      await repositories.pages.upsertByPath(site.id, page);
-    }
+    await initializePublishedPages(pages, {
+      findExisting: (path) =>
+        transaction.page.findUnique({
+          where: {
+            siteId_path: { siteId: site.id, path },
+          },
+          select: { id: true },
+        }),
+
+      create: (page) =>
+        repositories.pages.upsertByPath(site.id, page),
+
+      publish: (pageId, page) =>
+        repositories.publications.publish({
+          siteId: site.id,
+          pageId,
+          page,
+        }),
+    });
 
     let ownerUserId: string | null = null;
 
