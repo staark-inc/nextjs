@@ -4,6 +4,7 @@ import {
 } from "node:crypto";
 
 import { getPrismaClient } from "./db/prisma";
+import { assertSaaSRuntimeKind } from "./saas-runtime-kind";
 import {
   createFirstSetup,
   type FirstSetupInput,
@@ -17,6 +18,7 @@ import {
 } from "./cloudflare-saas";
 
 export type HubProvisioningInput = {
+  runtimeKind?: "saas";
   hubSubscriptionId: string;
   hubProvisioningId: string;
   hubClientId: string;
@@ -237,6 +239,9 @@ function planAllowsCustomDomain(
 }
 
 export async function provisionFromHub(raw: HubProvisioningInput) {
+  // Staged rollout: accept legacy requests without runtimeKind until all Hub
+  // senders are upgraded, but never accept an explicitly different runtime.
+  assertSaaSRuntimeKind(raw.runtimeKind);
   const hubSubscriptionId = required(
     raw.hubSubscriptionId,
     "hubSubscriptionId",
