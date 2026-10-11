@@ -20,6 +20,7 @@ const fields: BlockField[] = [
   { name: "intro", label: "Introduction", type: "textarea" },
 ];
 export const customBaseBlockSchemas = {
+  contactForm: z.object({ eyebrow, heading, intro, form: z.string().regex(/^[a-z0-9][a-z0-9-]*$/).max(64).default("contact") }),
   imageText: z.object({ eyebrow, heading, intro, paragraphs: z.array(z.string()).default([]), image: image.optional(), side: z.enum(["left", "right"]).default("left"), anchor }),
   faq: z.object({ eyebrow, heading, intro, items: z.array(z.object({ question: heading, answer: heading })).default([]), openFirst: z.boolean().default(false), anchor }),
   gallery: z.object({ eyebrow, heading, intro, items: z.array(image).default([]), columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).default(3), anchor }),
@@ -34,6 +35,7 @@ export const customBaseBlockSchemas = {
 export type CustomBaseBlockType = keyof typeof customBaseBlockSchemas;
 
 export const customBaseBlockDefinitions: BlockDefinition[] = [
+  defineBlock({ type: "contactForm", label: "Email contact form", category: "contact", version: 2, fields: [...fields, { name: "form", label: "Form key", type: "text" }], required: ["heading"], defaults: { heading: "Berätta om din idé.", intro: "Vi börjar med ett samtal.", eyebrow: "Kontakt", form: "contact" } }),
   defineBlock({ type: "imageText", label: "Image and text", category: "content", version: 2, fields: [...fields, { name: "paragraphs", label: "Paragraphs", type: "array" }, { name: "image", label: "Image", type: "object", fields: [{ name: "src", label: "Source", type: "text" }, { name: "alt", label: "Alternative text", type: "text" }, { name: "caption", label: "Caption", type: "text" }, { name: "width", label: "Width", type: "number" }, { name: "height", label: "Height", type: "number" }] }, { name: "side", label: "Image side", type: "select", options: ["left", "right"] }, { name: "anchor", label: "Anchor", type: "text" }], required: ["heading"], defaults: { eyebrow: "Vår process", heading: "Form med omtanke.", intro: "Från första idé till färdig upplevelse.", paragraphs: [], side: "left" } }),
   defineBlock({ type: "faq", label: "Frequently asked questions", category: "content", version: 2, fields: [...fields, { name: "items", label: "Questions", type: "array", fields: [{ name: "question", label: "Question", type: "text" }, { name: "answer", label: "Answer", type: "textarea" }] }, { name: "openFirst", label: "Open first answer", type: "boolean" }, { name: "anchor", label: "Anchor", type: "text" }], required: ["heading"], defaults: { heading: "Vanliga frågor", intro: "", eyebrow: "Bra att veta", items: [{ question: "Kan vi anpassa uttrycket?", answer: "Ja. Varje projekt väljer sitt innehåll och sin visuella riktning." }], openFirst: false } }),
   defineBlock({ type: "gallery", label: "Image gallery", category: "portfolio", version: 2, fields: [...fields, { name: "items", label: "Images", type: "array", fields: [{ name: "src", label: "Source", type: "text" }, { name: "alt", label: "Alternative text", type: "text" }, { name: "caption", label: "Caption", type: "text" }, { name: "width", label: "Width", type: "number" }, { name: "height", label: "Height", type: "number" }] }, { name: "columns", label: "Columns", type: "select", options: [2, 3, 4] }, { name: "anchor", label: "Anchor", type: "text" }], required: ["heading"], defaults: { heading: "Ett urval", intro: "", eyebrow: "Galleri", items: [], columns: 3 } }),
@@ -61,7 +63,7 @@ export const customBaseBlockDefinitions: BlockDefinition[] = [
 
 /** Block type shortcuts, like the SaaS block picker; these are not routes. */
 export const customBaseShortcuts: Record<string, CustomBaseBlockType> = {
-  photos: "gallery", questions: "faq", split: "imageText", intro: "hero", story: "text", features: "services", work: "projectsShowcase", numbers: "stats", links: "shortcuts", contact: "cta",
+  form: "contactForm", photos: "gallery", questions: "faq", split: "imageText", intro: "hero", story: "text", features: "services", work: "projectsShowcase", numbers: "stats", links: "shortcuts", contact: "cta",
 };
 export const customBaseBlockTemplates = customBaseBlockDefinitions.map(blockDefinitionToLegacyTemplate);
 

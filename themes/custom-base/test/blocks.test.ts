@@ -5,7 +5,7 @@ import { customBasePresets } from "../src/presets.ts";
 import customBaseManifest from "../src/manifest.ts";
 
 test("every block definition has valid defaults and a matching manifest entry", () => {
-  assert.equal(customBaseBlockDefinitions.length, 10);
+  assert.equal(customBaseBlockDefinitions.length, 11);
   assert.deepEqual(new Set(customBaseBlockDefinitions.map(item => item.type)), new Set(customBaseManifest.blocks));
   for (const definition of customBaseBlockDefinitions) {
     assert.doesNotThrow(() => createCustomBaseBlock(definition.type, definition.type));

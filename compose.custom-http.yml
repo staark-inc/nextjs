@@ -1,0 +1,6 @@
+# Explicit HTTP test override. Keep HTTPS hardening in normal images.
+services:
+  custom-runtime:
+    build:
+      args:
+        STAARK_CUSTOM_HTTP_TEST: "true"

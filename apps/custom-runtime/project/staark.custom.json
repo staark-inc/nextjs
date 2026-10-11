@@ -41,7 +41,20 @@
         "config": {
           "basePath": "/blog",
           "title": "Blog",
-          "description": "Nyheter, id\u00e9er och inspiration fr\u00e5n Staark Custom Demo."
+          "description": "Nyheter, idéer och inspiration från Staark Custom Demo."
+        }
+      },
+      {
+        "key": "forms",
+        "config": {
+          "forms": [
+            {
+              "key": "contact",
+              "recipientEnv": "CUSTOM_CONTACT_TO",
+              "subject": "Ny kontaktförfrågan · Custom Studio",
+              "phone": true
+            }
+          ]
         }
       }
     ],

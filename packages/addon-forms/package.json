@@ -1,0 +1,7 @@
+{
+  "name": "@staark/addon-forms", "version": "0.1.0", "private": true, "type": "module",
+  "exports": { ".": "./src/index.ts", "./config": "./src/config.ts" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "node --experimental-strip-types --test test/*.test.ts" },
+  "dependencies": { "@staark/custom": "workspace:*", "nodemailer": "^10.0.11", "zod": "^4.6.5" },
+  "devDependencies": { "@types/node": "^22.20.4", "typescript": "^5.9.3" }
+}

@@ -32,6 +32,16 @@
       }
     },
     {
+      "id": "contact-form",
+      "type": "contactForm",
+      "props": {
+        "heading": "Låt oss höra\nom din idé.",
+        "eyebrow": "Starta ett samtal",
+        "intro": "Fyll i formuläret så återkommer vi till dig.",
+        "form": "contact"
+      }
+    },
+    {
       "id": "contact-details",
       "type": "text",
       "props": {

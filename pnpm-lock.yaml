@@ -23,6 +23,9 @@ importers:
       '@staark/addon-blog':
         specifier: workspace:*
         version: link:../../packages/addon-blog
+      '@staark/addon-forms':
+        specifier: workspace:*
+        version: link:../../packages/addon-forms
       '@staark/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -193,6 +196,25 @@ importers:
       '@staark/custom':
         specifier: workspace:*
         version: link:../custom
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/addon-forms:
+    dependencies:
+      '@staark/custom':
+        specifier: workspace:*
+        version: link:../custom
+      nodemailer:
+        specifier: ^10.0.11
+        version: 10.0.12
       zod:
         specifier: ^4.6.5
         version: 4.6.5
