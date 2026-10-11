@@ -16,7 +16,7 @@ function authorized(raw: string, request: Request, secret: string): boolean {
   if (!timestamp || !signature || !/^\d{10}$/.test(timestamp) || !/^[a-f0-9]{64}$/i.test(signature)) return false;
   const seconds = Number(timestamp);
   if (!Number.isSafeInteger(seconds) || Math.abs(Math.floor(Date.now() / 1000) - seconds) > MAX_SKEW_SECONDS) return false;
-  const expected = createHmac("sha256", secret).update(`${timestamp}.${raw}`).digest();
+  const expected = createHmac("sha256", secret).update(`POST\n/api/staark/inventory\n${timestamp}.${raw}`).digest();
   const received = Buffer.from(signature, "hex");
   return received.length === expected.length && timingSafeEqual(received, expected);
 }
@@ -33,10 +33,26 @@ export async function POST(request: Request) {
   const secret = process.env.STAARK_PROVISIONING_SECRET?.trim();
   if (!secret) return NextResponse.json({ ok: false, error: "Inventory is unavailable." }, { status: 503 });
 
-  const raw = await request.text();
-  if (Buffer.byteLength(raw, "utf8") > MAX_BODY_BYTES) {
-    return NextResponse.json({ ok: false, error: "Payload too large." }, { status: 413 });
+  // Reject oversized bodies while streaming: request.text() would buffer the entire payload.
+  const reader = request.body?.getReader();
+  if (!reader) return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 });
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return NextResponse.json({ ok: false, error: "Payload too large." }, { status: 413 });
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 });
   }
+  const raw = Buffer.concat(chunks).toString("utf8");
   if (!authorized(raw, request, secret)) {
     return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
   }
