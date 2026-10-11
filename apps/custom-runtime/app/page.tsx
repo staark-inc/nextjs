@@ -4,6 +4,7 @@ import { loadActiveCustomProject } from "@/lib/custom-project";
 import { resolveCustomServices } from "@/lib/custom-services";
 import { resolveCustomTheme } from "@/lib/custom-theme";
 import { loadCustomSite, loadCustomHome, validateCustomPageBlocks } from "@/lib/custom-content";
+import { customPageMetadata } from "@/lib/custom-metadata";
 import { CustomProjectFrame } from "@/lib/custom-frame";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const project = await loadActiveCustomProject();
   const site = await loadCustomSite(project);
-  return { title: site.name, description: site.seo.defaultDescription };
+  return customPageMetadata(await loadCustomHome(project), site);
 }
 export default async function Page() {
   const project = await loadActiveCustomProject();

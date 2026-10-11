@@ -36,3 +36,35 @@ test("page validation includes parent blocks and rejects unknown/duplicate block
   assert.throws(() => validateCustomPageBlocks({ blocks: [{ id: "h", type: "unknown" }] }, child, { "custom-base": base }), /Unknown project block/);
   assert.throws(() => validateCustomPageBlocks({ blocks: [{ id: "h", type: "hero" }, { id: "h", type: "hero" }] }, base, {}), /Duplicate block/);
 });
+
+test("project pages support nested URLs, hide drafts and reject mismatched paths", async t => {
+  const { loadCustomPage, customPagePath } = await import("../lib/custom-content.ts");
+  const directory = await fixture(t);
+  const pages = path.join(directory, "content/pages/guides");
+  await mkdir(pages, { recursive: true });
+  const file = path.join(pages, "start.json");
+  const page = { projectKey: "demo", path: "/guides/start", title: "Start", blocks: [] };
+  await writeFile(file, JSON.stringify(page));
+  assert.equal((await loadCustomPage(project, ["guides", "start"], directory))?.title, "Start");
+  assert.equal(await loadCustomPage(project, ["missing"], directory), null);
+  for (const segments of [[], [".."], ["../outside"], ["api", "test"], ["admin"], ["dashboard"], ["UPPER"], ["a\\b"]]) assert.equal(customPagePath(segments), null);
+  await writeFile(file, JSON.stringify({ ...page, status: "draft" }));
+  assert.equal(await loadCustomPage(project, ["guides", "start"], directory), null);
+  await writeFile(file, JSON.stringify({ ...page, status: "invalid" }));
+  await assert.rejects(loadCustomPage(project, ["guides", "start"], directory), /publication status/);
+  await writeFile(file, JSON.stringify({ ...page, path: "/other" }));
+  await assert.rejects(loadCustomPage(project, ["guides", "start"], directory), /content location/);
+  await writeFile(file, JSON.stringify({ ...page, projectKey: "other" }));
+  await assert.rejects(loadCustomPage(project, ["guides", "start"], directory), /different project/);
+});
+
+test("page symlinks cannot read content outside their project", async t => {
+  const { symlink } = await import("node:fs/promises");
+  const { loadCustomPage } = await import("../lib/custom-content.ts");
+  const directory = await fixture(t);
+  const other = await fixture(t);
+  await mkdir(path.join(directory, "content/pages"));
+  await writeFile(path.join(other, "content/outside.json"), JSON.stringify({ projectKey: "demo", path: "/outside", title: "Outside", blocks: [] }));
+  await symlink(path.join(other, "content/outside.json"), path.join(directory, "content/pages/outside.json"));
+  await assert.rejects(loadCustomPage(project, ["outside"], directory), /within the project/);
+});

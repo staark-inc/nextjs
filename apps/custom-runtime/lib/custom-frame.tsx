@@ -10,7 +10,7 @@ import { resolveCustomStyles } from "./custom-styles";
 import { customProjectLayouts } from "@/project/layouts";
 import { customProjectStyles } from "@/project/styles";
 
-export function CustomProjectFrame({ project, site, children }: { project: LoadedCustomProject; site: SiteSettings; children: ReactNode }) {
+export function CustomProjectFrame({ project, site, children, appearance = "default" }: { project: LoadedCustomProject; site: SiteSettings; children: ReactNode; appearance?: "default" | "blog" }) {
   const { theme, registry } = resolveCustomTheme(project);
   const baseChrome = project.runtime.config.theme.family === "custom-base" || Object.values(registry).some(item => item.id === "custom-base");
   const layouts = resolveCustomLayouts(project, customProjectLayouts);
@@ -20,7 +20,7 @@ export function CustomProjectFrame({ project, site, children }: { project: Loade
   const Shell = layouts.page;
   const enabledBlog = project.runtime.config.addons.find(addon => addon.key === "blog" && addon.enabled);
   const blog = enabledBlog ? BlogConfigSchema.parse(enabledBlog.config) : null;
-  const body = <div className={baseChrome ? "cb-root" : undefined} style={presetToCssVars(resolvePreset(theme), site.theme.overrides)} data-staark-custom-styles={styles ? "true" : undefined}>
+  const body = <div className={baseChrome ? `cb-root${appearance === "blog" ? " cb-root--blog" : ""}` : undefined} style={presetToCssVars(resolvePreset(theme), site.theme.overrides)} data-staark-custom-styles={styles ? "true" : undefined}>
     {styles ? <style dangerouslySetInnerHTML={{ __html: styles.css }} /> : null}
     {Header ? <Header project={project} /> : baseChrome ? <CustomSiteHeader site={site} extraLinks={blog ? [{ label: blog.title, href: blog.basePath }] : []} /> : null}
     {children}

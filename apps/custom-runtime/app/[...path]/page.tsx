@@ -1,35 +1,56 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { matchBlogPath } from "@staark/addon-blog/config";
 import { loadCustomBlog } from "@/lib/custom-blog";
-import { loadCustomSite } from "@/lib/custom-content";
+import { loadCustomSite, loadCustomPage, validateCustomPageBlocks } from "@/lib/custom-content";
+import { resolveCustomBlogPath } from "@/lib/custom-routing";
+import { customPageMetadata } from "@/lib/custom-metadata";
+import { resolveCustomTheme } from "@/lib/custom-theme";
+import { resolveCustomServices } from "@/lib/custom-services";
+import { BlockRenderer } from "@staark/theme-kit";
 import { CustomProjectFrame } from "@/lib/custom-frame";
 import "./blog.css";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ path: string[] }> };
 
-async function resolveBlogPage(params: Props["params"]) {
+async function resolvePage(params: Props["params"]) {
   const { project, blog } = await loadCustomBlog();
-  if (!blog) notFound();
-  const slug = matchBlogPath(blog.config.basePath, (await params).path);
-  if (slug === null) notFound();
-  const post = slug ? await blog.get(slug) : null;
-  if (slug && !post) notFound();
-  return { project, blog, post };
+  const segments = (await params).path;
+  const route = resolveCustomBlogPath(project, segments);
+  if (route.owns) {
+    if (!blog || route.slug === null) notFound();
+    const post = route.slug ? await blog.get(route.slug) : null;
+    if (route.slug && !post) notFound();
+    return { kind: "blog" as const, project, blog, post };
+  }
+  const page = await loadCustomPage(project, segments);
+  if (!page) notFound();
+  return { kind: "page" as const, project, page };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { blog, post } = await resolveBlogPage(params);
-  return { title: post?.title ?? blog.config.title, description: post?.excerpt ?? blog.config.description };
+  const result = await resolvePage(params);
+  if (result.kind === "page") return customPageMetadata(result.page, await loadCustomSite(result.project));
+  return { title: result.post?.title ?? result.blog.config.title, description: result.post?.excerpt ?? result.blog.config.description };
 }
 
-export default async function BlogPage({ params }: Props) {
-  const { project, blog, post } = await resolveBlogPage(params);
+export default async function CustomContentPage({ params }: Props) {
+  const result = await resolvePage(params);
+  if (result.kind === "page") {
+    const { project, page } = result;
+    const site = await loadCustomSite(project);
+    const services = resolveCustomServices(project);
+    const { theme, registry } = resolveCustomTheme(project, services.extensions.sections);
+    validateCustomPageBlocks(page, theme, registry);
+    return <CustomProjectFrame project={project} site={site}><main>
+      <BlockRenderer blocks={page.blocks} site={site} theme={theme} registry={registry} />
+    </main></CustomProjectFrame>;
+  }
+  const { project, blog, post } = result;
   const posts = post ? [] : await blog.list();
   const site = await loadCustomSite(project);
-  return <CustomProjectFrame project={project} site={site}>
+  return <CustomProjectFrame project={project} site={site} appearance="blog">
       <main className="custom-blog">
         {post ? (
           <article className="custom-blog__article">

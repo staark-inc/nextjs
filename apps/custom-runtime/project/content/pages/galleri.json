@@ -1,0 +1,81 @@
+{
+  "projectKey": "custom-demo",
+  "status": "published",
+  "path": "/galleri",
+  "title": "Galleri",
+  "seo": {
+    "title": "Galleri | Custom Studio",
+    "description": "Visuella studier i form, färg och digital identitet.",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Galleri",
+        "heading": "Ett eget uttryck.\nI varje detalj.",
+        "intro": "Tre visuella koncept. Öppna en bild för att se mer.",
+        "artwork": false,
+        "primary": {
+          "label": "Starta ett projekt",
+          "href": "/kontakt"
+        },
+        "secondary": {
+          "label": "Våra tjänster",
+          "href": "/tjanster"
+        },
+        "more": {
+          "label": "Om vår studio →",
+          "href": "/om-oss"
+        }
+      }
+    },
+    {
+      "id": "gallery",
+      "type": "gallery",
+      "props": {
+        "anchor": "gallery",
+        "eyebrow": "Visuella studier",
+        "heading": "Form. Färg.\nEtt eget uttryck.",
+        "intro": "Öppna en bild för att se detaljerna. Dessa bilder är konceptstudier.",
+        "items": [
+          {
+            "src": "/custom-demo/studio.svg",
+            "alt": "Lila cirkel och mörkt band",
+            "caption": "Studio / En tydlig riktning",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/custom-demo/forma.svg",
+            "alt": "Grön rundad form med öppet centrum",
+            "caption": "Forma / Balans och utrymme",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/custom-demo/edition.svg",
+            "alt": "Tre terrakottafärgade pelare",
+            "caption": "Edition / Rytm och struktur",
+            "width": 1200,
+            "height": 900
+          }
+        ],
+        "columns": 3
+      }
+    },
+    {
+      "id": "contact",
+      "type": "cta",
+      "props": {
+        "heading": "Nästa steg\nbörjar här.",
+        "intro": "Berätta vad du vill skapa.",
+        "link": {
+          "label": "Kontakta oss",
+          "href": "/kontakt"
+        }
+      }
+    }
+  ]
+}

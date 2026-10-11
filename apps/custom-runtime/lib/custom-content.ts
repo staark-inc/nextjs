@@ -5,7 +5,7 @@ import type { LoadedCustomProject } from "@staark/custom";
 import type { ThemeDefinition } from "@staark/theme-kit";
 import { resolveActiveCustomProjectDirectory } from "./custom-project.ts";
 
-async function readProjectContent(project: LoadedCustomProject, file: "site.json" | "home.json", directory: string) {
+async function readProjectContent(project: LoadedCustomProject, file: "site.json" | "home.json" | `pages/${string}.json`, directory: string) {
   const root = await realpath(directory);
   let text: string;
   try {
@@ -40,6 +40,25 @@ export async function loadCustomHome(project: LoadedCustomProject, directory = r
     path: "/", title: project.project.name, blocks: [{ id: "hero", type: "hero", props: { heading: project.project.name, intro: "" } }],
   });
   if (page.path !== "/") throw new Error("Custom home content must use the root path.");
+  return page;
+}
+
+export function customPagePath(segments: readonly string[]): string | null {
+  if (!segments.length || segments.some(segment => !/^[a-z0-9][a-z0-9-]*$/.test(segment))) return null;
+  if (["api", "admin", "dashboard", "_next"].includes(segments[0]!)) return null;
+  return `/${segments.join("/")}`;
+}
+
+/** No fallback to another project or demo page for missing URLs. */
+export async function loadCustomPage(project: LoadedCustomProject, segments: readonly string[], directory = resolveActiveCustomProjectDirectory()) {
+  const requestedPath = customPagePath(segments);
+  if (!requestedPath) return null;
+  const input = await readProjectContent(project, `pages/${segments.join("/")}.json`, directory);
+  if (!input) return null;
+  if (input.status !== undefined && input.status !== "published" && input.status !== "draft") throw new Error("Invalid Custom page publication status.");
+  if (input.status === "draft") return null;
+  const page = PageSchema.parse(input);
+  if (page.path !== requestedPath) throw new Error("Custom page path does not match its content location.");
   return page;
 }
 
