@@ -1,3 +1,8 @@
+import { CustomErrorProvider } from "@/components/CustomErrorContext";
+import { loadCustomErrorPresentation } from "@/lib/custom-error-presentation";
+
+export const dynamic = "force-dynamic";
+
 import type {
   Metadata,
 } from "next";
@@ -23,12 +28,13 @@ export const metadata:
     "noindex",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children:
     React.ReactNode;
 }) {
+  const presentation = await loadCustomErrorPresentation();
   return (
     <html lang="sv">
       <body
@@ -37,7 +43,7 @@ export default function RootLayout({
             0,
         }}
       >
-        {children}
+        <CustomErrorProvider value={presentation}>{children}</CustomErrorProvider>
       </body>
     </html>
   );

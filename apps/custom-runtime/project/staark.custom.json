@@ -16,7 +16,8 @@
       "routes": true,
       "styles": false,
       "layouts": false,
-      "navigation": true
+      "navigation": true,
+      "errors": true
     },
     "custom": {
       "componentNamespace": "custom-demo",

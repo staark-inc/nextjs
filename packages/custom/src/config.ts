@@ -55,6 +55,10 @@ export const CustomOverridesSchema =
       z.boolean()
         .default(false),
 
+    errors:
+      z.boolean()
+        .default(false),
+
     navigation:
       z.boolean()
         .default(false),
@@ -136,6 +140,7 @@ export const CustomRuntimeConfigSchema =
           routes: false,
           styles: true,
           layouts: false,
+          errors: false,
           navigation: false,
         }),
 

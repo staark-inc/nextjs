@@ -13,6 +13,7 @@ export type CustomRuntimeCapability =
   | "routes"
   | "styles"
   | "layouts"
+  | "errors"
   | "navigation"
   | "theme-extensions";
 
@@ -72,6 +73,8 @@ function resolveCapabilities(
       "layouts",
     );
   }
+
+  if (config.overrides.errors) result.push("errors");
 
   if (
     config.overrides.navigation
