@@ -58,6 +58,9 @@ export const CustomHero:
 
           <h1
             style={{
+              color:
+                "#ffffff",
+
               maxWidth:
                 850,
 
