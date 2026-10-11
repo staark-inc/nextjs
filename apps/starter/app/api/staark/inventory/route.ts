@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   try {
     const prisma = getPrismaClient();
     const sites = await prisma.site.findMany({
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      ...(cursor ? { where: { id: { gt: cursor } } } : {}),
       orderBy: { id: "asc" },
       take: pageSize + 1,
       select: {
