@@ -1,0 +1,69 @@
+{
+  "projectKey": "forma-demo",
+  "status": "published",
+  "path": "/ateljen",
+  "title": "Ateljén",
+  "seo": {
+    "title": "Ateljén | Forma Atelier",
+    "description": "Möt idéerna bakom Forma Atelier.",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Ateljén",
+        "heading": "En plats\nför nya former.",
+        "intro": "Vi söker ett stilla uttryck med en tydlig karaktär.",
+        "artwork": false,
+        "primary": {
+          "label": "Se kollektionen",
+          "href": "/kollektion"
+        },
+        "secondary": {
+          "label": "Kontakta ateljén",
+          "href": "/kontakt"
+        },
+        "more": {
+          "label": "Läs om ateljén →",
+          "href": "/ateljen"
+        },
+        "note": "En konceptkollektion. Ett eget perspektiv."
+      }
+    },
+    {
+      "id": "story",
+      "type": "imageText",
+      "props": {
+        "heading": "Från skiss\ntill känsla.",
+        "intro": "Vi undersöker hur material och form möts.",
+        "paragraphs": [
+          "Forma Atelier är ett fristående demoprojekt. Sidor, artiklar och formulär tillhör det här projektet.",
+          "Vi använder samma Custom Base som andra projekt, med en mörk palett och en egen innehållsstruktur."
+        ],
+        "image": {
+          "src": "/forma-demo/orbit.svg",
+          "alt": "Illustration av en cirkulär form i grön ton",
+          "caption": "Orbit / En mjuk rytm",
+          "width": 1200,
+          "height": 900
+        },
+        "side": "left"
+      }
+    },
+    {
+      "id": "closing",
+      "type": "cta",
+      "props": {
+        "eyebrow": "Skapa tillsammans",
+        "heading": "En idé.\nEtt nytt objekt.",
+        "intro": "Vi börjar med materialet, formen och det du vill uttrycka.",
+        "link": {
+          "label": "Starta ett samtal",
+          "href": "/kontakt"
+        }
+      }
+    }
+  ]
+}

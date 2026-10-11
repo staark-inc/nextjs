@@ -68,3 +68,21 @@ test("page symlinks cannot read content outside their project", async t => {
   await symlink(path.join(other, "content/outside.json"), path.join(directory, "content/pages/outside.json"));
   await assert.rejects(loadCustomPage(project, ["outside"], directory), /within the project/);
 });
+
+test("deployment origin overrides site content without changing project theme or identity", async t => {
+  const directory = await fixture(t);
+  await writeFile(path.join(directory, "content/site.json"), JSON.stringify({ projectKey: "demo", name: "Own brand", url: "https://content.example" }));
+  const previous = process.env.STAARK_CUSTOM_SITE_URL;
+  try {
+    process.env.STAARK_CUSTOM_SITE_URL = "http://192.0.2.10:3303";
+    const site = await loadCustomSite(project, directory);
+    assert.equal(site.url, "http://192.0.2.10:3303");
+    assert.equal(site.name, "Own brand");
+    assert.equal(site.theme.family, "custom-base");
+    process.env.STAARK_CUSTOM_SITE_URL = "";
+    assert.equal((await loadCustomSite(project, directory)).url, "https://content.example");
+  } finally {
+    if (previous === undefined) delete process.env.STAARK_CUSTOM_SITE_URL;
+    else process.env.STAARK_CUSTOM_SITE_URL = previous;
+  }
+});

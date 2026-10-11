@@ -29,6 +29,8 @@ export async function loadCustomSite(project: LoadedCustomProject, directory = r
   return SiteSettingsSchema.parse({
     name: project.project.name, websiteType: "custom", locale: "sv-SE", url: "http://localhost:3300",
     ...input,
+    // Public origin is deployment-specific when one image serves different projects.
+    ...(process.env.STAARK_CUSTOM_SITE_URL?.trim() ? { url: process.env.STAARK_CUSTOM_SITE_URL.trim() } : {}),
     // Deployment manifest owns family/preset; site content owns token overrides.
     theme: { ...(input?.theme as Record<string, unknown> | undefined), family: project.runtime.config.theme.family, preset: project.runtime.config.theme.variant },
   });

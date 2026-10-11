@@ -138,3 +138,9 @@ application work; the extension host provides the mechanism for it.
 `overrides.errors` independently enables project-owned 404/error views. It defaults
 to false. See [Custom error pages](CUSTOM-ERROR-PAGES.md) for registry, fallback
 and recovery behavior.
+
+## Second project demo
+
+[Forma Atelier](CUSTOM-SECOND-PROJECT.md) demonstrates shared code with separate
+project content, Midnight styling, Journal routes, form recipients and error views.
+The side-by-side Compose stack selects projects from a common root.

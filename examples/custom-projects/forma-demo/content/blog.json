@@ -1,0 +1,36 @@
+{
+  "projectKey": "forma-demo",
+  "posts": [
+    {
+      "slug": "material-och-minne",
+      "title": "Material och minne",
+      "excerpt": "Hur en yta kan förändra upplevelsen av ett objekt.",
+      "paragraphs": [
+        "I ateljén börjar vi ofta med ett materialprov. Ytan ger riktningen innan formen är bestämd.",
+        "Den här artikeln finns bara i Forma-projektets journal."
+      ],
+      "status": "published",
+      "publishedAt": "2026-10-06T10:00:00Z"
+    },
+    {
+      "slug": "en-form-i-taget",
+      "title": "En form i taget",
+      "excerpt": "Om att ge enkla idéer tid att utvecklas.",
+      "paragraphs": [
+        "En skiss blir tydligare när vi tar bort det som inte behövs.",
+        "Vi låter proportion och rytm avgöra nästa steg."
+      ],
+      "status": "published",
+      "publishedAt": "2026-10-05T10:00:00Z"
+    },
+    {
+      "slug": "nasta-kollektion",
+      "title": "FORMA PRIVATE DRAFT",
+      "excerpt": "Ett utkast.",
+      "paragraphs": [
+        "Inte för publik visning."
+      ],
+      "status": "draft"
+    }
+  ]
+}

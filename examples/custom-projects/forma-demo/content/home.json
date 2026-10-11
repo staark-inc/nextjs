@@ -1,0 +1,124 @@
+{
+  "projectKey": "forma-demo",
+  "status": "published",
+  "path": "/",
+  "title": "Hem",
+  "seo": {
+    "title": "Hem | Forma Atelier",
+    "description": "Objekt med karaktär, skapade med omtanke.",
+    "noindex": true
+  },
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "hero",
+      "props": {
+        "eyebrow": "Forma Atelier",
+        "heading": "Form för\ndet vardagliga.",
+        "intro": "Vi utforskar material, proportioner och de små detaljerna som gör ett objekt personligt.",
+        "artwork": false,
+        "primary": {
+          "label": "Se kollektionen",
+          "href": "/kollektion"
+        },
+        "secondary": {
+          "label": "Kontakta ateljén",
+          "href": "/kontakt"
+        },
+        "more": {
+          "label": "Läs om ateljén →",
+          "href": "/ateljen"
+        },
+        "note": "En konceptkollektion. Ett eget perspektiv."
+      }
+    },
+    {
+      "id": "process",
+      "type": "imageText",
+      "props": {
+        "heading": "Långsamt tänkt.\nOmsorgsfullt format.",
+        "intro": "En ateljé där enkla idéer får ta plats.",
+        "paragraphs": [
+          "Vi arbetar med former som känns självklara, med en känsla för material och användning."
+        ],
+        "image": {
+          "src": "/forma-demo/arc.svg",
+          "alt": "Illustration av en ljus keramisk vas",
+          "caption": "Arc / Volym och balans",
+          "width": 1200,
+          "height": 900
+        },
+        "side": "right"
+      }
+    },
+    {
+      "id": "collection",
+      "type": "gallery",
+      "props": {
+        "heading": "Tre objekt.\nTre perspektiv.",
+        "intro": "Konceptillustrationer ur vår första digitala kollektion.",
+        "items": [
+          {
+            "src": "/forma-demo/arc.svg",
+            "alt": "Illustration av en ljus keramisk vas",
+            "caption": "Arc / Volym och balans",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/forma-demo/fold.svg",
+            "alt": "Illustration av ett vikt objekt i terrakotta",
+            "caption": "Fold / Rörelse i materialet",
+            "width": 1200,
+            "height": 900
+          },
+          {
+            "src": "/forma-demo/orbit.svg",
+            "alt": "Illustration av en cirkulär form i grön ton",
+            "caption": "Orbit / En mjuk rytm",
+            "width": 1200,
+            "height": 900
+          }
+        ],
+        "columns": 3
+      }
+    },
+    {
+      "id": "principles",
+      "type": "services",
+      "props": {
+        "heading": "Det som formar oss.",
+        "items": [
+          {
+            "title": "Material",
+            "text": "Yta, tyngd och känsla kommer först.",
+            "label": "01"
+          },
+          {
+            "title": "Proportion",
+            "text": "Balans mellan funktion och uttryck.",
+            "label": "02"
+          },
+          {
+            "title": "Omsorg",
+            "text": "Detaljer som håller ihop helheten.",
+            "label": "03"
+          }
+        ]
+      }
+    },
+    {
+      "id": "closing",
+      "type": "cta",
+      "props": {
+        "eyebrow": "Skapa tillsammans",
+        "heading": "En idé.\nEtt nytt objekt.",
+        "intro": "Vi börjar med materialet, formen och det du vill uttrycka.",
+        "link": {
+          "label": "Starta ett samtal",
+          "href": "/kontakt"
+        }
+      }
+    }
+  ]
+}
